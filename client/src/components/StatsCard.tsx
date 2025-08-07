@@ -37,18 +37,18 @@ export default function StatsCard({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-20 p-6">
+    <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-gray-20/40 p-6 card-hover shadow-lg">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-50 mb-1">{title}</p>
-          <p className="text-2xl font-semibold text-gray-100">{value}</p>
-          <p className={`text-sm mt-1 ${getChangeColor()}`}>
-            <span className="mr-1">{getChangeIcon()}</span>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-50 mb-2">{title}</p>
+          <p className="text-3xl font-bold text-gray-100 mb-2">{value}</p>
+          <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getChangeColor()} bg-opacity-10`}>
+            <span className="mr-1 text-lg">{getChangeIcon()}</span>
             {change}
-          </p>
+          </div>
         </div>
-        <div className={`w-12 h-12 ${iconBgColor} rounded-lg flex items-center justify-center`}>
-          <Icon className={iconColor} size={24} />
+        <div className={`w-16 h-16 ${iconBgColor} rounded-2xl flex items-center justify-center shadow-lg`}>
+          <Icon className={iconColor} size={28} />
         </div>
       </div>
     </div>

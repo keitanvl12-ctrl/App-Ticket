@@ -7,7 +7,9 @@ import {
   Users, 
   Settings, 
   Ticket,
-  MoreVertical 
+  LogOut,
+  User,
+  Bell
 } from "lucide-react";
 
 const navigationItems = [
@@ -23,14 +25,17 @@ export default function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-20 flex-shrink-0 flex flex-col">
+    <aside className="w-64 bg-white/90 backdrop-blur-xl border-r border-gray-20/30 flex-shrink-0 flex flex-col shadow-2xl">
       {/* Logo and Brand */}
-      <div className="p-4 border-b border-gray-20">
+      <div className="p-6 border-b border-gray-20/30">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Ticket className="text-white" size={16} />
+          <div className="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center shadow-lg">
+            <Ticket className="text-white" size={24} />
           </div>
-          <span className="text-lg font-semibold text-gray-100">TicketFlow Pro</span>
+          <div>
+            <h1 className="text-xl font-bold text-gradient">TicketFlow</h1>
+            <p className="text-xs font-medium text-gray-50 tracking-widest uppercase">Pro</p>
+          </div>
         </div>
       </div>
 
@@ -43,14 +48,17 @@ export default function Sidebar() {
           return (
             <Link key={item.path} href={item.path}>
               <a
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg font-medium transition-colors ${
+                className={`flex items-center space-x-4 px-4 py-3 rounded-2xl font-medium transition-all duration-300 group relative overflow-hidden ${
                   isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-gray-70 hover:bg-gray-10"
+                    ? "bg-gradient-to-r from-primary/15 to-secondary/10 text-primary shadow-lg border border-primary/20"
+                    : "text-gray-70 hover:bg-gradient-to-r hover:from-gray-10 hover:to-gray-10/60 hover:text-gray-100 hover:shadow-md hover:scale-[1.02]"
                 }`}
               >
-                <Icon size={20} />
-                <span>{item.label}</span>
+                <Icon size={22} className={`${isActive ? "text-primary" : "group-hover:text-primary/80"} transition-colors`} />
+                <span className={`font-medium ${isActive ? "font-semibold" : ""}`}>{item.label}</span>
+                {isActive && (
+                  <div className="absolute right-3 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                )}
               </a>
             </Link>
           );
@@ -58,18 +66,29 @@ export default function Sidebar() {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-gray-20 bg-white">
+      <div className="p-4 border-t border-gray-20/30 glass-effect m-4 rounded-2xl">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
-            <span>JS</span>
+          <div className="relative">
+            <div className="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center text-white text-sm font-bold shadow-xl">
+              <span>JS</span>
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-white shadow-md" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-100 truncate">João Silva</p>
-            <p className="text-xs text-gray-50 truncate">Administrador</p>
+            <p className="text-sm font-bold text-gray-100 truncate">João Silva</p>
+            <p className="text-xs text-gray-50 truncate flex items-center mt-1">
+              <span className="w-2 h-2 bg-success rounded-full mr-2 animate-pulse" />
+              Administrador Online
+            </p>
           </div>
-          <button className="text-gray-50 hover:text-gray-70 transition-colors">
-            <MoreVertical size={16} />
-          </button>
+          <div className="flex space-x-1">
+            <button className="p-2 text-gray-50 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200 hover:shadow-md">
+              <Bell size={16} />
+            </button>
+            <button className="p-2 text-gray-50 hover:text-error hover:bg-error/10 rounded-xl transition-all duration-200 hover:shadow-md">
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </aside>
