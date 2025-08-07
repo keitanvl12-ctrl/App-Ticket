@@ -16,6 +16,10 @@ import Login from "@/pages/Login";
 import SLA from "@/pages/SLA";
 import CreateTicket from "@/pages/CreateTicket";
 import UserManagement from "@/pages/UserManagement";
+import Categories from "@/pages/Categories";
+import TicketForms from "@/pages/TicketForms";
+import CustomFields from "@/pages/CustomFields";
+import WorkflowApprovals from "@/pages/WorkflowApprovals";
 import NotFound from "@/pages/NotFound";
 
 function Router() {
@@ -28,6 +32,10 @@ function Router() {
         <Route path="/analytics" component={Analytics} />
         <Route path="/sla" component={SLA} />
         <Route path="/users" component={UserManagement} />
+        <Route path="/categories" component={Categories} />
+        <Route path="/forms" component={TicketForms} />
+        <Route path="/fields" component={CustomFields} />
+        <Route path="/approvals" component={WorkflowApprovals} />
         <Route path="/settings" component={Settings} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />
