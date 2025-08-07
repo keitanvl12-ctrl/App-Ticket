@@ -6,6 +6,10 @@ import BulkActionsPanel from '@/components/users/BulkActionsPanel';
 import ActivityMonitor from '@/components/users/ActivityMonitor';
 import Button from '@/components/Button';
 import Icon from '@/components/AppIcon';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 export default function UserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -21,6 +25,17 @@ export default function UserManagement() {
   const [showFilters, setShowFilters] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showActivityMonitor, setShowActivityMonitor] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    role: '',
+    department: '',
+    phone: '',
+    extension: '',
+    location: '',
+    manager: ''
+  });
 
   // Mock data
   const users = [
@@ -142,8 +157,66 @@ export default function UserManagement() {
   };
 
   const handleCreateUser = () => {
-    console.log('Create new user');
-    // Implementar criação de usuário
+    setShowCreateUserModal(true);
+    setNewUser({
+      name: '',
+      email: '',
+      role: '',
+      department: '',
+      phone: '',
+      extension: '',
+      location: '',
+      manager: ''
+    });
+  };
+
+  const handleSaveUser = () => {
+    if (!newUser.name || !newUser.email || !newUser.role || !newUser.department) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const newUserData = {
+      id: (users.length + 1).toString(),
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      status: 'active',
+      department: newUser.department,
+      lastLogin: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      avatar: null,
+      phone: newUser.phone,
+      extension: newUser.extension,
+      location: newUser.location || 'São Paulo - SP',
+      manager: newUser.manager || null,
+      permissions: getDefaultPermissions(newUser.role),
+      ticketsAssigned: 0,
+      ticketsResolved: 0,
+      averageResolutionTime: '-',
+      satisfactionRating: 0
+    };
+
+    console.log('Novo usuário criado:', newUserData);
+    // Aqui você adicionaria a lógica para salvar no backend
+    
+    setShowCreateUserModal(false);
+    alert('Usuário criado com sucesso!');
+  };
+
+  const getDefaultPermissions = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return ['users.read', 'users.write', 'tickets.read', 'tickets.write', 'reports.read', 'reports.write'];
+      case 'manager':
+        return ['users.read', 'tickets.read', 'tickets.write', 'reports.read', 'reports.write'];
+      case 'operator':
+        return ['tickets.read', 'tickets.write', 'knowledge.read'];
+      case 'user':
+        return ['tickets.create', 'profile.read'];
+      default:
+        return ['profile.read'];
+    }
   };
 
   const handleImportUsers = () => {
@@ -402,6 +475,123 @@ export default function UserManagement() {
           users={users}
         />
       )}
+
+      {/* Create User Modal */}
+      <Dialog open={showCreateUserModal} onOpenChange={setShowCreateUserModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Usuário</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Nome *
+              </Label>
+              <Input
+                id="name"
+                value={newUser.name}
+                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                className="col-span-3"
+                placeholder="Nome completo"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email *
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                className="col-span-3"
+                placeholder="usuario@empresa.com"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="role" className="text-right">
+                Função *
+              </Label>
+              <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione uma função" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="department" className="text-right">
+                Departamento *
+              </Label>
+              <Select value={newUser.department} onValueChange={(value) => setNewUser({ ...newUser, department: value })}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione um departamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.name}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">
+                Telefone
+              </Label>
+              <Input
+                id="phone"
+                value={newUser.phone}
+                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                className="col-span-3"
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="extension" className="text-right">
+                Ramal
+              </Label>
+              <Input
+                id="extension"
+                value={newUser.extension}
+                onChange={(e) => setNewUser({ ...newUser, extension: e.target.value })}
+                className="col-span-3"
+                placeholder="1001"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">
+                Localização
+              </Label>
+              <Input
+                id="location"
+                value={newUser.location}
+                onChange={(e) => setNewUser({ ...newUser, location: e.target.value })}
+                className="col-span-3"
+                placeholder="São Paulo - SP"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCreateUserModal(false)}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveUser}>
+              Criar Usuário
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
