@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Ticket, Hourglass, CheckCircle, Clock } from "lucide-react";
-import TopBar from "@/components/TopBar";
 import StatsCard from "@/components/StatsCard";
 import TicketTrendsChart from "@/components/TicketTrendsChart";
 import PriorityBreakdown from "@/components/PriorityBreakdown";
@@ -17,15 +16,16 @@ export default function Dashboard() {
   });
 
   return (
-    <>
-      <TopBar 
-        title="Painel" 
-        description="Bem-vindo de volta! Aqui está o que está acontecendo com seus tickets hoje."
-      />
+    <div className="p-6 bg-background min-h-screen">
+      {/* Header Section */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-foreground mb-2">Dashboard</h1>
+        <p className="text-muted-foreground">Bem-vindo de volta! Aqui está o que está acontecendo com seus tickets hoje.</p>
+      </div>
       
-      <div className="flex-1 overflow-auto p-6 bg-background">
+      <div className="space-y-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Total de Tickets"
             value={stats?.totalTickets || 0}
@@ -65,14 +65,14 @@ export default function Dashboard() {
         </div>
 
         {/* Charts and Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Ticket Trends Chart */}
-          <div className="bg-card border border-border rounded p-6 shadow-enterprise">
+          <div className="bg-card border border-border rounded-lg p-6 shadow-enterprise">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-foreground">Tendências de Tickets</h2>
               <Select value={chartPeriod} onValueChange={setChartPeriod}>
-                <SelectTrigger className="w-40 text-sm border-gray-20">
-                  <SelectValue />
+                <SelectTrigger className="w-40 text-sm border-border">
+                  <SelectValue placeholder="Selecionar período" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="7">Últimos 7 dias</SelectItem>
@@ -85,17 +85,17 @@ export default function Dashboard() {
           </div>
 
           {/* Priority Breakdown */}
-          <div className="bg-card border border-border rounded p-6 shadow-enterprise">
+          <div className="bg-card border border-border rounded-lg p-6 shadow-enterprise">
             <h2 className="text-lg font-semibold text-foreground mb-6">Distribuição por Prioridade</h2>
             <PriorityBreakdown />
           </div>
         </div>
 
         {/* Recent Tickets Table */}
-        <div className="bg-card border border-border rounded shadow-enterprise overflow-hidden">
+        <div className="bg-card border border-border rounded-lg shadow-enterprise overflow-hidden">
           <RecentTicketsTable />
         </div>
       </div>
-    </>
+    </div>
   );
 }

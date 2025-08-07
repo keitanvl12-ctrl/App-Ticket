@@ -19,10 +19,11 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/tickets" component={AllTickets} />
-        <Route path="/kanban" component={KanbanBoard} />
+        <Route path="/tickets" component={KanbanBoard} />
+        <Route path="/create" component={AllTickets} />
         <Route path="/analytics" component={Analytics} />
-        <Route path="/team" component={Team} />
+        <Route path="/sla" component={Analytics} />
+        <Route path="/users" component={Team} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
