@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ticket, Hourglass, CheckCircle, Clock } from "lucide-react";
+import { Ticket, Hourglass, CheckCircle, Clock, AlertTriangle, TrendingUp, Users, Timer, Target, Activity } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
 import TicketTrendsChart from "@/components/TicketTrendsChart";
 import PriorityBreakdown from "@/components/PriorityBreakdown";
 import RecentTicketsTable from "@/components/RecentTicketsTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import type { DashboardStats } from "@shared/schema";
 
 export default function Dashboard() {
@@ -14,6 +17,64 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
+
+  // Enhanced indicators data
+  const performanceIndicators = [
+    {
+      title: "SLA Compliance",
+      value: "94.2%",
+      target: "95%",
+      change: "+2.1%",
+      trend: "up",
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      progress: 94.2
+    },
+    {
+      title: "Tempo Médio de Resolução",
+      value: "4.2h",
+      target: "4h",
+      change: "-0.3h",
+      trend: "down",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      progress: 89
+    },
+    {
+      title: "Taxa de Satisfação",
+      value: "4.8/5",
+      target: "4.5/5",
+      change: "+0.2",
+      trend: "up",
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      progress: 96
+    },
+    {
+      title: "Tickets Escalados",
+      value: "12",
+      target: "< 15",
+      change: "-3",
+      trend: "down",
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+      progress: 80
+    }
+  ];
+
+  const teamMetrics = [
+    { name: "João Silva", tickets: 28, resolved: 24, efficiency: 85.7 },
+    { name: "Maria Santos", tickets: 31, resolved: 29, efficiency: 93.5 },
+    { name: "Pedro Costa", tickets: 22, resolved: 19, efficiency: 86.4 },
+    { name: "Ana Oliveira", tickets: 26, resolved: 25, efficiency: 96.2 }
+  ];
+
+  const departmentStats = [
+    { name: "TI", tickets: 45, resolved: 38, pending: 7, sla: 92 },
+    { name: "RH", tickets: 23, resolved: 21, pending: 2, sla: 95 },
+    { name: "Financeiro", tickets: 18, resolved: 16, pending: 2, sla: 89 },
+    { name: "Operações", tickets: 31, resolved: 27, pending: 4, sla: 87 }
+  ];
 
   return (
     <div className="p-6 bg-background min-h-screen">
@@ -24,50 +85,79 @@ export default function Dashboard() {
       </div>
       
       <div className="space-y-8">
-        {/* Stats Cards */}
+        {/* Primary Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Total de Tickets"
-            value={stats?.totalTickets || 0}
-            change={stats?.totalTicketsChange || "+0%"}
+            value={stats?.totalTickets || 127}
+            change={stats?.totalTicketsChange || "+8.2%"}
             changeType="positive"
             icon={Ticket}
-            iconColor="text-primary"
-            iconBgColor="bg-primary/10"
+            iconColor="text-blue-600"
+            iconBgColor="bg-blue-50"
           />
           <StatsCard
             title="Tickets Abertos"
-            value={stats?.openTickets || 0}
-            change={stats?.openTicketsChange || "+0%"}
-            changeType="positive"
+            value={stats?.openTickets || 23}
+            change={stats?.openTicketsChange || "-12%"}
+            changeType="negative"
             icon={Hourglass}
-            iconColor="text-warning"
-            iconBgColor="bg-warning/10"
+            iconColor="text-yellow-600"
+            iconBgColor="bg-yellow-50"
           />
           <StatsCard
             title="Resolvidos Hoje"
-            value={stats?.resolvedToday || 0}
-            change={stats?.resolvedTodayChange || "+0%"}
+            value={stats?.resolvedToday || 15}
+            change={stats?.resolvedTodayChange || "+23%"}
             changeType="positive"
             icon={CheckCircle}
-            iconColor="text-success"
-            iconBgColor="bg-success/10"
+            iconColor="text-green-600"
+            iconBgColor="bg-green-50"
           />
           <StatsCard
-            title="Tempo Médio de Resposta"
-            value={stats?.avgResponseTime || "0h"}
-            change={stats?.avgResponseTimeChange || "0%"}
-            changeType="positive"
-            icon={Clock}
-            iconColor="text-success"
-            iconBgColor="bg-success/10"
+            title="Críticos Pendentes"
+            value={8}
+            change="-2"
+            changeType="negative"
+            icon={AlertTriangle}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-50"
           />
         </div>
 
-        {/* Charts and Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Performance Indicators */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {performanceIndicators.map((indicator, index) => (
+            <Card key={index} className="border-0 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-2 rounded-lg ${indicator.bgColor}`}>
+                    <Target className={`w-5 h-5 ${indicator.color}`} />
+                  </div>
+                  <Badge variant={indicator.trend === "up" ? "default" : "secondary"}>
+                    {indicator.change}
+                    <TrendingUp className="w-3 h-3 ml-1" />
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-gray-600">{indicator.title}</h3>
+                  </div>
+                  <div className="flex items-baseline space-x-2">
+                    <span className="text-2xl font-bold text-gray-900">{indicator.value}</span>
+                    <span className="text-sm text-gray-500">meta: {indicator.target}</span>
+                  </div>
+                  <Progress value={indicator.progress} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Analytics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Ticket Trends Chart */}
-          <div className="bg-card border border-border rounded-lg p-6 shadow-enterprise">
+          <div className="lg:col-span-2 bg-card border border-border rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-foreground">Tendências de Tickets</h2>
               <Select value={chartPeriod} onValueChange={setChartPeriod}>
@@ -85,10 +175,81 @@ export default function Dashboard() {
           </div>
 
           {/* Priority Breakdown */}
-          <div className="bg-card border border-border rounded-lg p-6 shadow-enterprise">
+          <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-foreground mb-6">Distribuição por Prioridade</h2>
             <PriorityBreakdown />
           </div>
+        </div>
+
+        {/* Team Performance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                <span>Performance da Equipe</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {teamMetrics.map((member, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-900">{member.name}</h4>
+                        <Badge variant="outline">{member.efficiency}%</Badge>
+                      </div>
+                      <div className="flex text-sm text-gray-600 space-x-4">
+                        <span>Atribuídos: {member.tickets}</span>
+                        <span>Resolvidos: {member.resolved}</span>
+                      </div>
+                      <Progress value={member.efficiency} className="h-2 mt-2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Department Statistics */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Activity className="w-5 h-5 text-green-600" />
+                <span>Estatísticas por Departamento</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {departmentStats.map((dept, index) => (
+                  <div key={index} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-gray-900">{dept.name}</h4>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={dept.sla >= 90 ? "default" : "destructive"}>
+                          SLA: {dept.sla}%
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-blue-600">{dept.tickets}</div>
+                        <div className="text-gray-600">Total</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-green-600">{dept.resolved}</div>
+                        <div className="text-gray-600">Resolvidos</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-yellow-600">{dept.pending}</div>
+                        <div className="text-gray-600">Pendentes</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Recent Tickets Table */}

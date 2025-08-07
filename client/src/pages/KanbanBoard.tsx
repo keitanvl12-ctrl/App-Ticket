@@ -267,21 +267,21 @@ const columns = [
 
 export default function KanbanBoard() {
   const [tickets, setTickets] = useState(mockTickets);
-  const [draggedTicket, setDraggedTicket] = useState(null);
+  const [draggedTicket, setDraggedTicket] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
 
-  const handleDragStart = (e, ticket) => {
+  const handleDragStart = (e: any, ticket: any) => {
     setDraggedTicket(ticket);
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: any) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e, status) => {
+  const handleDrop = (e: any, status: string) => {
     e.preventDefault();
     if (draggedTicket && draggedTicket.status !== status) {
       setTickets(prev => 
@@ -295,7 +295,7 @@ export default function KanbanBoard() {
     }
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'Alta': return 'bg-red-100 text-red-800 border-red-200';
       case 'Média': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -304,7 +304,7 @@ export default function KanbanBoard() {
     }
   };
 
-  const getProgressColor = (progress, status) => {
+  const getProgressColor = (progress: number, status: string) => {
     if (status === 'Resolvido') return 'bg-green-500';
     if (status === 'Atrasado') return 'bg-red-500';
     if (status === 'Pausado') return 'bg-yellow-500';
