@@ -49,15 +49,17 @@ export default function FilterPanel({
 
   const clearFilters = () => {
     onFiltersChange({
-      status: '',
-      role: '',
-      department: '',
-      lastLogin: '',
+      status: 'all',
+      role: 'all',
+      department: 'all',
+      lastLogin: 'all',
       search: ''
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => 
+    key === 'search' ? value !== '' : value !== 'all'
+  );
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 space-y-6">
@@ -106,7 +108,7 @@ export default function FilterPanel({
             <SelectValue placeholder="Todos os status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os status</SelectItem>
+            <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="active">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -139,7 +141,7 @@ export default function FilterPanel({
             <SelectValue placeholder="Todas as funções" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as funções</SelectItem>
+            <SelectItem value="all">Todas as funções</SelectItem>
             {roles.map(role => (
               <SelectItem key={role.id} value={role.id}>
                 <div>
@@ -162,7 +164,7 @@ export default function FilterPanel({
             <SelectValue placeholder="Todos os departamentos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os departamentos</SelectItem>
+            <SelectItem value="all">Todos os departamentos</SelectItem>
             {departments.map(dept => (
               <SelectItem key={dept.id} value={dept.name}>
                 <div className="flex items-center justify-between w-full">
@@ -185,7 +187,7 @@ export default function FilterPanel({
             <SelectValue placeholder="Qualquer período" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Qualquer período</SelectItem>
+            <SelectItem value="all">Qualquer período</SelectItem>
             <SelectItem value="today">Hoje</SelectItem>
             <SelectItem value="week">Esta semana</SelectItem>
             <SelectItem value="month">Este mês</SelectItem>

@@ -40,9 +40,9 @@ export default function ActivityMonitor({
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [filteredActivities, setFilteredActivities] = useState<ActivityEntry[]>([]);
   const [filters, setFilters] = useState({
-    user: '',
-    type: '',
-    severity: '',
+    user: 'all',
+    type: 'all',
+    severity: 'all',
     timeRange: 'today'
   });
   const [isLive, setIsLive] = useState(true);
@@ -327,7 +327,7 @@ export default function ActivityMonitor({
                   <SelectValue placeholder="Todos os usuários" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os usuários</SelectItem>
+                  <SelectItem value="all">Todos os usuários</SelectItem>
                   {users.map(user => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.name}
@@ -343,7 +343,7 @@ export default function ActivityMonitor({
                   <SelectValue placeholder="Todos os tipos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os tipos</SelectItem>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="authentication">Autenticação</SelectItem>
                   <SelectItem value="ticket">Tickets</SelectItem>
                   <SelectItem value="user_management">Usuários</SelectItem>
@@ -358,7 +358,7 @@ export default function ActivityMonitor({
                   <SelectValue placeholder="Todas severidades" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas severidades</SelectItem>
+                  <SelectItem value="all">Todas severidades</SelectItem>
                   <SelectItem value="critical">Crítica</SelectItem>
                   <SelectItem value="high">Alta</SelectItem>
                   <SelectItem value="medium">Média</SelectItem>

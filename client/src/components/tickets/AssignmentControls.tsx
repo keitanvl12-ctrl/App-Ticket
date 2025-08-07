@@ -153,7 +153,7 @@ export default function AssignmentControls({
                   <SelectValue placeholder="Selecione um operador (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value="auto">
                     <span className="text-slate-500">Deixar para distribuição automática</span>
                   </SelectItem>
                   {filteredOperators?.map(operator => (
