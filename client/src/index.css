@@ -5,42 +5,42 @@
 @tailwind utilities;
 
 :root {
-  /* Modern gradient-based colors */
-  --background: hsl(240 25% 98%);
-  --foreground: hsl(240 10% 9%);
+  /* Clean minimalist design like the reference */
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(220 13% 18%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(240 10% 9%);
+  --card-foreground: hsl(220 13% 18%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(240 10% 9%);
+  --popover-foreground: hsl(220 13% 18%);
   
-  /* Primary - Modern purple-blue gradient feel */
-  --primary: hsl(248 100% 70%);
+  /* Primary - Clean blue accent */
+  --primary: hsl(210 100% 50%);
   --primary-foreground: hsl(0 0% 100%);
-  --primary-hover: hsl(248 100% 65%);
-  --primary-light: hsl(248 100% 97%);
-  --primary-dark: hsl(248 100% 55%);
+  --primary-hover: hsl(210 100% 45%);
+  --primary-light: hsl(210 100% 97%);
+  --primary-dark: hsl(210 100% 40%);
   
-  /* Secondary - Complementary pink-purple */
-  --secondary: hsl(326 78% 68%);
-  --secondary-foreground: hsl(0 0% 100%);
-  --secondary-hover: hsl(326 78% 63%);
-  --secondary-light: hsl(326 100% 97%);
+  /* Secondary - Subtle gray */
+  --secondary: hsl(220 13% 91%);
+  --secondary-foreground: hsl(220 13% 18%);
+  --secondary-hover: hsl(220 13% 85%);
+  --secondary-light: hsl(220 13% 97%);
   
-  /* Accent - Cyan blue */
-  --accent: hsl(197 100% 63%);
+  /* Accent - Orange highlight like in reference */
+  --accent: hsl(25 95% 53%);
   --accent-foreground: hsl(0 0% 100%);
-  --accent-hover: hsl(197 100% 58%);
-  --accent-light: hsl(197 100% 96%);
+  --accent-hover: hsl(25 95% 48%);
+  --accent-light: hsl(25 100% 96%);
   
-  --muted: hsl(240 25% 97%);
-  --muted-foreground: hsl(240 8% 46%);
+  --muted: hsl(220 13% 96%);
+  --muted-foreground: hsl(220 9% 46%);
   --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(240 12% 88%);
-  --input: hsl(240 25% 97%);
-  --ring: hsl(248 100% 70%);
+  --border: hsl(220 13% 91%);
+  --input: hsl(220 13% 96%);
+  --ring: hsl(210 100% 50%);
   
-  /* Status Colors - More vibrant */
+  /* Status Colors - Clean and minimal */
   --success: hsl(142 71% 45%);
   --success-foreground: hsl(0 0% 100%);
   --success-light: hsl(142 76% 96%);
@@ -51,23 +51,23 @@
   --error-foreground: hsl(0 0% 100%);
   --error-light: hsl(0 100% 97%);
   
-  /* Sophisticated gray scale */
-  --gray-10: hsl(240 25% 98%);
-  --gray-20: hsl(240 12% 88%);
-  --gray-30: hsl(240 8% 73%);
-  --gray-50: hsl(240 8% 46%);
-  --gray-70: hsl(240 10% 32%);
-  --gray-90: hsl(240 10% 15%);
-  --gray-100: hsl(240 10% 9%);
+  /* Clean gray scale like reference */
+  --gray-10: hsl(220 13% 96%);
+  --gray-20: hsl(220 13% 91%);
+  --gray-30: hsl(220 9% 76%);
+  --gray-50: hsl(220 9% 46%);
+  --gray-70: hsl(220 13% 26%);
+  --gray-90: hsl(220 14% 11%);
+  --gray-100: hsl(220 13% 18%);
   
-  /* Chart colors - Modern palette */
-  --chart-1: hsl(248 100% 70%);
+  /* Chart colors - Minimal palette */
+  --chart-1: hsl(210 100% 50%);
   --chart-2: hsl(142 71% 45%);
   --chart-3: hsl(43 96% 56%);
-  --chart-4: hsl(197 100% 63%);
-  --chart-5: hsl(326 78% 68%);
+  --chart-4: hsl(25 95% 53%);
+  --chart-5: hsl(280 100% 70%);
   
-  --radius: 0.75rem;
+  --radius: 0.375rem;
   --font-sans: 'Inter', system-ui, sans-serif;
   
   /* Shadow system */
