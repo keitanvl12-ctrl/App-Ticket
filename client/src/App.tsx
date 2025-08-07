@@ -14,6 +14,8 @@ import Team from "@/pages/Team";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import SLA from "@/pages/SLA";
+import CreateTicket from "@/pages/CreateTicket";
+import UserManagement from "@/pages/UserManagement";
 import NotFound from "@/pages/NotFound";
 
 function Router() {
@@ -22,10 +24,10 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/tickets" component={KanbanBoard} />
-        <Route path="/create" component={AllTickets} />
+        <Route path="/create" component={CreateTicket} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/sla" component={SLA} />
-        <Route path="/users" component={Team} />
+        <Route path="/users" component={UserManagement} />
         <Route path="/settings" component={Settings} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />
