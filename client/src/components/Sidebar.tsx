@@ -47,8 +47,8 @@ export default function Sidebar() {
           
           return (
             <Link key={item.path} href={item.path}>
-              <a
-                className={`flex items-center space-x-4 px-4 py-3 rounded-2xl font-medium transition-all duration-300 group relative overflow-hidden ${
+              <div
+                className={`flex items-center space-x-4 px-4 py-3 rounded-2xl font-medium transition-all duration-300 group relative overflow-hidden cursor-pointer ${
                   isActive
                     ? "bg-gradient-to-r from-primary/15 to-secondary/10 text-primary shadow-lg border border-primary/20"
                     : "text-gray-70 hover:bg-gradient-to-r hover:from-gray-10 hover:to-gray-10/60 hover:text-gray-100 hover:shadow-md hover:scale-[1.02]"
@@ -59,7 +59,7 @@ export default function Sidebar() {
                 {isActive && (
                   <div className="absolute right-3 w-2 h-2 rounded-full bg-primary animate-pulse" />
                 )}
-              </a>
+              </div>
             </Link>
           );
         })}
