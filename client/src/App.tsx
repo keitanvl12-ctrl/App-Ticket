@@ -12,7 +12,9 @@ import KanbanBoard from "@/pages/KanbanBoard";
 import Analytics from "@/pages/Analytics";
 import Team from "@/pages/Team";
 import Settings from "@/pages/Settings";
-import NotFound from "@/pages/not-found";
+import Login from "@/pages/Login";
+import SLA from "@/pages/SLA";
+import NotFound from "@/pages/NotFound";
 
 function Router() {
   return (
@@ -22,9 +24,10 @@ function Router() {
         <Route path="/tickets" component={KanbanBoard} />
         <Route path="/create" component={AllTickets} />
         <Route path="/analytics" component={Analytics} />
-        <Route path="/sla" component={Analytics} />
+        <Route path="/sla" component={SLA} />
         <Route path="/users" component={Team} />
         <Route path="/settings" component={Settings} />
+        <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
