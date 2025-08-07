@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(0 0% 9.8%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(0 0% 9.8%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(0 0% 9.8%);
+  --primary: hsl(217 91% 53%);
+  --primary-foreground: hsl(0 0% 100%);
+  --primary-hover: hsl(217 91% 45%);
+  --secondary: hsl(0 0% 44%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(0 0% 95.7%);
+  --muted-foreground: hsl(0 0% 44%);
+  --accent: hsl(0 0% 95.7%);
+  --accent-foreground: hsl(0 0% 9.8%);
+  --destructive: hsl(0 84% 46%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(0 0% 87.8%);
+  --input: hsl(200 23% 97%);
+  --ring: hsl(217 91% 53%);
+  --chart-1: hsl(217 91% 53%);
+  --chart-2: hsl(142 71% 29%);
+  --chart-3: hsl(45 93% 47%);
+  --chart-4: hsl(142 76% 36%);
+  --chart-5: hsl(346 84% 61%);
+  
+  /* Custom colors from design */
+  --success: hsl(142 71% 29%);
+  --success-foreground: hsl(0 0% 100%);
+  --warning: hsl(45 93% 47%);
+  --warning-foreground: hsl(0 0% 9.8%);
+  --error: hsl(0 84% 46%);
+  --error-foreground: hsl(0 0% 100%);
+  --gray-10: hsl(0 0% 95.7%);
+  --gray-20: hsl(0 0% 87.8%);
+  --gray-30: hsl(0 0% 77.6%);
+  --gray-50: hsl(0 0% 55.3%);
+  --gray-70: hsl(0 0% 32.2%);
+  --gray-90: hsl(0 0% 14.9%);
+  --gray-100: hsl(0 0% 8.6%);
+  
+  --radius: 0.5rem;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+.dark {
+  --background: hsl(0 0% 8.6%);
+  --foreground: hsl(0 0% 95.7%);
+  --card: hsl(0 0% 8.6%);
+  --card-foreground: hsl(0 0% 95.7%);
+  --popover: hsl(0 0% 8.6%);
+  --popover-foreground: hsl(0 0% 95.7%);
+  --primary: hsl(217 91% 53%);
+  --primary-foreground: hsl(0 0% 100%);
+  --primary-hover: hsl(217 91% 45%);
+  --secondary: hsl(0 0% 95.7%);
+  --secondary-foreground: hsl(0 0% 8.6%);
+  --muted: hsl(0 0% 14.9%);
+  --muted-foreground: hsl(0 0% 64.9%);
+  --accent: hsl(0 0% 14.9%);
+  --accent-foreground: hsl(0 0% 95.7%);
+  --destructive: hsl(0 84% 46%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(0 0% 14.9%);
+  --input: hsl(0 0% 14.9%);
+  --ring: hsl(217 91% 53%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .text-primary-hover {
+    color: hsl(var(--primary-hover));
+  }
+  
+  .bg-primary-hover {
+    background-color: hsl(var(--primary-hover));
+  }
+  
+  .text-success {
+    color: hsl(var(--success));
+  }
+  
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+  
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+  
+  .text-error {
+    color: hsl(var(--error));
+  }
+  
+  .bg-error {
+    background-color: hsl(var(--error));
+  }
+  
+  .text-gray-10 {
+    color: hsl(var(--gray-10));
+  }
+  
+  .bg-gray-10 {
+    background-color: hsl(var(--gray-10));
+  }
+  
+  .text-gray-20 {
+    color: hsl(var(--gray-20));
+  }
+  
+  .bg-gray-20 {
+    background-color: hsl(var(--gray-20));
+  }
+  
+  .border-gray-20 {
+    border-color: hsl(var(--gray-20));
+  }
+  
+  .text-gray-30 {
+    color: hsl(var(--gray-30));
+  }
+  
+  .bg-gray-30 {
+    background-color: hsl(var(--gray-30));
+  }
+  
+  .text-gray-50 {
+    color: hsl(var(--gray-50));
+  }
+  
+  .bg-gray-50 {
+    background-color: hsl(var(--gray-50));
+  }
+  
+  .text-gray-70 {
+    color: hsl(var(--gray-70));
+  }
+  
+  .bg-gray-70 {
+    background-color: hsl(var(--gray-70));
+  }
+  
+  .text-gray-90 {
+    color: hsl(var(--gray-90));
+  }
+  
+  .bg-gray-90 {
+    background-color: hsl(var(--gray-90));
+  }
+  
+  .text-gray-100 {
+    color: hsl(var(--gray-100));
+  }
+  
+  .bg-gray-100 {
+    background-color: hsl(var(--gray-100));
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 200ms ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 200ms ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideDown {
+  0% { transform: translateY(-4px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}

@@ -1,0 +1,46 @@
+import { Switch, Route } from "wouter";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Provider } from "react-redux";
+import { queryClient } from "./lib/queryClient";
+import { store } from "./store";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Layout from "@/components/Layout";
+import Dashboard from "@/pages/Dashboard";
+import AllTickets from "@/pages/AllTickets";
+import KanbanBoard from "@/pages/KanbanBoard";
+import Analytics from "@/pages/Analytics";
+import Team from "@/pages/Team";
+import Settings from "@/pages/Settings";
+import NotFound from "@/pages/not-found";
+
+function Router() {
+  return (
+    <Layout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/tickets" component={AllTickets} />
+        <Route path="/kanban" component={KanbanBoard} />
+        <Route path="/analytics" component={Analytics} />
+        <Route path="/team" component={Team} />
+        <Route path="/settings" component={Settings} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
+  );
+}
+
+function App() {
+  return (
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </Provider>
+  );
+}
+
+export default App;

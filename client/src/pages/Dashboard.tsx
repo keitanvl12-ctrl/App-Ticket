@@ -1,0 +1,99 @@
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Ticket, Hourglass, CheckCircle, Clock } from "lucide-react";
+import TopBar from "@/components/TopBar";
+import StatsCard from "@/components/StatsCard";
+import TicketTrendsChart from "@/components/TicketTrendsChart";
+import PriorityBreakdown from "@/components/PriorityBreakdown";
+import RecentTicketsTable from "@/components/RecentTicketsTable";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { DashboardStats } from "@shared/schema";
+
+export default function Dashboard() {
+  const [chartPeriod, setChartPeriod] = useState("7");
+
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ["/api/dashboard/stats"],
+  });
+
+  return (
+    <>
+      <TopBar 
+        title="Dashboard" 
+        description="Welcome back! Here's what's happening with your tickets today."
+      />
+      
+      <div className="flex-1 overflow-auto p-6 bg-gray-10">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatsCard
+            title="Total Tickets"
+            value={stats?.totalTickets || 0}
+            change={stats?.totalTicketsChange || "+0%"}
+            changeType="positive"
+            icon={Ticket}
+            iconColor="text-primary"
+            iconBgColor="bg-primary/10"
+          />
+          <StatsCard
+            title="Open Tickets"
+            value={stats?.openTickets || 0}
+            change={stats?.openTicketsChange || "+0%"}
+            changeType="positive"
+            icon={Hourglass}
+            iconColor="text-warning"
+            iconBgColor="bg-warning/10"
+          />
+          <StatsCard
+            title="Resolved Today"
+            value={stats?.resolvedToday || 0}
+            change={stats?.resolvedTodayChange || "+0%"}
+            changeType="positive"
+            icon={CheckCircle}
+            iconColor="text-success"
+            iconBgColor="bg-success/10"
+          />
+          <StatsCard
+            title="Avg Response Time"
+            value={stats?.avgResponseTime || "0h"}
+            change={stats?.avgResponseTimeChange || "0%"}
+            changeType="positive"
+            icon={Clock}
+            iconColor="text-success"
+            iconBgColor="bg-success/10"
+          />
+        </div>
+
+        {/* Charts and Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Ticket Trends Chart */}
+          <div className="bg-white rounded-lg border border-gray-20 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-100">Ticket Trends</h2>
+              <Select value={chartPeriod} onValueChange={setChartPeriod}>
+                <SelectTrigger className="w-40 text-sm border-gray-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">Last 7 days</SelectItem>
+                  <SelectItem value="30">Last 30 days</SelectItem>
+                  <SelectItem value="90">Last 3 months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <TicketTrendsChart days={parseInt(chartPeriod)} />
+          </div>
+
+          {/* Priority Breakdown */}
+          <div className="bg-white rounded-lg border border-gray-20 p-6">
+            <h2 className="text-lg font-semibold text-gray-100 mb-6">Priority Breakdown</h2>
+            <PriorityBreakdown />
+          </div>
+        </div>
+
+        {/* Recent Tickets Table */}
+        <RecentTicketsTable />
+      </div>
+    </>
+  );
+}
