@@ -28,7 +28,7 @@ export default function TopBar({ title, description }: TopBarProps) {
             <div className="relative">
               <Input
                 type="text"
-                placeholder="Search tickets..."
+                placeholder="Buscar tickets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-64 pl-10 bg-gray-10 border-gray-20 focus:ring-primary focus:border-primary"
@@ -50,7 +50,7 @@ export default function TopBar({ title, description }: TopBarProps) {
               className="bg-primary hover:bg-primary-hover text-white font-medium"
             >
               <Plus size={16} className="mr-2" />
-              Create Ticket
+              Criar Ticket
             </Button>
           </div>
         </div>

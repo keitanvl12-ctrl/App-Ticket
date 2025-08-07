@@ -31,8 +31,8 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
 
   const form = useForm<InsertTicket>({
     resolver: zodResolver(insertTicketSchema.extend({
-      subject: insertTicketSchema.shape.subject.min(1, "Subject is required").max(100, "Subject must be less than 100 characters"),
-      description: insertTicketSchema.shape.description.min(10, "Description must be at least 10 characters"),
+      subject: insertTicketSchema.shape.subject.min(1, "Assunto é obrigatório").max(100, "Assunto deve ter menos de 100 caracteres"),
+      description: insertTicketSchema.shape.description.min(10, "Descrição deve ter pelo menos 10 caracteres"),
     })),
     defaultValues: {
       subject: "",
@@ -47,9 +47,9 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
   const createTicketMutation = useMutation({
     mutationFn: async (data: InsertTicket) => {
       // In a real app, createdBy would come from authenticated user
-      const currentUser = users?.[0]; // Using first user as demo
+      const currentUser = users?.[0]; // Usando primeiro usuário como demo
       if (!currentUser) {
-        throw new Error("User not found");
+        throw new Error("Usuário não encontrado");
       }
 
       const ticketData = { ...data, createdBy: currentUser.id };
@@ -58,8 +58,8 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Ticket created successfully",
+        title: "Sucesso",
+        description: "Ticket criado com sucesso",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
@@ -69,8 +69,8 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create ticket",
+        title: "Erro",
+        description: error.message || "Falha ao criar ticket",
         variant: "destructive",
       });
     },
@@ -104,7 +104,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            Create New Ticket
+            Criar Novo Ticket
             <Button
               variant="ghost"
               size="sm"
@@ -125,11 +125,11 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                 name="subject"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject *</FormLabel>
+                    <FormLabel>Assunto *</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Brief description of the issue"
+                        placeholder="Descrição breve do problema"
                         className="focus:ring-primary focus:border-primary"
                       />
                     </FormControl>
@@ -143,18 +143,18 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority *</FormLabel>
+                    <FormLabel>Prioridade *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="focus:ring-primary focus:border-primary">
-                          <SelectValue placeholder="Select priority" />
+                          <SelectValue placeholder="Selecionar prioridade" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
+                        <SelectItem value="low">Baixa</SelectItem>
+                        <SelectItem value="medium">Média</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="critical">Crítica</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -169,18 +169,18 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Categoria</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                       <FormControl>
                         <SelectTrigger className="focus:ring-primary focus:border-primary">
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Selecionar categoria" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="bug">Bug Report</SelectItem>
-                        <SelectItem value="feature">Feature Request</SelectItem>
-                        <SelectItem value="support">Technical Support</SelectItem>
-                        <SelectItem value="improvement">Improvement</SelectItem>
+                        <SelectItem value="bug">Relatório de Bug</SelectItem>
+                        <SelectItem value="feature">Solicitação de Funcionalidade</SelectItem>
+                        <SelectItem value="support">Suporte Técnico</SelectItem>
+                        <SelectItem value="improvement">Melhoria</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -193,11 +193,11 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                 name="assignedTo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assignee</FormLabel>
+                    <FormLabel>Responsável</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                       <FormControl>
                         <SelectTrigger className="focus:ring-primary focus:border-primary">
-                          <SelectValue placeholder="Auto-assign" />
+                          <SelectValue placeholder="Atribuição automática" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -219,11 +219,11 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description *</FormLabel>
+                  <FormLabel>Descrição *</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="Detailed description of the issue, steps to reproduce, expected behavior..."
+                      placeholder="Descrição detalhada do problema, passos para reproduzir, comportamento esperado..."
                       className="h-32 resize-none focus:ring-primary focus:border-primary"
                     />
                   </FormControl>
@@ -234,10 +234,10 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
 
             {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-100 mb-2">Attachments</label>
+              <label className="block text-sm font-medium text-gray-100 mb-2">Anexos</label>
               <div className="border-2 border-dashed border-gray-20 rounded-lg p-6 text-center">
                 <Upload className="mx-auto text-3xl text-gray-30 mb-3" size={48} />
-                <p className="text-sm text-gray-50 mb-2">Drag and drop files here or click to browse</p>
+                <p className="text-sm text-gray-50 mb-2">Arraste e solte arquivos aqui ou clique para navegar</p>
                 <input
                   type="file"
                   multiple
@@ -251,7 +251,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                   className="text-primary hover:text-primary-hover font-medium text-sm"
                   onClick={() => document.getElementById('fileUpload')?.click()}
                 >
-                  Choose Files
+                  Escolher Arquivos
                 </Button>
               </div>
               {selectedFiles.length > 0 && (
@@ -281,14 +281,14 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                 onClick={handleClose}
                 disabled={createTicketMutation.isPending}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button 
                 type="submit" 
                 disabled={createTicketMutation.isPending}
                 className="bg-primary hover:bg-primary-hover text-white"
               >
-                {createTicketMutation.isPending ? "Creating..." : "Create Ticket"}
+                {createTicketMutation.isPending ? "Criando..." : "Criar Ticket"}
               </Button>
             </div>
           </form>

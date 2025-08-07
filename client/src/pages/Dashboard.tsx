@@ -19,15 +19,15 @@ export default function Dashboard() {
   return (
     <>
       <TopBar 
-        title="Dashboard" 
-        description="Welcome back! Here's what's happening with your tickets today."
+        title="Painel" 
+        description="Bem-vindo de volta! Aqui está o que está acontecendo com seus tickets hoje."
       />
       
       <div className="flex-1 overflow-auto p-6 bg-gray-10">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
-            title="Total Tickets"
+            title="Total de Tickets"
             value={stats?.totalTickets || 0}
             change={stats?.totalTicketsChange || "+0%"}
             changeType="positive"
@@ -36,7 +36,7 @@ export default function Dashboard() {
             iconBgColor="bg-primary/10"
           />
           <StatsCard
-            title="Open Tickets"
+            title="Tickets Abertos"
             value={stats?.openTickets || 0}
             change={stats?.openTicketsChange || "+0%"}
             changeType="positive"
@@ -45,7 +45,7 @@ export default function Dashboard() {
             iconBgColor="bg-warning/10"
           />
           <StatsCard
-            title="Resolved Today"
+            title="Resolvidos Hoje"
             value={stats?.resolvedToday || 0}
             change={stats?.resolvedTodayChange || "+0%"}
             changeType="positive"
@@ -54,7 +54,7 @@ export default function Dashboard() {
             iconBgColor="bg-success/10"
           />
           <StatsCard
-            title="Avg Response Time"
+            title="Tempo Médio de Resposta"
             value={stats?.avgResponseTime || "0h"}
             change={stats?.avgResponseTimeChange || "0%"}
             changeType="positive"
@@ -69,15 +69,15 @@ export default function Dashboard() {
           {/* Ticket Trends Chart */}
           <div className="bg-white rounded-lg border border-gray-20 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-100">Ticket Trends</h2>
+              <h2 className="text-lg font-semibold text-gray-100">Tendências de Tickets</h2>
               <Select value={chartPeriod} onValueChange={setChartPeriod}>
                 <SelectTrigger className="w-40 text-sm border-gray-20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="90">Last 3 months</SelectItem>
+                  <SelectItem value="7">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30">Últimos 30 dias</SelectItem>
+                  <SelectItem value="90">Últimos 3 meses</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -86,7 +86,7 @@ export default function Dashboard() {
 
           {/* Priority Breakdown */}
           <div className="bg-white rounded-lg border border-gray-20 p-6">
-            <h2 className="text-lg font-semibold text-gray-100 mb-6">Priority Breakdown</h2>
+            <h2 className="text-lg font-semibold text-gray-100 mb-6">Distribuição por Prioridade</h2>
             <PriorityBreakdown />
           </div>
         </div>

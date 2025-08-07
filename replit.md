@@ -5,6 +5,7 @@ TicketFlow Pro is a modern, full-stack ticket management system built with React
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Language: Sistema completo traduzido para português brasileiro (interface, formulários, dados de exemplo).
 
 # System Architecture
 

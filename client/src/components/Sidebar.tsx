@@ -11,12 +11,12 @@ import {
 } from "lucide-react";
 
 const navigationItems = [
-  { path: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { path: "/tickets", icon: List, label: "All Tickets" },
-  { path: "/kanban", icon: Columns, label: "Kanban Board" },
-  { path: "/analytics", icon: BarChart3, label: "Analytics" },
-  { path: "/team", icon: Users, label: "Team" },
-  { path: "/settings", icon: Settings, label: "Settings" },
+  { path: "/", icon: LayoutDashboard, label: "Painel" },
+  { path: "/tickets", icon: List, label: "Todos os Tickets" },
+  { path: "/kanban", icon: Columns, label: "Quadro Kanban" },
+  { path: "/analytics", icon: BarChart3, label: "Análises" },
+  { path: "/team", icon: Users, label: "Equipe" },
+  { path: "/settings", icon: Settings, label: "Configurações" },
 ];
 
 export default function Sidebar() {
@@ -61,11 +61,11 @@ export default function Sidebar() {
       <div className="p-4 border-t border-gray-20 bg-white">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
-            <span>JD</span>
+            <span>JS</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-100 truncate">John Doe</p>
-            <p className="text-xs text-gray-50 truncate">Admin</p>
+            <p className="text-sm font-medium text-gray-100 truncate">João Silva</p>
+            <p className="text-xs text-gray-50 truncate">Administrador</p>
           </div>
           <button className="text-gray-50 hover:text-gray-70 transition-colors">
             <MoreVertical size={16} />

@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 import type { TicketWithDetails } from "@shared/schema";
 
 const statusConfig = {
-  open: { color: "bg-primary/10 text-primary", label: "Open" },
-  in_progress: { color: "bg-warning/10 text-warning", label: "In Progress" },
-  resolved: { color: "bg-success/10 text-success", label: "Resolved" },
-  closed: { color: "bg-gray-50/10 text-gray-70", label: "Closed" },
+  open: { color: "bg-primary/10 text-primary", label: "Aberto" },
+  in_progress: { color: "bg-warning/10 text-warning", label: "Em Progresso" },
+  resolved: { color: "bg-success/10 text-success", label: "Resolvido" },
+  closed: { color: "bg-gray-50/10 text-gray-70", label: "Fechado" },
 };
 
 const priorityConfig = {
-  low: { color: "bg-success/10 text-success", label: "Low" },
-  medium: { color: "bg-primary/10 text-primary", label: "Medium" },
-  high: { color: "bg-warning/10 text-warning", label: "High" },
-  critical: { color: "bg-error/10 text-error", label: "Critical" },
+  low: { color: "bg-success/10 text-success", label: "Baixa" },
+  medium: { color: "bg-primary/10 text-primary", label: "Média" },
+  high: { color: "bg-warning/10 text-warning", label: "Alta" },
+  critical: { color: "bg-error/10 text-error", label: "Crítica" },
 };
 
 export default function RecentTicketsTable() {
@@ -28,11 +28,11 @@ export default function RecentTicketsTable() {
       <div className="bg-white rounded-lg border border-gray-20">
         <div className="p-6 border-b border-gray-20">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-100">Recent Tickets</h2>
+            <h2 className="text-lg font-semibold text-gray-100">Tickets Recentes</h2>
           </div>
         </div>
         <div className="p-6">
-          <div className="text-center text-gray-50">Loading tickets...</div>
+          <div className="text-center text-gray-50">Carregando tickets...</div>
         </div>
       </div>
     );
@@ -44,9 +44,9 @@ export default function RecentTicketsTable() {
     <div className="bg-white rounded-lg border border-gray-20">
       <div className="p-6 border-b border-gray-20">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-100">Recent Tickets</h2>
+          <h2 className="text-lg font-semibold text-gray-100">Tickets Recentes</h2>
           <Button variant="ghost" className="text-primary hover:text-primary-hover font-medium text-sm">
-            View All →
+            Ver Todos →
           </Button>
         </div>
       </div>

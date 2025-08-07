@@ -65,40 +65,40 @@ export class MemStorage implements IStorage {
     const adminUser = await this.createUser({
       username: "admin",
       password: "password",
-      name: "John Doe",
-      email: "john.doe@company.com",
+      name: "João Silva",
+      email: "joao.silva@empresa.com",
       role: "admin",
     });
 
     const user1 = await this.createUser({
-      username: "sarah.miller",
+      username: "maria.santos",
       password: "password",
-      name: "Sarah Miller",
-      email: "sarah.miller@company.com",
+      name: "Maria Santos",
+      email: "maria.santos@empresa.com",
       role: "user",
     });
 
     const user2 = await this.createUser({
-      username: "alex.chen",
+      username: "carlos.oliveira",
       password: "password",
-      name: "Alex Chen",
-      email: "alex.chen@company.com",
+      name: "Carlos Oliveira",
+      email: "carlos.oliveira@empresa.com",
       role: "user",
     });
 
     const user3 = await this.createUser({
-      username: "mike.johnson",
+      username: "ana.costa",
       password: "password",
-      name: "Mike Johnson",
-      email: "mike.johnson@company.com",
+      name: "Ana Costa",
+      email: "ana.costa@empresa.com",
       role: "user",
     });
 
     // Create demo tickets
     const tickets = [
       {
-        subject: "Login authentication issues for mobile app",
-        description: "Users are experiencing login failures on the mobile application. The issue appears to be related to the OAuth integration.",
+        subject: "Problemas de autenticação no aplicativo móvel",
+        description: "Usuários estão enfrentando falhas de login no aplicativo móvel. O problema parece estar relacionado à integração OAuth.",
         status: "in_progress",
         priority: "high",
         category: "bug",
@@ -108,8 +108,8 @@ export class MemStorage implements IStorage {
         updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
       },
       {
-        subject: "Database performance optimization needed",
-        description: "Query performance has degraded significantly for large datasets. Need to optimize indexing and query structure.",
+        subject: "Otimização de performance do banco de dados necessária",
+        description: "A performance das consultas degradou significativamente para grandes volumes de dados. É necessário otimizar a indexação e estrutura das consultas.",
         status: "open",
         priority: "medium",
         category: "improvement",
@@ -119,8 +119,8 @@ export class MemStorage implements IStorage {
         updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
       },
       {
-        subject: "Email notifications not working properly",
-        description: "Email notifications are not being sent for ticket updates. SMTP configuration may need review.",
+        subject: "Notificações por email não estão funcionando corretamente",
+        description: "Notificações por email não estão sendo enviadas para atualizações de tickets. A configuração SMTP pode precisar de revisão.",
         status: "resolved",
         priority: "low",
         category: "bug",
