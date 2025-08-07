@@ -42,10 +42,10 @@ export default function RecentTicketsTable() {
 
   return (
     <div className="overflow-hidden">
-      <div className="p-8 border-b border-gray-20/40">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-100">Tickets Recentes</h2>
-          <Button variant="ghost" className="text-primary hover:text-primary-hover font-semibold text-sm px-6 py-2 rounded-2xl hover:bg-primary/10 transition-all">
+          <h2 className="text-lg font-semibold text-foreground">Tickets Recentes</h2>
+          <Button variant="ghost" className="text-primary hover:text-primary-hover font-medium text-sm transition-enterprise">
             Ver Todos →
           </Button>
         </div>

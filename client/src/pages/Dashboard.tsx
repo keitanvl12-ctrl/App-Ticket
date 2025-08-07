@@ -23,9 +23,9 @@ export default function Dashboard() {
         description="Bem-vindo de volta! Aqui está o que está acontecendo com seus tickets hoje."
       />
       
-      <div className="flex-1 overflow-auto p-8 bg-gradient-to-br from-gray-10 to-gray-20/20">
+      <div className="flex-1 overflow-auto p-6 bg-background">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
             title="Total de Tickets"
             value={stats?.totalTickets || 0}
@@ -65,11 +65,11 @@ export default function Dashboard() {
         </div>
 
         {/* Charts and Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Ticket Trends Chart */}
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-gray-20/40 p-8 card-hover shadow-xl">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-bold text-gray-100">Tendências de Tickets</h2>
+          <div className="bg-card border border-border rounded p-6 shadow-enterprise">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-foreground">Tendências de Tickets</h2>
               <Select value={chartPeriod} onValueChange={setChartPeriod}>
                 <SelectTrigger className="w-40 text-sm border-gray-20">
                   <SelectValue />
@@ -85,14 +85,14 @@ export default function Dashboard() {
           </div>
 
           {/* Priority Breakdown */}
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-gray-20/40 p-8 card-hover shadow-xl">
-            <h2 className="text-xl font-bold text-gray-100 mb-8">Distribuição por Prioridade</h2>
+          <div className="bg-card border border-border rounded p-6 shadow-enterprise">
+            <h2 className="text-lg font-semibold text-foreground mb-6">Distribuição por Prioridade</h2>
             <PriorityBreakdown />
           </div>
         </div>
 
         {/* Recent Tickets Table */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-gray-20/40 shadow-xl overflow-hidden">
+        <div className="bg-card border border-border rounded shadow-enterprise overflow-hidden">
           <RecentTicketsTable />
         </div>
       </div>
