@@ -20,7 +20,7 @@ interface Category {
   subcategories?: Category[];
 }
 
-export default function Categories() {
+function Categories() {
   const [categories, setCategories] = useState<Category[]>([
     {
       id: '1',
@@ -440,3 +440,5 @@ export default function Categories() {
     </div>
   );
 }
+
+export default Categories;
