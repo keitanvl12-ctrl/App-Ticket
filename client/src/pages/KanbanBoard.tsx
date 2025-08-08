@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { Search, Filter, ChevronDown, MoreHorizontal, Grid3X3, List, Eye, Edit, Trash } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Enhanced ticket data matching the reference image
 const mockTickets = [
@@ -270,6 +271,7 @@ export default function KanbanBoard() {
   const [draggedTicket, setDraggedTicket] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   const handleDragStart = (e: any, ticket: any) => {
     setDraggedTicket(ticket);
@@ -329,9 +331,32 @@ export default function KanbanBoard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Listagem de Tickets</h1>
-            <p className="text-gray-600">Gerencie tickets em formato Kanban</p>
+            <p className="text-gray-600">
+              {viewMode === 'kanban' ? 'Gerencie tickets em formato Kanban' : 'Visualize tickets em formato de lista'}
+            </p>
           </div>
           <div className="flex items-center space-x-2">
+            {/* View Mode Toggle */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <Button
+                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('kanban')}
+                className="px-3"
+              >
+                <Grid3X3 className="w-4 h-4 mr-2" />
+                Kanban
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="px-3"
+              >
+                <List className="w-4 h-4 mr-2" />
+                Lista
+              </Button>
+            </div>
             <Button variant="outline" size="sm">
               <Filter className="w-4 h-4 mr-2" />
               Filtro Avançado
@@ -381,99 +406,208 @@ export default function KanbanBoard() {
         </div>
       </div>
 
-      {/* Kanban Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {columns.map((column) => (
-          <div key={column.id} className="space-y-4">
-            {/* Column Header */}
-            <div className={`${column.headerColor} text-white p-4 rounded-lg flex items-center justify-between shadow-md`}>
-              <span className="font-bold text-sm tracking-wide">{column.title}</span>
-              <div className="bg-white bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center">
-                <span className="text-sm font-bold">
-                  {filteredTickets.filter(t => t.status === column.id).length}
-                </span>
+      {/* Content Based on View Mode */}
+      {viewMode === 'kanban' ? (
+        /* Kanban Board */
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {columns.map((column) => (
+            <div key={column.id} className="space-y-4">
+              {/* Column Header */}
+              <div className={`${column.headerColor} text-white p-4 rounded-lg flex items-center justify-between shadow-md`}>
+                <span className="font-bold text-sm tracking-wide">{column.title}</span>
+                <div className="bg-white bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center">
+                  <span className="text-sm font-bold">
+                    {filteredTickets.filter(t => t.status === column.id).length}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Drop Zone */}
+              <div 
+                className="space-y-3 min-h-[600px] p-2 rounded-lg"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, column.id)}
+              >
+                {filteredTickets
+                  .filter(ticket => ticket.status === column.id)
+                  .map((ticket) => (
+                    <Card 
+                      key={ticket.id}
+                      className="cursor-move hover:shadow-lg transition-all duration-200 border-0 shadow-sm bg-white"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, ticket)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          {/* Header */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-600">{ticket.number}</span>
+                            <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
+                              <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                            </Button>
+                          </div>
+
+                          {/* Title */}
+                          <div>
+                            <h3 className="font-bold text-sm text-gray-900 leading-tight mb-1">
+                              {ticket.title}
+                            </h3>
+                            <p className="text-xs text-gray-600 line-clamp-2">
+                              {ticket.description}
+                            </p>
+                          </div>
+
+                          {/* Assignee and Date */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Avatar className="w-6 h-6">
+                                <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                                  {ticket.assignee.initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs text-gray-600">{ticket.assignee.name}</span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {ticket.dueDate}
+                            </div>
+                          </div>
+
+                          {/* Priority Badge */}
+                          <div className="flex items-center justify-between">
+                            <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
+                              {ticket.priority}
+                            </Badge>
+                            <span className="text-xs text-gray-500">{ticket.department}</span>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="space-y-1">
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(ticket.progress, ticket.status)}`}
+                                style={{ width: `${ticket.progress}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Progresso</span>
+                              <span>{ticket.progress}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
               </div>
             </div>
-            
-            {/* Drop Zone */}
-            <div 
-              className="space-y-3 min-h-[600px] p-2 rounded-lg"
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, column.id)}
-            >
-              {filteredTickets
-                .filter(ticket => ticket.status === column.id)
-                .map((ticket) => (
-                  <Card 
-                    key={ticket.id}
-                    className="cursor-move hover:shadow-lg transition-all duration-200 border-0 shadow-sm bg-white"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, ticket)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        {/* Header */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-gray-600">{ticket.number}</span>
-                          <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
-                            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                          </Button>
+          ))}
+        </div>
+      ) : (
+        /* List View */
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Ticket</TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Prioridade</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead>Solicitante</TableHead>
+                <TableHead>Departamento</TableHead>
+                <TableHead>Progresso</TableHead>
+                <TableHead>Vencimento</TableHead>
+                <TableHead className="w-[100px]">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTickets.map((ticket) => (
+                <TableRow key={ticket.id} className="hover:bg-gray-50">
+                  <TableCell className="font-mono text-sm">
+                    {ticket.number}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <p className="font-medium text-sm">{ticket.title}</p>
+                      {ticket.tags && ticket.tags.length > 0 && (
+                        <div className="flex gap-1">
+                          {ticket.tags.slice(0, 2).map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {ticket.tags.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{ticket.tags.length - 2}
+                            </Badge>
+                          )}
                         </div>
-
-                        {/* Title */}
-                        <div>
-                          <h3 className="font-bold text-sm text-gray-900 leading-tight mb-1">
-                            {ticket.title}
-                          </h3>
-                          <p className="text-xs text-gray-600 line-clamp-2">
-                            {ticket.description}
-                          </p>
-                        </div>
-
-                        {/* Assignee and Date */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Avatar className="w-6 h-6">
-                              <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                                {ticket.assignee.initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs text-gray-600">{ticket.assignee.name}</span>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {ticket.dueDate}
-                          </div>
-                        </div>
-
-                        {/* Priority Badge */}
-                        <div className="flex items-center justify-between">
-                          <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
-                            {ticket.priority}
-                          </Badge>
-                          <span className="text-xs text-gray-500">{ticket.department}</span>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="space-y-1">
-                          <div className="w-full bg-gray-200 rounded-full h-1.5">
-                            <div 
-                              className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(ticket.progress, ticket.status)}`}
-                              style={{ width: `${ticket.progress}%` }}
-                            />
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-500">
-                            <span>Progresso</span>
-                            <span>{ticket.progress}%</span>
-                          </div>
-                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        ticket.status === 'Atrasado' ? 'border-red-200 text-red-800 bg-red-50' :
+                        ticket.status === 'Atendendo' ? 'border-green-200 text-green-800 bg-green-50' :
+                        ticket.status === 'Pausado' ? 'border-yellow-200 text-yellow-800 bg-yellow-50' :
+                        'border-gray-200 text-gray-800 bg-gray-50'
+                      }`}
+                    >
+                      {ticket.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${getPriorityColor(ticket.priority)}`}
+                    >
+                      {ticket.priority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                          {ticket.assignee.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{ticket.assignee.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm">{ticket.requester}</TableCell>
+                  <TableCell className="text-sm">{ticket.department}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${getProgressColor(ticket.progress, ticket.status)}`}
+                          style={{ width: `${ticket.progress}%` }}
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          </div>
-        ))}
-      </div>
+                      <span className="text-xs text-gray-500 w-8">{ticket.progress}%</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm">{ticket.dueDate}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <Button variant="ghost" size="icon" className="w-8 h-8">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="w-8 h-8">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="w-8 h-8 text-red-600 hover:text-red-700">
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
