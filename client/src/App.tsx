@@ -25,6 +25,7 @@ import Approvals from "@/pages/Approvals";
 import ReportsNew from "@/pages/ReportsNew";
 import Departments from "@/pages/Departments";
 import NotFound from "@/pages/NotFound";
+import UserProfiles from "@/pages/UserProfiles";
 
 function Router() {
   return (
@@ -43,6 +44,7 @@ function Router() {
         <Route path="/approvals" component={Approvals} />
         <Route path="/workflow-approvals" component={WorkflowApprovals} />
         <Route path="/reports" component={ReportsNew} />
+        <Route path="/user-profiles" component={UserProfiles} />
         <Route path="/settings" component={Settings} />
         <Route path="/profile" component={Profile} />
         <Route path="/login" component={Login} />

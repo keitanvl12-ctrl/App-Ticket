@@ -214,7 +214,7 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
                 Classifique o tipo e prioridade do chamado
               </p>
               
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Campo Departamento */}
                 <FormField
                   control={form.control}
@@ -289,6 +289,58 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
                   )}
                 />
               </div>
+            </div>
+
+            {/* ATRIBUIÇÃO */}
+            <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Atribuição
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                Defina quem irá atender este chamado
+              </p>
+              
+              <FormField
+                control={form.control}
+                name="assignedTo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Atendente</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value || ""}
+                      disabled={!selectedDepartment}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="focus:ring-primary focus:border-primary">
+                          <SelectValue 
+                            placeholder={
+                              !selectedDepartment 
+                                ? "Selecione um departamento primeiro" 
+                                : "Selecione o atendente"
+                            } 
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {users?.filter(user => 
+                          (user.role === 'admin' || user.role === 'supervisor') && 
+                          user.departmentId === selectedDepartment
+                        ).map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} ({user.role === 'admin' ? 'Administrador' : 'Supervisor'})
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="">Não atribuído</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Apenas administradores e supervisores podem ser atendentes
+                    </p>
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Botões */}

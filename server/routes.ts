@@ -159,10 +159,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id, 
         name: user.name, 
         email: user.email, 
-        role: user.role 
+        role: user.role,
+        departmentId: user.departmentId
       })));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Update user role
+  app.patch("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+      
+      if (!role || !['admin', 'supervisor', 'colaborador'].includes(role)) {
+        return res.status(400).json({ message: "Role inválido" });
+      }
+
+      const updatedUser = await storage.updateUser(id, { role });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Error updating user" });
     }
   });
 
