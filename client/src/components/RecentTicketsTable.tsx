@@ -6,18 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-interface Ticket {
-  id: string;
-  ticketNumber: string;
-  subject: string;
-  status: string;
-  priority: string;
-  assignedTo: string;
-  requester: string;
-  createdAt: string;
-  updatedAt: string;
-  department: string;
-}
+import type { TicketWithDetails } from "@shared/schema";
 
 // Configuração de status traduzida e melhorada
 const statusConfig = {
@@ -72,7 +61,7 @@ interface RecentTicketsTableProps {
 }
 
 export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTableProps) {
-  const { data: tickets = [], isLoading } = useQuery<Ticket[]>({
+  const { data: tickets = [], isLoading } = useQuery<TicketWithDetails[]>({
     queryKey: ["/api/tickets"],
   });
 
@@ -183,7 +172,7 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
                           <User className="w-4 h-4" />
                           <span>Solicitante:</span>
                           <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {ticket.requester}
+                            {ticket.createdByUser?.name || 'Usuário'}
                           </span>
                         </div>
                         
@@ -192,27 +181,26 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
                           <span>{formatDate(ticket.createdAt)}</span>
                         </div>
                         
-                        {ticket.department && (
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="outline" className="text-xs">
-                              {ticket.department}
-                            </Badge>
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          <span>Departamento:</span>
+                          <Badge variant="outline" className="text-xs">
+                            {ticket.department?.name || 'Não especificado'}
+                          </Badge>
+                        </div>
                       </div>
                       
                       {/* Assignee */}
-                      {ticket.assignedTo && (
+                      {ticket.assignedToUser && (
                         <div className="flex items-center space-x-2 mt-3">
                           <span className="text-sm text-slate-600 dark:text-slate-400">Atribuído para:</span>
                           <div className="flex items-center space-x-2">
                             <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                               <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                {getInitials(ticket.assignedTo)}
+                                {getInitials(ticket.assignedToUser.name)}
                               </span>
                             </div>
                             <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                              {ticket.assignedTo}
+                              {ticket.assignedToUser.name}
                             </span>
                           </div>
                         </div>

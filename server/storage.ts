@@ -314,6 +314,13 @@ export class DatabaseStorage implements IStorage {
         createdAt: tickets.createdAt,
         updatedAt: tickets.updatedAt,
         resolvedAt: tickets.resolvedAt,
+        department: {
+          id: departments.id,
+          name: departments.name,
+          description: departments.description,
+          createdAt: departments.createdAt,
+          updatedAt: departments.updatedAt,
+        },
         createdByUser: {
           id: users.id,
           username: users.username,
@@ -326,6 +333,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .from(tickets)
+      .leftJoin(departments, eq(tickets.departmentId, departments.id))
       .leftJoin(users, eq(tickets.createdBy, users.id))
       .where(eq(tickets.id, id));
 

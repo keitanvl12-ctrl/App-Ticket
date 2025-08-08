@@ -128,6 +128,7 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 // Extended types for API responses
 export type TicketWithDetails = Ticket & {
+  department?: Department | null;
   createdByUser: User;
   assignedToUser: User | null;
   comments: (Comment & { user: User })[];

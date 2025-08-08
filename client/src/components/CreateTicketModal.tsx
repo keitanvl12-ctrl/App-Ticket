@@ -71,7 +71,11 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
         throw new Error("Usuário não encontrado");
       }
 
-      const ticketData = { ...data, createdBy: currentUser.id };
+      const ticketData = { 
+        ...data, 
+        createdBy: currentUser.id,
+        departmentId: data.departmentId // Garantir que o departmentId seja passado
+      };
       const response = await apiRequest("POST", "/api/tickets", ticketData);
       return response.json();
     },
