@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Eye, Edit, Save, X, Paperclip, MessageCircle, Clock, User, 
   FileText, Image, Download, Upload, Calendar, AlertCircle,
-  CheckCircle, Pause, Play, MoreHorizontal
+  CheckCircle, Pause, Play, MoreHorizontal, Send
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface TicketModalProps {
   ticket: any;
@@ -28,36 +32,55 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTicket, setEditedTicket] = useState(ticket);
   const [newComment, setNewComment] = useState('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Buscar comentários do ticket
+  const { data: comments, isLoading: commentsLoading } = useQuery<any[]>({
+    queryKey: ['/api/tickets', ticket.id, 'comments'],
+    enabled: isOpen && !!ticket.id,
+  });
+
+  // Buscar usuários para saber quem está logado
+  const { data: users } = useQuery<any[]>({
+    queryKey: ['/api/users'],
+    enabled: isOpen,
+  });
+
+  // Usuário atual (assumindo que é o primeiro admin para demo)
+  const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
+
+  // Mutation para criar comentário
+  const createCommentMutation = useMutation({
+    mutationFn: async (content: string) => {
+      if (!currentUser) throw new Error('Usuário não encontrado');
+      
+      return apiRequest(`/api/tickets/${ticket.id}/comments`, 'POST', {
+        content,
+        userId: currentUser.id,
+        ticketId: ticket.id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets', ticket.id, 'comments'] });
+      setNewComment('');
+      toast({
+        title: 'Comentário adicionado',
+        description: 'Seu comentário foi adicionado com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao adicionar comentário',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const [attachments, setAttachments] = useState([
     { id: 1, name: 'screenshot.png', type: 'image', size: '2.4 MB', uploadedAt: new Date(), uploadedBy: 'João Silva' },
     { id: 2, name: 'log_error.txt', type: 'text', size: '156 KB', uploadedAt: new Date(), uploadedBy: 'Ana Santos' }
-  ]);
-
-  const [comments] = useState([
-    {
-      id: 1,
-      author: 'João Silva',
-      authorAvatar: 'JS',
-      content: 'Iniciando atendimento do ticket. Verificando os requisitos iniciais.',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      isInternal: false
-    },
-    {
-      id: 2,
-      author: 'Ana Santos',
-      authorAvatar: 'AS',
-      content: 'Identificado problema na configuração do Office. Será necessário reinstalação.',
-      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-      isInternal: true
-    },
-    {
-      id: 3,
-      author: 'Pedro Costa',
-      authorAvatar: 'PC',
-      content: 'Cliente confirmou disponibilidade para manutenção amanhã às 14h.',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000),
-      isInternal: false
-    }
   ]);
 
   const handleSave = () => {
@@ -72,8 +95,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
-    // Aqui você adicionaria a lógica para salvar o comentário
-    setNewComment('');
+    createCommentMutation.mutate(newComment);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -324,9 +346,12 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     <input type="checkbox" id="internal" className="rounded" />
                     <Label htmlFor="internal" className="text-sm">Comentário interno</Label>
                   </div>
-                  <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Adicionar Comentário
+                  <Button 
+                    onClick={handleAddComment} 
+                    disabled={!newComment.trim() || createCommentMutation.isPending}
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {createCommentMutation.isPending ? 'Adicionando...' : 'Adicionar Comentário'}
                   </Button>
                 </div>
               </CardContent>
@@ -334,31 +359,41 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
 
             {/* Lista de Comentários */}
             <div className="space-y-4">
-              {comments.map((comment) => (
-                <Card key={comment.id} className={comment.isInternal ? 'border-l-4 border-l-yellow-400' : ''}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                          {comment.authorAvatar}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm font-medium">{comment.author}</span>
-                          {comment.isInternal && (
-                            <Badge variant="secondary" className="text-xs">Interno</Badge>
-                          )}
-                          <span className="text-xs text-gray-500">
-                            {format(comment.timestamp, "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-                          </span>
+              {commentsLoading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-500">Carregando comentários...</p>
+                </div>
+              ) : comments && comments.length > 0 ? (
+                comments.map((comment) => (
+                  <Card key={comment.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start space-x-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                            {comment.user?.name?.split(' ').map((n) => n[0]).join('').toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="text-sm font-medium">{comment.user?.name || 'Usuário'}</span>
+                            <span className="text-xs text-gray-500">
+                              {format(new Date(comment.createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700">{comment.content}</p>
                         </div>
-                        <p className="text-sm text-gray-700">{comment.content}</p>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <MessageCircle className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-500">Nenhum comentário ainda</p>
+                  <p className="text-xs text-gray-400">Seja o primeiro a comentar neste ticket</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
