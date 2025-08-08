@@ -1,0 +1,475 @@
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Eye, Edit, Save, X, Paperclip, MessageCircle, Clock, User, 
+  FileText, Image, Download, Upload, Calendar, AlertCircle,
+  CheckCircle, Pause, Play, MoreHorizontal
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface TicketModalProps {
+  ticket: any;
+  children: React.ReactNode;
+  onUpdate?: (ticket: any) => void;
+}
+
+export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTicket, setEditedTicket] = useState(ticket);
+  const [newComment, setNewComment] = useState('');
+  const [attachments, setAttachments] = useState([
+    { id: 1, name: 'screenshot.png', type: 'image', size: '2.4 MB', uploadedAt: new Date(), uploadedBy: 'João Silva' },
+    { id: 2, name: 'log_error.txt', type: 'text', size: '156 KB', uploadedAt: new Date(), uploadedBy: 'Ana Santos' }
+  ]);
+
+  const [comments] = useState([
+    {
+      id: 1,
+      author: 'João Silva',
+      authorAvatar: 'JS',
+      content: 'Iniciando atendimento do ticket. Verificando os requisitos iniciais.',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      isInternal: false
+    },
+    {
+      id: 2,
+      author: 'Ana Santos',
+      authorAvatar: 'AS',
+      content: 'Identificado problema na configuração do Office. Será necessário reinstalação.',
+      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      isInternal: true
+    },
+    {
+      id: 3,
+      author: 'Pedro Costa',
+      authorAvatar: 'PC',
+      content: 'Cliente confirmou disponibilidade para manutenção amanhã às 14h.',
+      timestamp: new Date(Date.now() - 30 * 60 * 1000),
+      isInternal: false
+    }
+  ]);
+
+  const handleSave = () => {
+    onUpdate?.(editedTicket);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditedTicket(ticket);
+    setIsEditing(false);
+  };
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    // Aqui você adicionaria a lógica para salvar o comentário
+    setNewComment('');
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'Alta': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Média': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Baixa': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Atrasado': return 'border-red-200 text-red-800 bg-red-50';
+      case 'Atendendo': return 'border-green-200 text-green-800 bg-green-50';
+      case 'Pausado': return 'border-yellow-200 text-yellow-800 bg-yellow-50';
+      case 'Resolvido': return 'border-gray-200 text-gray-800 bg-gray-50';
+      default: return 'border-gray-200 text-gray-800 bg-gray-50';
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      // Aqui você adicionaria a lógica para upload dos arquivos
+      console.log('Uploading files:', files);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogTitle className="flex items-center space-x-3">
+            <span className="text-xl font-bold">Ticket {ticket.number}</span>
+            <Badge variant="outline" className={`${getStatusColor(editedTicket.status)}`}>
+              {editedTicket.status}
+            </Badge>
+            <Badge variant="outline" className={`${getPriorityColor(editedTicket.priority)}`}>
+              {editedTicket.priority}
+            </Badge>
+          </DialogTitle>
+          <div className="flex items-center space-x-2">
+            {isEditing ? (
+              <>
+                <Button size="sm" onClick={handleSave}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleCancel}>
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            )}
+          </div>
+        </DialogHeader>
+
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="details">Detalhes</TabsTrigger>
+            <TabsTrigger value="comments">Comentários</TabsTrigger>
+            <TabsTrigger value="attachments">Anexos</TabsTrigger>
+            <TabsTrigger value="history">Histórico</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Informações Principais */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Informações Principais</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">Título</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedTicket.title}
+                        onChange={(e) => setEditedTicket({...editedTicket, title: e.target.value})}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{editedTicket.title}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Descrição</Label>
+                    {isEditing ? (
+                      <Textarea
+                        value={editedTicket.description || ''}
+                        onChange={(e) => setEditedTicket({...editedTicket, description: e.target.value})}
+                        className="mt-1"
+                        rows={3}
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-700">{editedTicket.description}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Status</Label>
+                      {isEditing ? (
+                        <Select 
+                          value={editedTicket.status} 
+                          onValueChange={(value) => setEditedTicket({...editedTicket, status: value})}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Atrasado">Atrasado</SelectItem>
+                            <SelectItem value="Atendendo">Atendendo</SelectItem>
+                            <SelectItem value="Pausado">Pausado</SelectItem>
+                            <SelectItem value="Resolvido">Resolvido</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className={`mt-1 ${getStatusColor(editedTicket.status)}`}>
+                          {editedTicket.status}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Prioridade</Label>
+                      {isEditing ? (
+                        <Select 
+                          value={editedTicket.priority} 
+                          onValueChange={(value) => setEditedTicket({...editedTicket, priority: value})}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Alta">Alta</SelectItem>
+                            <SelectItem value="Média">Média</SelectItem>
+                            <SelectItem value="Baixa">Baixa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className={`mt-1 ${getPriorityColor(editedTicket.priority)}`}>
+                          {editedTicket.priority}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Progresso</Label>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Concluído</span>
+                        <span>{editedTicket.progress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full transition-all"
+                          style={{ width: `${editedTicket.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Atribuições */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Atribuições</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">Responsável</Label>
+                    <div className="mt-2 flex items-center space-x-3">
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                          {editedTicket.assignee.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{editedTicket.assignee.name}</p>
+                        <p className="text-xs text-gray-500">{editedTicket.department}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Solicitante</Label>
+                    <p className="mt-1 text-sm text-gray-700">{editedTicket.requester}</p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Departamento</Label>
+                    <p className="mt-1 text-sm text-gray-700">{editedTicket.department}</p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Data de Vencimento</Label>
+                    <div className="mt-1 flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-700">{editedTicket.dueDate}</span>
+                    </div>
+                  </div>
+
+                  {editedTicket.tags && editedTicket.tags.length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium">Tags</Label>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {editedTicket.tags.map((tag: string, index: number) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="comments" className="space-y-4">
+            {/* Adicionar Comentário */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Adicionar Comentário</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  placeholder="Escreva seu comentário..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  rows={3}
+                />
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="internal" className="rounded" />
+                    <Label htmlFor="internal" className="text-sm">Comentário interno</Label>
+                  </div>
+                  <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Adicionar Comentário
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Comentários */}
+            <div className="space-y-4">
+              {comments.map((comment) => (
+                <Card key={comment.id} className={comment.isInternal ? 'border-l-4 border-l-yellow-400' : ''}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start space-x-3">
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                          {comment.authorAvatar}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-sm font-medium">{comment.author}</span>
+                          {comment.isInternal && (
+                            <Badge variant="secondary" className="text-xs">Interno</Badge>
+                          )}
+                          <span className="text-xs text-gray-500">
+                            {format(comment.timestamp, "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700">{comment.content}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="space-y-4">
+            {/* Upload de Anexos */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Adicionar Anexos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="mt-2">
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                        Clique para fazer upload
+                      </span>
+                      <span className="text-sm text-gray-500"> ou arraste arquivos aqui</span>
+                    </label>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG, PDF até 10MB
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Anexos */}
+            <div className="space-y-3">
+              {attachments.map((attachment) => (
+                <Card key={attachment.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-gray-100 rounded">
+                          {attachment.type === 'image' ? (
+                            <Image className="w-5 h-5 text-blue-600" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-gray-600" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{attachment.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {attachment.size} • {attachment.uploadedBy} • 
+                            {format(attachment.uploadedAt, "dd/MM/yyyy HH:mm")}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div className="p-2 bg-green-100 rounded-full">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Ticket criado</p>
+                  <p className="text-xs text-gray-500">Por Cliente Opus • 17/12/2024 10:30</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <User className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Ticket atribuído para João Silva</p>
+                  <p className="text-xs text-gray-500">Por Sistema • 17/12/2024 10:35</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div className="p-2 bg-yellow-100 rounded-full">
+                  <Play className="w-4 h-4 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Status alterado para "Atendendo"</p>
+                  <p className="text-xs text-gray-500">Por João Silva • 17/12/2024 11:00</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div className="p-2 bg-purple-100 rounded-full">
+                  <Paperclip className="w-4 h-4 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Anexo adicionado: screenshot.png</p>
+                  <p className="text-xs text-gray-500">Por João Silva • 17/12/2024 14:20</p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}

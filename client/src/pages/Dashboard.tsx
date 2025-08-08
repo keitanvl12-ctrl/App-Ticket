@@ -4,7 +4,10 @@ import { Ticket, Hourglass, CheckCircle, Clock, AlertTriangle, TrendingUp, Users
 import StatsCard from "@/components/StatsCard";
 import TicketTrendsChart from "@/components/TicketTrendsChart";
 import PriorityBreakdown from "@/components/PriorityBreakdown";
-import RecentTicketsTable from "@/components/RecentTicketsTable";
+// Removed RecentTicketsTable as requested
+import { Search, Filter, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +16,10 @@ import type { DashboardStats } from "@shared/schema";
 
 export default function Dashboard() {
   const [chartPeriod, setChartPeriod] = useState("7");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateFilter, setDateFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
@@ -78,11 +85,85 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 bg-background min-h-screen">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Bem-vindo de volta! Aqui está o que está acontecendo com seus tickets hoje.</p>
+      {/* Header with filters */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Visão geral do sistema de tickets</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            <Filter className="w-4 h-4" />
+            <span>Filtros Avançados</span>
+          </button>
+          <Select value={chartPeriod} onValueChange={setChartPeriod}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">7 dias</SelectItem>
+              <SelectItem value="30">30 dias</SelectItem>
+              <SelectItem value="90">90 dias</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {/* Advanced Filters Panel */}
+      {showFilters && (
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Filtros do Dashboard</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Período</Label>
+                  <Input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Prioridade</Label>
+                  <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas as Prioridades" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as Prioridades</SelectItem>
+                      <SelectItem value="alta">Alta</SelectItem>
+                      <SelectItem value="media">Média</SelectItem>
+                      <SelectItem value="baixa">Baixa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Departamento</Label>
+                  <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os Departamentos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Departamentos</SelectItem>
+                      <SelectItem value="ti">TI</SelectItem>
+                      <SelectItem value="suporte">Suporte</SelectItem>
+                      <SelectItem value="vendas">Vendas</SelectItem>
+                      <SelectItem value="rh">RH</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <div className="space-y-8">
         {/* Primary Stats Cards */}
@@ -254,7 +335,7 @@ export default function Dashboard() {
 
         {/* Recent Tickets Table */}
         <div className="bg-card border border-border rounded-lg shadow-enterprise overflow-hidden">
-          <RecentTicketsTable />
+          {/* Recent Tickets section removed as requested */}
         </div>
       </div>
     </div>

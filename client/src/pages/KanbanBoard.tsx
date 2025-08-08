@@ -8,6 +8,7 @@ import { Search, Filter, ChevronDown, MoreHorizontal, Grid3X3, List, Eye, Edit, 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
+import { TicketModal } from '@/components/TicketModal';
 
 // Enhanced ticket data matching the reference image
 const mockTickets = [
@@ -340,10 +341,10 @@ export default function KanbanBoard() {
   });
 
   // Get unique values for filter options
-  const uniqueStatuses = [...new Set(tickets.map(t => t.status))];
-  const uniquePriorities = [...new Set(tickets.map(t => t.priority))];
-  const uniqueDepartments = [...new Set(tickets.map(t => t.department))];
-  const uniqueAssignees = [...new Set(tickets.map(t => t.assignee.name))];
+  const uniqueStatuses = Array.from(new Set(tickets.map(t => t.status)));
+  const uniquePriorities = Array.from(new Set(tickets.map(t => t.priority)));
+  const uniqueDepartments = Array.from(new Set(tickets.map(t => t.department)));
+  const uniqueAssignees = Array.from(new Set(tickets.map(t => t.assignee.name)));
 
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -352,6 +353,12 @@ export default function KanbanBoard() {
     setPriorityFilter('all');
     setDepartmentFilter('all');
     setAssigneeFilter('all');
+  };
+
+  const handleDeleteTicket = (ticketId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este ticket?')) {
+      setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+    }
   };
 
   return (
@@ -532,12 +539,14 @@ export default function KanbanBoard() {
                 {filteredTickets
                   .filter(ticket => ticket.status === column.id)
                   .map((ticket) => (
-                    <Card 
-                      key={ticket.id}
-                      className="cursor-move hover:shadow-lg transition-all duration-200 border-0 shadow-sm bg-white"
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, ticket)}
-                    >
+                    <TicketModal key={ticket.id} ticket={ticket} onUpdate={(updatedTicket) => {
+                      setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+                    }}>
+                      <Card 
+                        className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-sm bg-white"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, ticket)}
+                      >
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           {/* Header */}
@@ -597,6 +606,7 @@ export default function KanbanBoard() {
                         </div>
                       </CardContent>
                     </Card>
+                    </TicketModal>
                   ))}
               </div>
             </div>
@@ -692,13 +702,26 @@ export default function KanbanBoard() {
                   <TableCell className="text-sm">{ticket.dueDate}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="icon" className="w-8 h-8">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="w-8 h-8">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="w-8 h-8 text-red-600 hover:text-red-700">
+                      <TicketModal ticket={ticket} onUpdate={(updatedTicket) => {
+                        setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+                      }}>
+                        <Button variant="ghost" size="icon" className="w-8 h-8">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TicketModal>
+                      <TicketModal ticket={ticket} onUpdate={(updatedTicket) => {
+                        setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+                      }}>
+                        <Button variant="ghost" size="icon" className="w-8 h-8">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </TicketModal>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="w-8 h-8 text-red-600 hover:text-red-700"
+                        onClick={() => handleDeleteTicket(ticket.id)}
+                      >
                         <Trash className="w-4 h-4" />
                       </Button>
                     </div>
