@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, ChevronDown, MoreHorizontal, Grid3X3, List, Eye, Edit, Trash } from 'lucide-react';
+import { Search, Filter, ChevronDown, MoreHorizontal, Grid3X3, List, Eye, Edit, Trash, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Label } from '@/components/ui/label';
 
 // Enhanced ticket data matching the reference image
 const mockTickets = [
@@ -272,6 +273,11 @@ export default function KanbanBoard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const handleDragStart = (e: any, ticket: any) => {
     setDraggedTicket(ticket);
@@ -316,13 +322,37 @@ export default function KanbanBoard() {
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ticket.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.assignee.name.toLowerCase().includes(searchTerm.toLowerCase());
+                         ticket.assignee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ticket.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ticket.department.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (filterBy === 'all') return matchesSearch;
-    if (filterBy === 'alta') return matchesSearch && ticket.priority === 'Alta';
-    if (filterBy === 'atrasado') return matchesSearch && ticket.status === 'Atrasado';
-    return matchesSearch;
+    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
+    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
+    const matchesDepartment = departmentFilter === 'all' || ticket.department === departmentFilter;
+    const matchesAssignee = assigneeFilter === 'all' || ticket.assignee.name === assigneeFilter;
+    
+    // Legacy filter compatibility
+    const matchesLegacyFilter = filterBy === 'all' || 
+      (filterBy === 'alta' && ticket.priority === 'Alta') ||
+      (filterBy === 'atrasado' && ticket.status === 'Atrasado');
+    
+    return matchesSearch && matchesStatus && matchesPriority && matchesDepartment && matchesAssignee && matchesLegacyFilter;
   });
+
+  // Get unique values for filter options
+  const uniqueStatuses = [...new Set(tickets.map(t => t.status))];
+  const uniquePriorities = [...new Set(tickets.map(t => t.priority))];
+  const uniqueDepartments = [...new Set(tickets.map(t => t.department))];
+  const uniqueAssignees = [...new Set(tickets.map(t => t.assignee.name))];
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setFilterBy('all');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setDepartmentFilter('all');
+    setAssigneeFilter('all');
+  };
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -364,45 +394,116 @@ export default function KanbanBoard() {
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input 
-              placeholder="Buscar..." 
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        {/* Search and Quick Filters */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input 
+                placeholder="Buscar por ticket, título, responsável, solicitante..." 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Status</SelectItem>
+                {uniqueStatuses.map(status => (
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Prioridade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Prioridades</SelectItem>
+                {uniquePriorities.map(priority => (
+                  <SelectItem key={priority} value={priority}>{priority}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filtros Avançados
+              <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+            </Button>
+
+            {(searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || departmentFilter !== 'all' || assigneeFilter !== 'all') && (
+              <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                Limpar Filtros
+              </Button>
+            )}
           </div>
-          <Select value={filterBy} onValueChange={setFilterBy}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filtros" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="alta">Alta Prioridade</SelectItem>
-              <SelectItem value="atrasado">Atrasados</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm">
-            Funcionalidade <ChevronDown className="w-4 h-4 ml-1" />
-          </Button>
-          <Button variant="outline" size="sm">
-            Status <ChevronDown className="w-4 h-4 ml-1" />
-          </Button>
-          <Button variant="outline" size="sm">
-            Empresa <ChevronDown className="w-4 h-4 ml-1" />
-          </Button>
-          <Button variant="outline" size="sm">
-            Categoria <ChevronDown className="w-4 h-4 ml-1" />
-          </Button>
-          <Button variant="outline" size="sm">
-            Módulo <ChevronDown className="w-4 h-4 ml-1" />
-          </Button>
-          <Button variant="outline" size="sm">
-            Solicitante <ChevronDown className="w-4 h-4 ml-1" />
-          </Button>
+
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Departamento</Label>
+                  <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os Departamentos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Departamentos</SelectItem>
+                      {uniqueDepartments.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Responsável</Label>
+                  <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os Responsáveis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Responsáveis</SelectItem>
+                      {uniqueAssignees.map(assignee => (
+                        <SelectItem key={assignee} value={assignee}>{assignee}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Filtros Rápidos</Label>
+                  <Select value={filterBy} onValueChange={setFilterBy}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filtros Especiais" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="alta">Alta Prioridade</SelectItem>
+                      <SelectItem value="atrasado">Atrasados</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                    <strong>{filteredTickets.length}</strong> de <strong>{tickets.length}</strong> tickets
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
