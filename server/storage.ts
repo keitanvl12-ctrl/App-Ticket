@@ -95,8 +95,9 @@ export class MemStorage implements IStorage {
     });
 
     // Create demo tickets with distributed dates for trending data
+    const now = new Date();
     const tickets = [
-      // Tickets from 7 days ago
+      // Tickets from 6 days ago
       {
         subject: "Sistema de backup está falhando",
         description: "Backup automático não está funcionando corretamente desde a última atualização",
@@ -105,9 +106,9 @@ export class MemStorage implements IStorage {
         category: "bug",
         createdBy: adminUser.id,
         assignedTo: user1.id,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
-        resolvedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        createdAt: subDays(now, 6),
+        updatedAt: subDays(now, 6),
+        resolvedAt: subDays(now, 5),
       },
       {
         subject: "Erro na integração com API externa",
@@ -117,9 +118,9 @@ export class MemStorage implements IStorage {
         category: "bug",
         createdBy: user2.id,
         assignedTo: user3.id,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
-        resolvedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        createdAt: subDays(now, 6),
+        updatedAt: subDays(now, 6),
+        resolvedAt: subDays(now, 5),
       },
       // Tickets from 5 days ago
       {
@@ -130,10 +131,11 @@ export class MemStorage implements IStorage {
         category: "improvement",
         createdBy: user1.id,
         assignedTo: user2.id,
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-        resolvedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        createdAt: subDays(now, 5),
+        updatedAt: subDays(now, 4),
+        resolvedAt: subDays(now, 4),
       },
+      // Tickets from 4 days ago
       {
         subject: "Atualização de segurança necessária",
         description: "Aplicar patches de segurança mais recentes",
@@ -142,11 +144,10 @@ export class MemStorage implements IStorage {
         category: "security",
         createdBy: adminUser.id,
         assignedTo: user1.id,
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        resolvedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        createdAt: subDays(now, 4),
+        updatedAt: subDays(now, 3),
+        resolvedAt: subDays(now, 3),
       },
-      // Tickets from 3 days ago
       {
         subject: "Performance lenta no carregamento de relatórios",
         description: "Relatórios estão demorando mais de 30 segundos para carregar",
@@ -155,11 +156,24 @@ export class MemStorage implements IStorage {
         category: "performance",
         createdBy: user3.id,
         assignedTo: user2.id,
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        resolvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        createdAt: subDays(now, 4),
+        updatedAt: subDays(now, 3),
+        resolvedAt: subDays(now, 3),
       },
-      // Tickets from yesterday
+      // Tickets from 3 days ago
+      {
+        subject: "Configuração de SSL para novos domínios",
+        description: "Implementar certificados SSL para os novos subdomínios",
+        status: "resolved",
+        priority: "medium",
+        category: "security",
+        createdBy: user1.id,
+        assignedTo: user3.id,
+        createdAt: subDays(now, 3),
+        updatedAt: subDays(now, 2),
+        resolvedAt: subDays(now, 2),
+      },
+      // Tickets from 2 days ago
       {
         subject: "Problemas de conectividade com banco de dados",
         description: "Timeouts frequentes nas consultas ao banco de dados principal",
@@ -168,9 +182,34 @@ export class MemStorage implements IStorage {
         category: "bug",
         createdBy: adminUser.id,
         assignedTo: user1.id,
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-        resolvedAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
+        createdAt: subDays(now, 2),
+        updatedAt: subDays(now, 1),
+        resolvedAt: subDays(now, 1),
+      },
+      {
+        subject: "Otimização de cache do Redis",
+        description: "Melhorar performance do sistema de cache",
+        status: "resolved",
+        priority: "medium",
+        category: "performance",
+        createdBy: user2.id,
+        assignedTo: user3.id,
+        createdAt: subDays(now, 2),
+        updatedAt: subDays(now, 1),
+        resolvedAt: subDays(now, 1),
+      },
+      // Tickets from yesterday
+      {
+        subject: "Atualização do sistema de logs",
+        description: "Implementar novo sistema de logging estruturado",
+        status: "resolved",
+        priority: "low",
+        category: "improvement",
+        createdBy: user3.id,
+        assignedTo: user2.id,
+        createdAt: subDays(now, 1),
+        updatedAt: now,
+        resolvedAt: now,
       },
       // Current tickets (today)
       {
@@ -181,8 +220,8 @@ export class MemStorage implements IStorage {
         category: "bug",
         createdBy: adminUser.id,
         assignedTo: user1.id,
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+        createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
+        updatedAt: new Date(now.getTime() - 1 * 60 * 60 * 1000),
       },
       {
         subject: "Otimização de performance do banco de dados necessária",
@@ -192,8 +231,8 @@ export class MemStorage implements IStorage {
         category: "improvement",
         createdBy: adminUser.id,
         assignedTo: user2.id,
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        createdAt: new Date(now.getTime() - 4 * 60 * 60 * 1000), // 4 hours ago
+        updatedAt: new Date(now.getTime() - 4 * 60 * 60 * 1000),
       },
       {
         subject: "Configuração de monitoramento avançado",
@@ -203,8 +242,8 @@ export class MemStorage implements IStorage {
         category: "improvement",
         createdBy: user3.id,
         assignedTo: user2.id,
-        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-        updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+        createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000), // 1 hour ago
+        updatedAt: new Date(now.getTime() - 1 * 60 * 60 * 1000),
       },
     ];
 

@@ -8,7 +8,8 @@ interface TicketTrendsChartProps {
 
 export default function TicketTrendsChart({ days }: TicketTrendsChartProps) {
   const { data: trendData, isLoading } = useQuery<TrendData[]>({
-    queryKey: ["/api/dashboard/trends", { days }],
+    queryKey: ["/api/dashboard/trends", days],
+    queryFn: () => fetch(`/api/dashboard/trends?days=${days}`).then(res => res.json()),
   });
 
   if (isLoading) {
@@ -22,10 +23,12 @@ export default function TicketTrendsChart({ days }: TicketTrendsChartProps) {
   if (!trendData || trendData.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center">
-        <div className="text-gray-500">No data available</div>
+        <div className="text-gray-500">Sem dados disponíveis</div>
       </div>
     );
   }
+
+
 
   return (
     <div className="h-64">
