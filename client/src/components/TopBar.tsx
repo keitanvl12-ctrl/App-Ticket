@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Bell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import CreateTicketModalNew from "./CreateTicketModalNew";
+import TestModal from "./TestModal";
 
 interface TopBarProps {
   title: string;
@@ -60,7 +60,7 @@ export default function TopBar({ title, description }: TopBarProps) {
         </div>
       </header>
 
-      <CreateTicketModalNew 
+      <TestModal 
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
       />
