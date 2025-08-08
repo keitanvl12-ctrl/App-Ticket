@@ -42,9 +42,9 @@ export interface IStorage {
   createAttachment(attachment: InsertAttachment): Promise<Attachment>;
 
   // Analytics
-  getDashboardStats(): Promise<DashboardStats>;
-  getPriorityStats(): Promise<PriorityStats>;
-  getTrendData(days: number): Promise<TrendData[]>;
+  getDashboardStats(filters?: any): Promise<DashboardStats>;
+  getPriorityStats(filters?: any): Promise<PriorityStats>;
+  getTrendData(days: number, filters?: any): Promise<TrendData[]>;
 
   // Advanced Reports
   getFilteredTickets(filters: any): Promise<TicketWithDetails[]>;
@@ -387,26 +387,67 @@ export class DatabaseStorage implements IStorage {
     return newAttachment;
   }
 
-  async getDashboardStats(): Promise<DashboardStats> {
-    const totalTicketsResult = await db.select({ count: count() }).from(tickets);
-    const totalTickets = totalTicketsResult[0]?.count || 0;
-
-    const openTicketsResult = await db
-      .select({ count: count() })
-      .from(tickets)
-      .where(eq(tickets.status, 'open'));
-    const openTickets = openTicketsResult[0]?.count || 0;
-
-    const today = startOfDay(new Date());
-    const resolvedTodayResult = await db
-      .select({ count: count() })
-      .from(tickets)
-      .where(
+  async getDashboardStats(filters?: any): Promise<DashboardStats> {
+    // Build filter conditions
+    const conditions = [];
+    
+    if (filters?.priority && filters.priority !== 'all') {
+      conditions.push(eq(tickets.priority, filters.priority));
+    }
+    
+    if (filters?.department && filters.department !== 'all') {
+      // Join with users to filter by department
+      conditions.push(eq(users.departmentId, filters.department));
+    }
+    
+    if (filters?.dateFilter) {
+      const filterDate = new Date(filters.dateFilter);
+      const startDate = startOfDay(filterDate);
+      const endDate = endOfDay(filterDate);
+      conditions.push(
         and(
-          eq(tickets.status, 'resolved'),
-          gte(tickets.resolvedAt, today)
+          gte(tickets.createdAt, startDate),
+          lte(tickets.createdAt, endDate)
         )
       );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    // Get total tickets with filters
+    let totalTicketsQuery = db.select({ count: count() }).from(tickets);
+    if (filters?.department && filters.department !== 'all') {
+      totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+    }
+    if (whereClause) {
+      totalTicketsQuery = totalTicketsQuery.where(whereClause);
+    }
+    const totalTicketsResult = await totalTicketsQuery;
+    const totalTickets = totalTicketsResult[0]?.count || 0;
+
+    // Get open tickets with filters
+    const openConditions = [...conditions, eq(tickets.status, 'open')];
+    let openTicketsQuery = db.select({ count: count() }).from(tickets);
+    if (filters?.department && filters.department !== 'all') {
+      openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+    }
+    openTicketsQuery = openTicketsQuery.where(and(...openConditions));
+    const openTicketsResult = await openTicketsQuery;
+    const openTickets = openTicketsResult[0]?.count || 0;
+
+    // Get resolved today with filters
+    const today = startOfDay(new Date());
+    const resolvedConditions = [
+      ...conditions,
+      eq(tickets.status, 'resolved'),
+      gte(tickets.resolvedAt, today)
+    ];
+    let resolvedTodayQuery = db.select({ count: count() }).from(tickets);
+    if (filters?.department && filters.department !== 'all') {
+      resolvedTodayQuery = resolvedTodayQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+    }
+    resolvedTodayQuery = resolvedTodayQuery.where(and(...resolvedConditions));
+    const resolvedTodayResult = await resolvedTodayQuery;
     const resolvedToday = resolvedTodayResult[0]?.count || 0;
 
     return {
@@ -421,33 +462,53 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getPriorityStats(): Promise<PriorityStats> {
-    const totalTicketsResult = await db.select({ count: count() }).from(tickets);
+  async getPriorityStats(filters?: any): Promise<PriorityStats> {
+    // Build base filter conditions
+    const baseConditions = [];
+    
+    if (filters?.department && filters.department !== 'all') {
+      baseConditions.push(eq(users.departmentId, filters.department));
+    }
+    
+    if (filters?.dateFilter) {
+      const filterDate = new Date(filters.dateFilter);
+      const startDate = startOfDay(filterDate);
+      const endDate = endOfDay(filterDate);
+      baseConditions.push(
+        and(
+          gte(tickets.createdAt, startDate),
+          lte(tickets.createdAt, endDate)
+        )
+      );
+    }
+
+    // Get total with filters (excluding priority filter)
+    let totalQuery = db.select({ count: count() }).from(tickets);
+    if (filters?.department && filters.department !== 'all') {
+      totalQuery = totalQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+    }
+    if (baseConditions.length > 0) {
+      totalQuery = totalQuery.where(and(...baseConditions));
+    }
+    const totalTicketsResult = await totalQuery;
     const total = totalTicketsResult[0]?.count || 1;
 
-    const criticalResult = await db
-      .select({ count: count() })
-      .from(tickets)
-      .where(eq(tickets.priority, 'critical'));
-    const critical = criticalResult[0]?.count || 0;
+    // Function to get priority count
+    const getPriorityCount = async (priority: string) => {
+      const conditions = [...baseConditions, eq(tickets.priority, priority)];
+      let query = db.select({ count: count() }).from(tickets);
+      if (filters?.department && filters.department !== 'all') {
+        query = query.leftJoin(users, eq(tickets.assigneeId, users.id));
+      }
+      query = query.where(and(...conditions));
+      const result = await query;
+      return result[0]?.count || 0;
+    };
 
-    const highResult = await db
-      .select({ count: count() })
-      .from(tickets)
-      .where(eq(tickets.priority, 'high'));
-    const high = highResult[0]?.count || 0;
-
-    const mediumResult = await db
-      .select({ count: count() })
-      .from(tickets)
-      .where(eq(tickets.priority, 'medium'));
-    const medium = mediumResult[0]?.count || 0;
-
-    const lowResult = await db
-      .select({ count: count() })
-      .from(tickets)
-      .where(eq(tickets.priority, 'low'));
-    const low = lowResult[0]?.count || 0;
+    const critical = await getPriorityCount('critical');
+    const high = await getPriorityCount('high');
+    const medium = await getPriorityCount('medium');
+    const low = await getPriorityCount('low');
 
     return {
       critical: { count: critical, percentage: Math.round((critical / total) * 100) },
@@ -457,7 +518,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getTrendData(days: number): Promise<TrendData[]> {
+  async getTrendData(days: number, filters?: any): Promise<TrendData[]> {
     const trends: TrendData[] = [];
     const today = new Date();
 
@@ -466,27 +527,51 @@ export class DatabaseStorage implements IStorage {
       const startDate = startOfDay(date);
       const endDate = endOfDay(date);
 
-      const createdResult = await db
-        .select({ count: count() })
-        .from(tickets)
-        .where(
-          and(
-            gte(tickets.createdAt, startDate),
-            lte(tickets.createdAt, endDate)
-          )
-        );
+      // Build filter conditions for created tickets
+      const createdConditions = [
+        gte(tickets.createdAt, startDate),
+        lte(tickets.createdAt, endDate)
+      ];
+      
+      if (filters?.priority && filters.priority !== 'all') {
+        createdConditions.push(eq(tickets.priority, filters.priority));
+      }
+      
+      if (filters?.department && filters.department !== 'all') {
+        createdConditions.push(eq(users.departmentId, filters.department));
+      }
+
+      // Get created tickets count
+      let createdQuery = db.select({ count: count() }).from(tickets);
+      if (filters?.department && filters.department !== 'all') {
+        createdQuery = createdQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+      }
+      createdQuery = createdQuery.where(and(...createdConditions));
+      const createdResult = await createdQuery;
       const created = createdResult[0]?.count || 0;
 
-      const resolvedResult = await db
-        .select({ count: count() })
-        .from(tickets)
-        .where(
-          and(
-            eq(tickets.status, 'resolved'),
-            gte(tickets.resolvedAt, startDate),
-            lte(tickets.resolvedAt, endDate)
-          )
-        );
+      // Build filter conditions for resolved tickets
+      const resolvedConditions = [
+        eq(tickets.status, 'resolved'),
+        gte(tickets.resolvedAt, startDate),
+        lte(tickets.resolvedAt, endDate)
+      ];
+      
+      if (filters?.priority && filters.priority !== 'all') {
+        resolvedConditions.push(eq(tickets.priority, filters.priority));
+      }
+      
+      if (filters?.department && filters.department !== 'all') {
+        resolvedConditions.push(eq(users.departmentId, filters.department));
+      }
+
+      // Get resolved tickets count
+      let resolvedQuery = db.select({ count: count() }).from(tickets);
+      if (filters?.department && filters.department !== 'all') {
+        resolvedQuery = resolvedQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+      }
+      resolvedQuery = resolvedQuery.where(and(...resolvedConditions));
+      const resolvedResult = await resolvedQuery;
       const resolved = resolvedResult[0]?.count || 0;
 
       trends.push({

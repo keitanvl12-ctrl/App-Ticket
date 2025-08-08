@@ -8,9 +8,34 @@ const priorityConfig = {
   low: { color: "bg-success", textColor: "text-success" },
 };
 
-export default function PriorityBreakdown() {
+interface PriorityBreakdownProps {
+  filters?: {
+    dateFilter: string;
+    priorityFilter: string;
+    departmentFilter: string;
+  };
+}
+
+export default function PriorityBreakdown({ filters }: PriorityBreakdownProps) {
+  // Build query parameters
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    if (filters?.dateFilter) params.append('dateFilter', filters.dateFilter);
+    if (filters?.departmentFilter && filters.departmentFilter !== 'all') params.append('department', filters.departmentFilter);
+    // Note: We don't include priority filter for priority breakdown as it would skew the distribution
+    return params.toString();
+  };
+
+  const queryParams = buildQueryParams();
+
   const { data: priorityStats, isLoading } = useQuery<PriorityStats>({
-    queryKey: ["/api/dashboard/priority-stats"],
+    queryKey: ["/api/dashboard/priority-stats", queryParams],
+    queryFn: async () => {
+      const url = `/api/dashboard/priority-stats${queryParams ? `?${queryParams}` : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch priority stats');
+      return response.json();
+    }
   });
 
   if (isLoading) {

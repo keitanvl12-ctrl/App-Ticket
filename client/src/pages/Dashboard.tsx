@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import type { DashboardStats } from "@shared/schema";
+import type { DashboardStats, Department } from "@shared/schema";
 
 export default function Dashboard() {
   const [chartPeriod, setChartPeriod] = useState("7");
@@ -21,8 +21,30 @@ export default function Dashboard() {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
 
+  // Build query parameters for filters
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    if (dateFilter) params.append('dateFilter', dateFilter);
+    if (priorityFilter !== 'all') params.append('priority', priorityFilter);
+    if (departmentFilter !== 'all') params.append('department', departmentFilter);
+    return params.toString();
+  };
+
+  const queryParams = buildQueryParams();
+
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["/api/dashboard/stats"],
+    queryKey: ["/api/dashboard/stats", queryParams],
+    queryFn: async () => {
+      const url = `/api/dashboard/stats${queryParams ? `?${queryParams}` : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json();
+    }
+  });
+
+  // Fetch departments for filter dropdown
+  const { data: departments } = useQuery<Department[]>({
+    queryKey: ["/api/departments"],
   });
 
   // Enhanced indicators data
@@ -138,9 +160,10 @@ export default function Dashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as Prioridades</SelectItem>
-                      <SelectItem value="alta">Alta</SelectItem>
-                      <SelectItem value="media">Média</SelectItem>
-                      <SelectItem value="baixa">Baixa</SelectItem>
+                      <SelectItem value="critical">Crítica</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                      <SelectItem value="medium">Média</SelectItem>
+                      <SelectItem value="low">Baixa</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -152,10 +175,11 @@ export default function Dashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os Departamentos</SelectItem>
-                      <SelectItem value="ti">TI</SelectItem>
-                      <SelectItem value="suporte">Suporte</SelectItem>
-                      <SelectItem value="vendas">Vendas</SelectItem>
-                      <SelectItem value="rh">RH</SelectItem>
+                      {departments?.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -252,13 +276,13 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             </div>
-            <TicketTrendsChart days={parseInt(chartPeriod)} />
+            <TicketTrendsChart days={parseInt(chartPeriod)} filters={{ dateFilter, priorityFilter, departmentFilter }} />
           </div>
 
           {/* Priority Breakdown */}
           <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-foreground mb-6">Distribuição por Prioridade</h2>
-            <PriorityBreakdown />
+            <PriorityBreakdown filters={{ dateFilter, priorityFilter, departmentFilter }} />
           </div>
         </div>
 

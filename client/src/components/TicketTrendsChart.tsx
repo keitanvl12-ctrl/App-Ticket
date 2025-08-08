@@ -4,12 +4,29 @@ import type { TrendData } from "@shared/schema";
 
 interface TicketTrendsChartProps {
   days: number;
+  filters?: {
+    dateFilter: string;
+    priorityFilter: string;
+    departmentFilter: string;
+  };
 }
 
-export default function TicketTrendsChart({ days }: TicketTrendsChartProps) {
+export default function TicketTrendsChart({ days, filters }: TicketTrendsChartProps) {
+  // Build query parameters
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    params.append('days', days.toString());
+    if (filters?.dateFilter) params.append('dateFilter', filters.dateFilter);
+    if (filters?.priorityFilter && filters.priorityFilter !== 'all') params.append('priority', filters.priorityFilter);
+    if (filters?.departmentFilter && filters.departmentFilter !== 'all') params.append('department', filters.departmentFilter);
+    return params.toString();
+  };
+
+  const queryParams = buildQueryParams();
+
   const { data: trendData, isLoading } = useQuery<TrendData[]>({
-    queryKey: ["/api/dashboard/trends", days],
-    queryFn: () => fetch(`/api/dashboard/trends?days=${days}`).then(res => res.json()),
+    queryKey: ["/api/dashboard/trends", queryParams],
+    queryFn: () => fetch(`/api/dashboard/trends?${queryParams}`).then(res => res.json()),
   });
 
   if (isLoading) {

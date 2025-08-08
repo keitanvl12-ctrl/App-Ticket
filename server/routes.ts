@@ -9,10 +9,15 @@ import { z } from "zod";
 const updateTicketSchema = insertTicketSchema.partial();
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Dashboard stats
+  // Dashboard stats with filters
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats();
+      const filters = {
+        dateFilter: req.query.dateFilter as string,
+        priority: req.query.priority as string,
+        department: req.query.department as string
+      };
+      const stats = await storage.getDashboardStats(filters);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
@@ -21,7 +26,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/dashboard/priority-stats", async (req, res) => {
     try {
-      const stats = await storage.getPriorityStats();
+      const filters = {
+        dateFilter: req.query.dateFilter as string,
+        priority: req.query.priority as string,
+        department: req.query.department as string
+      };
+      const stats = await storage.getPriorityStats(filters);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch priority stats" });
@@ -31,7 +41,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/trends", async (req, res) => {
     try {
       const days = parseInt(req.query.days as string) || 7;
-      const trends = await storage.getTrendData(days);
+      const filters = {
+        dateFilter: req.query.dateFilter as string,
+        priority: req.query.priority as string,
+        department: req.query.department as string
+      };
+      const trends = await storage.getTrendData(days, filters);
       res.json(trends);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch trend data" });
