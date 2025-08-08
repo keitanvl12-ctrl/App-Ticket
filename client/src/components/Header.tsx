@@ -133,6 +133,7 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => handleNavigation('/profile')}
             iconName="User"
             iconSize={16}
             className="transition-enterprise"

@@ -12,6 +12,7 @@ import KanbanBoard from "@/pages/KanbanBoard";
 import Analytics from "@/pages/Analytics";
 import Team from "@/pages/Team";
 import Settings from "@/pages/Settings";
+import Profile from "@/pages/Profile";
 import Login from "@/pages/Login";
 import SLA from "@/pages/SLA";
 import CreateTicket from "@/pages/CreateTicket";
@@ -41,6 +42,7 @@ function Router() {
         <Route path="/approvals" component={WorkflowApprovals} />
         <Route path="/reports" component={ReportsNew} />
         <Route path="/settings" component={Settings} />
+        <Route path="/profile" component={Profile} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />
       </Switch>
