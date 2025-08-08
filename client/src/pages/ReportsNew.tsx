@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Download, TrendingUp, BarChart3, PieChart, Users, Clock, Target, Filter } from 'lucide-react';
+import { Calendar, Download, BarChart3, PieChart, Users, Clock, Target, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import TicketTrendsChart from '@/components/TicketTrendsChart';
+
 
 export default function ReportsNew() {
   const [dateRange, setDateRange] = useState({
@@ -171,9 +171,8 @@ export default function ReportsNew() {
       </Card>
 
       {/* Tabs dos Relatórios */}
-      <Tabs defaultValue="trends" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-          <TabsTrigger value="trends">Tendências</TabsTrigger>
+      <Tabs defaultValue="sla" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
           <TabsTrigger value="sla">SLA</TabsTrigger>
           <TabsTrigger value="daily">Chamados/Dia</TabsTrigger>
           <TabsTrigger value="aging">Envelhecimento</TabsTrigger>
@@ -182,21 +181,6 @@ export default function ReportsNew() {
           <TabsTrigger value="satisfaction">Satisfação</TabsTrigger>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
         </TabsList>
-
-        {/* Tab Tendências */}
-        <TabsContent value="trends">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5" />
-                <span>Tendências de Tickets</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TicketTrendsChart days={7} />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Tab SLA */}
         <TabsContent value="sla">
