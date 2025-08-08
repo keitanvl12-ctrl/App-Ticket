@@ -51,6 +51,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       priority: "medium",
       category: "",
       responsibleDepartmentId: "",
+      requesterDepartmentId: "",
       assignedTo: "",
       createdBy: "", // This would typically come from auth context
     },
@@ -76,8 +77,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       const ticketData = { 
         ...data, 
         createdBy: currentUser.id,
-        requesterDepartmentId: currentUser.departmentId, // Departamento do solicitante
-        responsibleDepartmentId: data.responsibleDepartmentId // Departamento responsável
+        requesterDepartmentId: currentUser.departmentId || null,
       };
       const response = await apiRequest("POST", "/api/tickets", ticketData);
       return response.json();
