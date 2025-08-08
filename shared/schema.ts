@@ -3,14 +3,25 @@ import { pgTable, text, varchar, timestamp, integer, boolean } from "drizzle-orm
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Departments/Workgroups table
+export const departments = pgTable("departments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  role: text("role").notNull().default("user"), // admin, user
+  role: text("role").notNull().default("user"), // admin, user, manager
+  departmentId: varchar("department_id").references(() => departments.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const tickets = pgTable("tickets", {
@@ -21,6 +32,7 @@ export const tickets = pgTable("tickets", {
   status: text("status").notNull().default("open"), // open, in_progress, resolved, closed
   priority: text("priority").notNull().default("medium"), // low, medium, high, critical
   category: text("category"), // bug, feature, support, improvement
+  departmentId: varchar("department_id").references(() => departments.id).notNull(),
   createdBy: varchar("created_by").references(() => users.id).notNull(),
   assignedTo: varchar("assigned_to").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -48,9 +60,16 @@ export const attachments = pgTable("attachments", {
 });
 
 // Insert schemas
+export const insertDepartmentSchema = createInsertSchema(departments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertTicketSchema = createInsertSchema(tickets).omit({
@@ -72,6 +91,8 @@ export const insertAttachmentSchema = createInsertSchema(attachments).omit({
 });
 
 // Types
+export type Department = typeof departments.$inferSelect;
+export type InsertDepartment = typeof departments.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 

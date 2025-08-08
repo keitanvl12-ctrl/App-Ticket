@@ -60,6 +60,7 @@ const NewSidebar: React.FC<SidebarProps> = ({
       description: 'Gerenciar sistema',
       submenu: [
         { label: 'Gerenciar Usuários', path: '/users', icon: 'Users' },
+        { label: 'Departamentos', path: '/departments', icon: 'Building2' },
         { label: 'Categorias', path: '/categories', icon: 'FolderTree' },
         { label: 'Formulários', path: '/forms', icon: 'FileText' },
         { label: 'Campos Customizáveis', path: '/fields', icon: 'Settings2' },

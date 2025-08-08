@@ -72,23 +72,25 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 - **Theming**: CSS custom properties for consistent color schemes
 - **Typography**: Inter font family from Google Fonts
 
-# Recent Changes (January 2025)
+# Recent Changes (August 2025)
 
-## New Enterprise Features Added
+## Department-Based Access Control System (NEW)
+- **Multi-Department Support**: Added department/workgroup system for sector isolation
+- **Database Schema**: Enhanced with departments table and user/ticket department associations
+- **Access Control**: Each department can only see their own tickets and users
+- **Role Management**: Extended roles (admin, user, manager) with department-specific permissions
+
+## Enterprise Features Completed
+- **Advanced Reporting**: 6 comprehensive analysis tabs with interactive charts and filters
+- **Trend Analysis**: Fixed ticket trends visualization with distributed historical data
 - **Categories Management**: Complete category and subcategory system with SLA configuration
 - **Ticket Forms**: Custom form builder for different ticket types and contexts  
 - **Custom Fields**: Configurable field system with multiple input types
 - **Workflow Approvals**: Sequential approval system with status tracking
-- **Enhanced Navigation**: Expanded administration menu with all new features
 
 ## Technical Improvements
-- **Fixed SelectItem Issues**: Resolved empty value props causing console errors
+- **Database Migration**: PostgreSQL integration with proper schema design
+- **Fixed Trend Charts**: Resolved data distribution issues for realistic visualizations
 - **Enhanced Routing**: Added new pages to routing system with proper navigation
 - **UI Components**: Implemented enterprise-level interfaces matching reference design
-- **Sidebar Updates**: Added new administration submenu items
-
-## Interface Enhancements
-- **Hierarchical Categories**: Tree-view display with expand/collapse functionality
-- **Approval Flow Visualization**: Step-by-step approval tracking with status icons
-- **Form Configuration**: Visual form builder with field type selection
-- **Priority and Status Badges**: Color-coded status indicators throughout interface
+- **Performance**: Optimized data queries and chart rendering

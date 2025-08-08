@@ -21,6 +21,7 @@ import TicketForms from "@/pages/TicketForms";
 import CustomFields from "@/pages/CustomFields";
 import WorkflowApprovals from "@/pages/WorkflowApprovals";
 import Reports from "@/pages/Reports";
+import Departments from "@/pages/Departments";
 import NotFound from "@/pages/NotFound";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
         <Route path="/analytics" component={Analytics} />
         <Route path="/sla" component={SLA} />
         <Route path="/users" component={UserManagement} />
+        <Route path="/departments" component={Departments} />
         <Route path="/categories" component={Categories} />
         <Route path="/forms" component={TicketForms} />
         <Route path="/fields" component={CustomFields} />
