@@ -103,7 +103,7 @@ const NewSidebar: React.FC<SidebarProps> = ({
 
   const sidebarWidth = isCollapsed ? 'w-16' : 'w-60';
   const sidebarClasses = `
-    fixed top-0 left-0 h-full bg-card border-r border-border shadow-enterprise-lg z-40
+    fixed top-16 left-0 h-full bg-card border-r border-border shadow-enterprise-lg z-30
     transition-all duration-300 ease-in-out
     ${sidebarWidth}
     lg:translate-x-0
@@ -115,10 +115,24 @@ const NewSidebar: React.FC<SidebarProps> = ({
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           onClick={onClose}
         />
       )}
+      
+      {/* Collapse Toggle Button - External */}
+      <button
+        onClick={onToggleCollapse}
+        className="fixed bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 z-50 hover:bg-gray-50"
+        title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+        style={{ 
+          top: '5rem',
+          left: isCollapsed ? '4.5rem' : '15.5rem',
+          transform: 'translateX(-50%)'
+        }}
+      >
+        <Icon name={isCollapsed ? "ChevronRight" : "ChevronLeft"} size={16} />
+      </button>
       
       {/* Sidebar */}
       <aside className={sidebarClasses}>
@@ -143,16 +157,7 @@ const NewSidebar: React.FC<SidebarProps> = ({
               </div>
             )}
 
-            {/* Collapse Toggle (Always visible) */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleCollapse}
-              className="flex transition-enterprise"
-              title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-            >
-              <Icon name={isCollapsed ? "ChevronRight" : "ChevronLeft"} size={16} />
-            </Button>
+            {/* Space for external button */}
 
             {/* Close Button (Mobile only when not collapsed) */}
             {!isCollapsed && (
