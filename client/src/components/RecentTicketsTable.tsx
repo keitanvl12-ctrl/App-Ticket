@@ -1,141 +1,291 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Edit } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Eye, Edit, MoreHorizontal, User, Calendar, AlertTriangle, Clock, CheckCircle2, Circle, Timer, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { TicketWithDetails } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
+interface Ticket {
+  id: string;
+  ticketNumber: string;
+  subject: string;
+  status: string;
+  priority: string;
+  assignedTo: string;
+  requester: string;
+  createdAt: string;
+  updatedAt: string;
+  department: string;
+}
+
+// Configuração de status traduzida e melhorada
 const statusConfig = {
-  open: { color: "bg-primary/10 text-primary", label: "Aberto" },
-  in_progress: { color: "bg-warning/10 text-warning", label: "Em Progresso" },
-  resolved: { color: "bg-success/10 text-success", label: "Resolvido" },
-  closed: { color: "bg-gray-50/10 text-gray-70", label: "Fechado" },
+  open: { 
+    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", 
+    label: "Aberto",
+    icon: Circle
+  },
+  in_progress: { 
+    color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400", 
+    label: "Em Progresso",
+    icon: Timer
+  },
+  resolved: { 
+    color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400", 
+    label: "Resolvido",
+    icon: CheckCircle2
+  },
+  closed: { 
+    color: "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300", 
+    label: "Fechado",
+    icon: CheckCircle2
+  },
 };
 
+// Configuração de prioridade traduzida e melhorada
 const priorityConfig = {
-  low: { color: "bg-success/10 text-success", label: "Baixa" },
-  medium: { color: "bg-primary/10 text-primary", label: "Média" },
-  high: { color: "bg-warning/10 text-warning", label: "Alta" },
-  critical: { color: "bg-error/10 text-error", label: "Crítica" },
+  low: { 
+    color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400", 
+    label: "Baixa",
+    dot: "bg-green-500"
+  },
+  medium: { 
+    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", 
+    label: "Média",
+    dot: "bg-blue-500"
+  },
+  high: { 
+    color: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400", 
+    label: "Alta",
+    dot: "bg-orange-500"
+  },
+  critical: { 
+    color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400", 
+    label: "Crítica",
+    dot: "bg-red-500"
+  },
 };
 
-export default function RecentTicketsTable() {
-  const { data: tickets, isLoading } = useQuery<TicketWithDetails[]>({
+interface RecentTicketsTableProps {
+  limit?: number;
+}
+
+export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTableProps) {
+  const { data: tickets = [], isLoading } = useQuery<Ticket[]>({
     queryKey: ["/api/tickets"],
   });
 
+  const recentTickets = tickets.slice(0, limit);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return "Hoje";
+    if (diffDays === 2) return "Ontem";
+    if (diffDays <= 7) return `${diffDays} dias atrás`;
+    
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-20">
-        <div className="p-6 border-b border-gray-20">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-100">Tickets Recentes</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Clock className="w-5 h-5" />
+            <span>Tickets Recentes</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
-        </div>
-        <div className="p-6">
-          <div className="text-center text-gray-50">Carregando tickets...</div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  const recentTickets = tickets?.slice(0, 5) || [];
-
   return (
-    <div className="overflow-hidden">
-      <div className="p-6 border-b border-border">
+    <Card>
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Tickets Recentes</h2>
-          <Button variant="ghost" className="text-primary hover:text-primary-hover font-medium text-sm transition-enterprise">
-            Ver Todos →
+          <CardTitle className="flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-blue-600" />
+            <span>Tickets Recentes</span>
+          </CardTitle>
+          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+            Ver todos
+            <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
-      </div>
-      
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-20">
-              <th className="text-left p-4 text-sm font-medium text-gray-70">Ticket ID</th>
-              <th className="text-left p-4 text-sm font-medium text-gray-70">Subject</th>
-              <th className="text-left p-4 text-sm font-medium text-gray-70">Status</th>
-              <th className="text-left p-4 text-sm font-medium text-gray-70">Priority</th>
-              <th className="text-left p-4 text-sm font-medium text-gray-70">Assignee</th>
-              <th className="text-left p-4 text-sm font-medium text-gray-70">Created</th>
-              <th className="text-left p-4 text-sm font-medium text-gray-70">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentTickets.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="p-8 text-center text-gray-50">
-                  No tickets found
-                </td>
-              </tr>
-            ) : (
-              recentTickets.map((ticket) => {
-                const statusStyle = statusConfig[ticket.status as keyof typeof statusConfig];
-                const priorityStyle = priorityConfig[ticket.priority as keyof typeof priorityConfig];
-                
-                return (
-                  <tr key={ticket.id} className="border-b border-gray-20 hover:bg-gray-10 transition-colors">
-                    <td className="p-4">
-                      <span className="text-sm font-medium text-primary">
-                        {ticket.ticketNumber}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-gray-100">{ticket.subject}</span>
-                    </td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyle?.color}`}>
-                        {statusStyle?.label}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityStyle?.color}`}>
-                        {priorityStyle?.label}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs">
-                          {ticket.assignedToUser?.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                        </div>
-                        <span className="text-sm text-gray-70">
-                          {ticket.assignedToUser?.name || 'Unassigned'}
+      </CardHeader>
+      <CardContent className="p-0">
+        {recentTickets.length === 0 ? (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Clock className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              Nenhum ticket encontrado
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Quando novos tickets forem criados, eles aparecerão aqui.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
+            {recentTickets.map((ticket, index) => {
+              const statusStyle = statusConfig[ticket.status as keyof typeof statusConfig];
+              const priorityStyle = priorityConfig[ticket.priority as keyof typeof priorityConfig];
+              const StatusIcon = statusStyle?.icon;
+              
+              return (
+                <div key={ticket.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      {/* Header com ID e Status */}
+                      <div className="flex items-center space-x-3 mb-2">
+                        <span className="text-sm font-mono font-semibold text-blue-600 dark:text-blue-400">
+                          #{ticket.ticketNumber}
                         </span>
+                        <Badge className={`${statusStyle?.color} text-xs font-medium flex items-center space-x-1`}>
+                          {StatusIcon && <StatusIcon className="w-3 h-3" />}
+                          <span>{statusStyle?.label}</span>
+                        </Badge>
+                        <div className="flex items-center space-x-1">
+                          <div className={`w-2 h-2 rounded-full ${priorityStyle?.dot}`}></div>
+                          <span className="text-xs text-slate-600 dark:text-slate-400">
+                            {priorityStyle?.label}
+                          </span>
+                        </div>
                       </div>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-gray-50">
-                        {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-50 hover:text-primary transition-colors p-1 h-auto"
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-50 hover:text-primary transition-colors p-1 h-auto"
-                        >
-                          <Eye size={16} />
-                        </Button>
+                      
+                      {/* Título do Ticket */}
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2 line-clamp-1">
+                        {ticket.subject}
+                      </h3>
+                      
+                      {/* Informações do Ticket */}
+                      <div className="flex items-center space-x-6 text-sm text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center space-x-2">
+                          <User className="w-4 h-4" />
+                          <span>Solicitante:</span>
+                          <span className="font-medium text-slate-900 dark:text-slate-100">
+                            {ticket.requester}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>{formatDate(ticket.createdAt)}</span>
+                        </div>
+                        
+                        {ticket.department && (
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="outline" className="text-xs">
+                              {ticket.department}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                      
+                      {/* Assignee */}
+                      {ticket.assignedTo && (
+                        <div className="flex items-center space-x-2 mt-3">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">Atribuído para:</span>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                {getInitials(ticket.assignedTo)}
+                              </span>
+                            </div>
+                            <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                              {ticket.assignedTo}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Ações */}
+                    <div className="flex items-center space-x-2 ml-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-slate-600 hover:text-blue-600"
+                        title="Visualizar ticket"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-slate-600 hover:text-green-600"
+                        title="Editar ticket"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-slate-600 hover:text-slate-900"
+                        title="Mais opções"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        
+        {/* Footer com estatísticas rápidas */}
+        {recentTickets.length > 0 && (
+          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-4">
+                <span className="text-slate-600 dark:text-slate-400">
+                  Mostrando {recentTickets.length} de {tickets.length} tickets
+                </span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {recentTickets.filter(t => t.status === 'open').length} Abertos
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {recentTickets.filter(t => t.status === 'in_progress').length} Em Progresso
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {recentTickets.filter(t => t.status === 'resolved').length} Resolvidos
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
