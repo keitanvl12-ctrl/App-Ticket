@@ -138,26 +138,18 @@ const NewSidebar: React.FC<SidebarProps> = ({
       <aside className={sidebarClasses}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            {!isCollapsed && (
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-                  <Icon name="Ticket" size={20} color="white" />
-                </div>
+          <div className={`flex items-center border-b border-border ${isCollapsed ? 'justify-center p-2' : 'justify-between p-4'}`}>
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
+                <Icon name="Ticket" size={20} color="white" />
+              </div>
+              {!isCollapsed && (
                 <div>
                   <h1 className="text-lg font-semibold text-foreground">TicketFlow Pro</h1>
                   <p className="text-xs text-muted-foreground">Enterprise Edition</p>
                 </div>
-              </div>
-            )}
-            
-            {isCollapsed && (
-              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg mx-auto">
-                <Icon name="Ticket" size={20} color="white" />
-              </div>
-            )}
-
-            {/* Space for external button */}
+              )}
+            </div>
 
             {/* Close Button (Mobile only when not collapsed) */}
             {!isCollapsed && (
@@ -194,14 +186,16 @@ const NewSidebar: React.FC<SidebarProps> = ({
                     }
                   }}
                 >
-                  <Icon 
-                    name={item?.icon} 
-                    size={20} 
-                    className={`
-                      ${isCollapsed ? '' : 'mr-3'} 
-                      ${isActiveParent(item) ? 'text-primary-foreground' : ''}
-                    `}
-                  />
+                  <div className={`flex items-center justify-center ${isCollapsed ? 'w-6 h-6' : ''}`}>
+                    <Icon 
+                      name={item?.icon} 
+                      size={isCollapsed ? 18 : 20} 
+                      className={`
+                        ${isCollapsed ? '' : 'mr-3'} 
+                        ${isActiveParent(item) ? 'text-primary-foreground' : ''}
+                      `}
+                    />
+                  </div>
                   
                   {!isCollapsed && (
                     <>
@@ -230,10 +224,24 @@ const NewSidebar: React.FC<SidebarProps> = ({
 
                   {/* Tooltip for Collapsed State */}
                   {isCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-popover border border-border rounded-md shadow-enterprise-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                      <div className="text-sm font-medium">{item?.label}</div>
+                    <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 min-w-48">
+                      <div className="text-sm font-medium mb-1">{item?.label}</div>
                       {item?.description && (
-                        <div className="text-xs text-muted-foreground">{item?.description}</div>
+                        <div className="text-xs opacity-80 mb-2">{item?.description}</div>
+                      )}
+                      {/* Submenu items em tooltip */}
+                      {item?.submenu && (
+                        <div className="space-y-1 border-t border-gray-700 pt-2">
+                          {item?.submenu?.map((subItem: any) => (
+                            <div 
+                              key={subItem?.path} 
+                              className="text-xs opacity-80 cursor-pointer hover:opacity-100 p-1 rounded hover:bg-gray-800"
+                              onClick={() => handleNavigation(subItem?.path)}
+                            >
+                              {subItem?.label}
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   )}

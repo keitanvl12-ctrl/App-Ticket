@@ -48,14 +48,7 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
             <Icon name="Menu" size={20} />
           </Button>
           
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-              <Icon name="Ticket" size={20} color="white" />
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-semibold text-foreground">TicketFlow Pro</h1>
-            </div>
-          </div>
+          {/* Logo removido do header para evitar duplicação */}
         </div>
 
         {/* Center Section - Primary Navigation (Desktop) */}
