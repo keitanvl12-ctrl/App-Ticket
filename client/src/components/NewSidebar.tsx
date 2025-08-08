@@ -143,25 +143,28 @@ const NewSidebar: React.FC<SidebarProps> = ({
               </div>
             )}
 
-            {/* Collapse Toggle (Desktop) */}
+            {/* Collapse Toggle (Always visible) */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleCollapse}
-              className="hidden lg:flex transition-enterprise"
+              className="flex transition-enterprise"
+              title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
             >
               <Icon name={isCollapsed ? "ChevronRight" : "ChevronLeft"} size={16} />
             </Button>
 
-            {/* Close Button (Mobile) */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="lg:hidden transition-enterprise"
-            >
-              <Icon name="X" size={16} />
-            </Button>
+            {/* Close Button (Mobile only when not collapsed) */}
+            {!isCollapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="lg:hidden transition-enterprise"
+              >
+                <Icon name="X" size={16} />
+              </Button>
+            )}
           </div>
 
           {/* Navigation */}

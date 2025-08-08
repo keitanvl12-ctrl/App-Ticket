@@ -358,6 +358,8 @@ export default function KanbanBoard() {
   const handleDeleteTicket = (ticketId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este ticket?')) {
       setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+      // Fechar modal se estiver aberto
+      setSelectedTicket(null);
     }
   };
 

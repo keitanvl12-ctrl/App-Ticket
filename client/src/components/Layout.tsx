@@ -1,7 +1,6 @@
 import { ReactNode, useState } from "react";
 import Header from "./Header";
-import { ExpandableSidebar } from "./ExpandableSidebar";
-import { useLocation } from 'wouter';
+import Sidebar from "./NewSidebar";
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,14 +9,25 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [location, setLocation] = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <ExpandableSidebar currentPath={location} onNavigate={setLocation} />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 overflow-auto">
+    <div className="min-h-screen bg-background">
+      <Header 
+        onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        isSidebarCollapsed={isSidebarCollapsed}
+      />
+      <div className="flex pt-16">
+        <Sidebar 
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+        <main className={`flex-1 transition-all duration-300 ${
+          isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
+        }`}>
           {children}
         </main>
       </div>
