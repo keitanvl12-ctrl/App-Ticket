@@ -47,6 +47,13 @@ const NewSidebar: React.FC<SidebarProps> = ({
       description: 'Acompanhar performance'
     },
     {
+      id: 'reports',
+      label: 'Relatórios Avançados',
+      path: '/reports',
+      icon: 'BarChart3',
+      description: 'Análises e insights'
+    },
+    {
       id: 'administration',
       label: 'Administração',
       icon: 'Settings',
