@@ -191,27 +191,49 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
               />
             </div>
 
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição *</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Forneça detalhes sobre o problema, incluindo passos para reproduzir, mensagens de erro, etc."
+                      className="min-h-[120px] focus:ring-primary focus:border-primary"
+                      rows={5}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Informação do solicitante - apenas informativo */}
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Solicitante:
+                </span>
+                <span className="text-sm text-blue-700 dark:text-blue-300">
+                  {currentUser?.name} - {currentUser?.departmentId ? 
+                    departments?.find(d => d.id === currentUser.departmentId)?.name || 'Departamento não especificado'
+                    : 'Departamento não especificado'
+                  }
+                </span>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                 <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
-                  Informações do Departamento
+                  Categorização
                 </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                  Classifique o tipo e prioridade do chamado
+                </p>
                 
-                {/* Departamento do Solicitante (informativo) */}
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                      Departamento do Solicitante:
-                    </span>
-                    <span className="text-sm text-blue-700 dark:text-blue-300">
-                      {currentUser?.departmentId ? 
-                        departments?.find(d => d.id === currentUser.departmentId)?.name || 'Não especificado'
-                        : 'Não especificado'
-                      }
-                    </span>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
