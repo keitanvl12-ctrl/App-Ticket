@@ -228,6 +228,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Categories endpoints
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  app.get("/api/categories/department/:departmentId", async (req, res) => {
+    try {
+      const { departmentId } = req.params;
+      const categories = await storage.getCategoriesByDepartment(departmentId);
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories by department:", error);
+      res.status(500).json({ message: "Failed to fetch categories by department" });
+    }
+  });
+
   // Advanced Reports API
   app.get("/api/reports/filtered-tickets", async (req, res) => {
     try {

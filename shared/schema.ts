@@ -31,7 +31,7 @@ export const tickets = pgTable("tickets", {
   description: text("description").notNull(),
   status: text("status").notNull().default("open"), // open, in_progress, resolved, closed
   priority: text("priority").notNull().default("medium"), // low, medium, high, critical
-  category: text("category"), // bug, feature, support, improvement
+  category: text("category"), // Nome da categoria selecionada
   departmentId: varchar("department_id").references(() => departments.id),
   createdBy: varchar("created_by").references(() => users.id).notNull(),
   assignedTo: varchar("assigned_to").references(() => users.id),
@@ -57,6 +57,18 @@ export const attachments = pgTable("attachments", {
   filePath: text("file_path").notNull(),
   uploadedBy: varchar("uploaded_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Categories table linked to departments
+export const categories = pgTable("categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  departmentId: varchar("department_id").references(() => departments.id),
+  slaHours: integer("sla_hours").default(24), // SLA deadline in hours
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Insert schemas
@@ -90,6 +102,12 @@ export const insertAttachmentSchema = createInsertSchema(attachments).omit({
   createdAt: true,
 });
 
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Department = typeof departments.$inferSelect;
 export type InsertDepartment = typeof departments.$inferInsert;
@@ -104,6 +122,9 @@ export type InsertComment = z.infer<typeof insertCommentSchema>;
 
 export type Attachment = typeof attachments.$inferSelect;
 export type InsertAttachment = z.infer<typeof insertAttachmentSchema>;
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 // Extended types for API responses
 export type TicketWithDetails = Ticket & {

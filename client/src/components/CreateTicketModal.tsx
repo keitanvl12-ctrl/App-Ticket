@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Upload } from "lucide-react";
 import { insertTicketSchema } from "@shared/schema";
-import type { InsertTicket, User } from "@shared/schema";
+import type { InsertTicket, User, Department, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,10 +23,21 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
 
   const { data: users } = useQuery<User[]>({
     queryKey: ["/api/users"],
     enabled: isOpen,
+  });
+
+  const { data: departments } = useQuery<Department[]>({
+    queryKey: ["/api/departments"],
+    enabled: isOpen,
+  });
+
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ["/api/categories/department", selectedDepartment],
+    enabled: isOpen && !!selectedDepartment,
   });
 
   const form = useForm<InsertTicket>({
@@ -39,10 +50,18 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       description: "",
       priority: "medium",
       category: "",
+      departmentId: "",
       assignedTo: "",
       createdBy: "", // This would typically come from auth context
     },
   });
+
+  // Reset category when department changes
+  useEffect(() => {
+    if (selectedDepartment) {
+      form.setValue("category", "");
+    }
+  }, [selectedDepartment, form]);
 
   const createTicketMutation = useMutation({
     mutationFn: async (data: InsertTicket) => {
@@ -65,6 +84,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
       form.reset();
       setSelectedFiles([]);
+      setSelectedDepartment("");
       onClose();
     },
     onError: (error) => {
@@ -95,6 +115,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     if (!createTicketMutation.isPending) {
       form.reset();
       setSelectedFiles([]);
+      setSelectedDepartment("");
       onClose();
     }
   };
@@ -163,31 +184,88 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger className="focus:ring-primary focus:border-primary">
-                          <SelectValue placeholder="Selecionar categoria" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="bug">Relatório de Bug</SelectItem>
-                        <SelectItem value="feature">Solicitação de Funcionalidade</SelectItem>
-                        <SelectItem value="support">Suporte Técnico</SelectItem>
-                        <SelectItem value="improvement">Melhoria</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-4">
+              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  Categorização
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="departmentId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Departamento *</FormLabel>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedDepartment(value);
+                            form.setValue("category", ""); // Reset category when department changes
+                          }} 
+                          defaultValue={field.value || ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="focus:ring-primary focus:border-primary">
+                              <SelectValue placeholder="Selecionar departamento" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {departments?.map((dept) => (
+                              <SelectItem key={dept.id} value={dept.id}>
+                                {dept.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Categoria *</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value || ""}
+                          disabled={!selectedDepartment}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="focus:ring-primary focus:border-primary">
+                              <SelectValue 
+                                placeholder={
+                                  !selectedDepartment 
+                                    ? "Selecione um departamento primeiro" 
+                                    : "Selecionar categoria"
+                                } 
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories?.map((category) => (
+                              <SelectItem key={category.id} value={category.name}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        {selectedDepartment && categories?.length === 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Nenhuma categoria disponível para este departamento
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="assignedTo"

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, tickets, comments, attachments, departments } from "@shared/schema";
+import { users, tickets, comments, attachments, departments, categories } from "@shared/schema";
 import { eq, desc, count, sql, and, gte, lte } from "drizzle-orm";
 import {
   type User,
@@ -11,6 +11,10 @@ import {
   type InsertComment,
   type Attachment,
   type InsertAttachment,
+  type Category,
+  type InsertCategory,
+  type Department,
+  type InsertDepartment,
   type DashboardStats,
   type PriorityStats,
   type TrendData,
@@ -40,6 +44,15 @@ export interface IStorage {
   // Attachments
   getAttachmentsByTicket(ticketId: string): Promise<Attachment[]>;
   createAttachment(attachment: InsertAttachment): Promise<Attachment>;
+
+  // Categories
+  getAllCategories(): Promise<Category[]>;
+  getCategoriesByDepartment(departmentId: string): Promise<Category[]>;
+  createCategory(category: InsertCategory): Promise<Category>;
+
+  // Departments
+  getAllDepartments(): Promise<Department[]>;
+  createDepartment(department: InsertDepartment): Promise<Department>;
 
   // Analytics
   getDashboardStats(filters?: any): Promise<DashboardStats>;
@@ -97,6 +110,68 @@ export class DatabaseStorage implements IStorage {
         email: "ana.costa@empresa.com",
         role: "colaborador",
       }).returning();
+
+      // Create demo departments
+      const [tiDept] = await db.insert(departments).values({
+        name: "TI",
+        description: "Departamento de Tecnologia da Informação",
+      }).returning();
+
+      const [rhDept] = await db.insert(departments).values({
+        name: "RH",
+        description: "Recursos Humanos",
+      }).returning();
+
+      const [finDept] = await db.insert(departments).values({
+        name: "Financeiro",
+        description: "Departamento Financeiro",
+      }).returning();
+
+      // Create demo categories linked to departments
+      await db.insert(categories).values([
+        {
+          name: "Bug de Sistema",
+          description: "Problemas técnicos no sistema",
+          departmentId: tiDept.id,
+          slaHours: 4,
+        },
+        {
+          name: "Nova Funcionalidade",
+          description: "Solicitação de nova funcionalidade",
+          departmentId: tiDept.id,
+          slaHours: 48,
+        },
+        {
+          name: "Suporte Técnico",
+          description: "Suporte técnico geral",
+          departmentId: tiDept.id,
+          slaHours: 8,
+        },
+        {
+          name: "Folha de Pagamento",
+          description: "Questões relacionadas à folha de pagamento",
+          departmentId: rhDept.id,
+          slaHours: 24,
+        },
+        {
+          name: "Benefícios",
+          description: "Questões sobre benefícios dos funcionários",
+          departmentId: rhDept.id,
+          slaHours: 12,
+        },
+        {
+          name: "Contabilidade",
+          description: "Questões contábeis e fiscais",
+          departmentId: finDept.id,
+          slaHours: 24,
+        },
+        {
+          name: "Contas a Pagar",
+          description: "Processamento de pagamentos",
+          departmentId: finDept.id,
+          slaHours: 12,
+        },
+      ]);
 
       // Create demo tickets with distributed dates for trending data
       const now = new Date();
@@ -385,6 +460,31 @@ export class DatabaseStorage implements IStorage {
   async createAttachment(attachment: InsertAttachment): Promise<Attachment> {
     const [newAttachment] = await db.insert(attachments).values(attachment).returning();
     return newAttachment;
+  }
+
+  // Categories methods
+  async getAllCategories(): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.isActive, true));
+  }
+
+  async getCategoriesByDepartment(departmentId: string): Promise<Category[]> {
+    return await db.select().from(categories)
+      .where(and(eq(categories.departmentId, departmentId), eq(categories.isActive, true)));
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  // Departments methods
+  async getAllDepartments(): Promise<Department[]> {
+    return await db.select().from(departments);
+  }
+
+  async createDepartment(department: InsertDepartment): Promise<Department> {
+    const [newDepartment] = await db.insert(departments).values(department).returning();
+    return newDepartment;
   }
 
   async getDashboardStats(filters?: any): Promise<DashboardStats> {
