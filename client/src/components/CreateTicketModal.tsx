@@ -218,18 +218,18 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                     name="responsibleDepartmentId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Departamento Responsável *</FormLabel>
+                        <FormLabel>Departamento *</FormLabel>
                         <Select 
                           onValueChange={(value) => {
                             field.onChange(value);
                             setSelectedDepartment(value);
                             form.setValue("category", ""); // Reset category when department changes
                           }} 
-                          defaultValue={field.value || ""}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger className="focus:ring-primary focus:border-primary">
-                              <SelectValue placeholder="Selecionar departamento responsável" />
+                              <SelectValue placeholder="Selecione o departamento" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -253,7 +253,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                         <FormLabel>Categoria *</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={field.value || ""}
+                          value={field.value || ""}
                           disabled={!selectedDepartment}
                         >
                           <FormControl>
@@ -262,7 +262,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                                 placeholder={
                                   !selectedDepartment 
                                     ? "Selecione um departamento primeiro" 
-                                    : "Selecionar categoria"
+                                    : "Selecione a categoria"
                                 } 
                               />
                             </SelectTrigger>
