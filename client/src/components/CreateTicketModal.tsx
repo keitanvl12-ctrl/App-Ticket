@@ -64,8 +64,8 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     }
   }, [selectedDepartment, form]);
 
-  // Simular usuário logado (pegar do primeiro usuário para demo)
-  const currentUser = users?.[0];
+  // Simular usuário logado (pegar usuário admin com departamento)
+  const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
   const createTicketMutation = useMutation({
     mutationFn: async (data: InsertTicket) => {
@@ -234,7 +234,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                   Classifique o tipo e prioridade do chamado
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="responsibleDepartmentId"
