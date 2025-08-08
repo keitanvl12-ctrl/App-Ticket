@@ -20,7 +20,7 @@ import Categories from "@/pages/Categories";
 import TicketForms from "@/pages/TicketForms";
 import CustomFields from "@/pages/CustomFields";
 import WorkflowApprovals from "@/pages/WorkflowApprovals";
-import Reports from "@/pages/Reports";
+import ReportsNew from "@/pages/ReportsNew";
 import Departments from "@/pages/Departments";
 import NotFound from "@/pages/NotFound";
 
@@ -39,7 +39,7 @@ function Router() {
         <Route path="/forms" component={TicketForms} />
         <Route path="/fields" component={CustomFields} />
         <Route path="/approvals" component={WorkflowApprovals} />
-        <Route path="/reports" component={Reports} />
+        <Route path="/reports" component={ReportsNew} />
         <Route path="/settings" component={Settings} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />

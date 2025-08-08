@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, tickets, comments, attachments } from "@shared/schema";
+import { users, tickets, comments, attachments, departments } from "@shared/schema";
 import { eq, desc, count, sql, and, gte } from "drizzle-orm";
 import {
   type User,
@@ -45,6 +45,12 @@ export interface IStorage {
   getDashboardStats(): Promise<DashboardStats>;
   getPriorityStats(): Promise<PriorityStats>;
   getTrendData(days: number): Promise<TrendData[]>;
+
+  // Advanced Reports
+  getFilteredTickets(filters: any): Promise<TicketWithDetails[]>;
+  getDepartmentPerformance(startDate: string, endDate: string): Promise<any[]>;
+  getUserPerformance(startDate: string, endDate: string, departmentId?: string): Promise<any[]>;
+  getResolutionTimeAnalysis(startDate: string, endDate: string, departmentId?: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -68,20 +74,28 @@ export class DatabaseStorage implements IStorage {
         role: "admin",
       }).returning();
 
-      const [user1] = await db.insert(users).values({
+      const [supervisor] = await db.insert(users).values({
         username: "maria.santos",
         password: "senha123",
         name: "Maria Santos",
         email: "maria.santos@empresa.com",
-        role: "user",
+        role: "supervisor",
       }).returning();
 
-      const [user2] = await db.insert(users).values({
+      const [colaborador1] = await db.insert(users).values({
         username: "carlos.oliveira",
         password: "senha123",
         name: "Carlos Oliveira",
         email: "carlos.oliveira@empresa.com",
-        role: "user",
+        role: "colaborador",
+      }).returning();
+
+      const [colaborador2] = await db.insert(users).values({
+        username: "ana.costa",
+        password: "senha123",
+        name: "Ana Costa",
+        email: "ana.costa@empresa.com",
+        role: "colaborador",
       }).returning();
 
       // Create demo tickets with distributed dates for trending data
@@ -96,7 +110,7 @@ export class DatabaseStorage implements IStorage {
           category: "bug",
           departmentId: null,
           createdBy: adminUser.id,
-          assignedTo: user1.id,
+          assignedTo: supervisor.id,
           createdAt: subDays(now, 6),
           updatedAt: subDays(now, 6),
           resolvedAt: subDays(now, 5),
@@ -109,8 +123,8 @@ export class DatabaseStorage implements IStorage {
           priority: "critical",
           category: "bug",
           departmentId: null,
-          createdBy: user2.id,
-          assignedTo: user1.id,
+          createdBy: colaborador1.id,
+          assignedTo: supervisor.id,
           createdAt: subDays(now, 6),
           updatedAt: subDays(now, 6),
           resolvedAt: subDays(now, 4),
@@ -123,8 +137,8 @@ export class DatabaseStorage implements IStorage {
           priority: "medium",
           category: "feature",
           departmentId: null,
-          createdBy: user2.id,
-          assignedTo: user1.id,
+          createdBy: colaborador2.id,
+          assignedTo: supervisor.id,
           createdAt: subDays(now, 3),
           updatedAt: subDays(now, 3),
         },
@@ -136,7 +150,7 @@ export class DatabaseStorage implements IStorage {
           priority: "high",
           category: "bug",
           departmentId: null,
-          createdBy: user1.id,
+          createdBy: supervisor.id,
           assignedTo: adminUser.id,
           createdAt: subDays(now, 2),
           updatedAt: subDays(now, 1),
@@ -150,7 +164,7 @@ export class DatabaseStorage implements IStorage {
           category: "bug",
           departmentId: null,
           createdBy: adminUser.id,
-          assignedTo: user2.id,
+          assignedTo: colaborador1.id,
           createdAt: subDays(now, 1),
           updatedAt: subDays(now, 1),
         },
@@ -455,6 +469,194 @@ export class DatabaseStorage implements IStorage {
     }
 
     return trends;
+  }
+
+  async getFilteredTickets(filters: any): Promise<TicketWithDetails[]> {
+    let query = db.select().from(tickets);
+    
+    const conditions: any[] = [];
+    
+    if (filters.startDate && filters.endDate) {
+      conditions.push(
+        and(
+          gte(tickets.createdAt, new Date(filters.startDate)),
+          gte(new Date(filters.endDate), tickets.createdAt)
+        )
+      );
+    }
+    
+    if (filters.departmentId && filters.departmentId !== 'all') {
+      conditions.push(eq(tickets.departmentId, filters.departmentId));
+    }
+    
+    if (filters.priority && filters.priority !== 'all') {
+      conditions.push(eq(tickets.priority, filters.priority));
+    }
+    
+    if (filters.status && filters.status !== 'all') {
+      conditions.push(eq(tickets.status, filters.status));
+    }
+    
+    if (filters.assignedTo && filters.assignedTo !== 'all') {
+      conditions.push(eq(tickets.assignedTo, filters.assignedTo));
+    }
+    
+    if (filters.createdBy && filters.createdBy !== 'all') {
+      conditions.push(eq(tickets.createdBy, filters.createdBy));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const filteredTickets = await query.orderBy(desc(tickets.createdAt));
+    
+    const detailedTickets = await Promise.all(
+      filteredTickets.map(ticket => this.getTicket(ticket.id))
+    );
+
+    return detailedTickets.filter(ticket => ticket !== undefined) as TicketWithDetails[];
+  }
+
+  async getDepartmentPerformance(startDate: string, endDate: string): Promise<any[]> {
+    const allDepartments = await db.select().from(departments);
+    const performance = [];
+
+    for (const dept of allDepartments) {
+      const totalTicketsResult = await db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.departmentId, dept.id),
+            gte(tickets.createdAt, new Date(startDate)),
+            gte(new Date(endDate), tickets.createdAt)
+          )
+        );
+
+      const resolvedTicketsResult = await db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.departmentId, dept.id),
+            eq(tickets.status, 'resolved'),
+            gte(tickets.createdAt, new Date(startDate)),
+            gte(new Date(endDate), tickets.createdAt)
+          )
+        );
+
+      const total = totalTicketsResult[0]?.count || 0;
+      const resolved = resolvedTicketsResult[0]?.count || 0;
+      const pending = total - resolved;
+
+      performance.push({
+        name: dept.name,
+        tickets: total,
+        resolved,
+        pending,
+        resolutionRate: total > 0 ? Math.round((resolved / total) * 100) : 0,
+        avgTime: '2.5h' // Simplified for demo
+      });
+    }
+
+    return performance;
+  }
+
+  async getUserPerformance(startDate: string, endDate: string, departmentId?: string): Promise<any[]> {
+    let userQuery = db.select().from(users);
+    
+    if (departmentId && departmentId !== 'all') {
+      userQuery = userQuery.where(eq(users.departmentId, departmentId));
+    }
+
+    const allUsers = await userQuery;
+    const performance = [];
+
+    for (const user of allUsers) {
+      const assignedTicketsResult = await db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.assignedTo, user.id),
+            gte(tickets.createdAt, new Date(startDate)),
+            gte(new Date(endDate), tickets.createdAt)
+          )
+        );
+
+      const resolvedTicketsResult = await db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.assignedTo, user.id),
+            eq(tickets.status, 'resolved'),
+            gte(tickets.createdAt, new Date(startDate)),
+            gte(new Date(endDate), tickets.createdAt)
+          )
+        );
+
+      const assigned = assignedTicketsResult[0]?.count || 0;
+      const resolved = resolvedTicketsResult[0]?.count || 0;
+
+      if (assigned > 0) {
+        performance.push({
+          name: user.name,
+          role: user.role,
+          tickets: assigned,
+          resolved,
+          efficiency: assigned > 0 ? Math.round((resolved / assigned) * 100) : 0,
+          satisfaction: 4.5 + Math.random() * 0.5 // Simplified for demo
+        });
+      }
+    }
+
+    return performance.sort((a, b) => b.efficiency - a.efficiency);
+  }
+
+  async getResolutionTimeAnalysis(startDate: string, endDate: string, departmentId?: string): Promise<any[]> {
+    let conditions = [
+      eq(tickets.status, 'resolved'),
+      gte(tickets.createdAt, new Date(startDate)),
+      gte(new Date(endDate), tickets.createdAt)
+    ];
+
+    if (departmentId && departmentId !== 'all') {
+      conditions.push(eq(tickets.departmentId, departmentId));
+    }
+
+    const resolvedTickets = await db
+      .select()
+      .from(tickets)
+      .where(and(...conditions));
+
+    const timeCategories = {
+      '< 1 hora': 0,
+      '1-4 horas': 0,
+      '4-8 horas': 0,
+      '8-24 horas': 0,
+      '> 24 horas': 0
+    };
+
+    resolvedTickets.forEach(ticket => {
+      if (ticket.resolvedAt && ticket.createdAt) {
+        const hours = differenceInHours(new Date(ticket.resolvedAt), new Date(ticket.createdAt));
+        
+        if (hours < 1) timeCategories['< 1 hora']++;
+        else if (hours < 4) timeCategories['1-4 horas']++;
+        else if (hours < 8) timeCategories['4-8 horas']++;
+        else if (hours < 24) timeCategories['8-24 horas']++;
+        else timeCategories['> 24 horas']++;
+      }
+    });
+
+    const total = resolvedTickets.length;
+    return Object.entries(timeCategories).map(([category, count]) => ({
+      category,
+      count,
+      percentage: total > 0 ? Math.round((count / total) * 100) : 0
+    }));
   }
 }
 

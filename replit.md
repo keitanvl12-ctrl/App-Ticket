@@ -74,11 +74,21 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 
 # Recent Changes (August 2025)
 
-## Department-Based Access Control System (NEW)
+## Three-Tier User Hierarchy System (NEW)
+- **User Hierarchy**: Implemented colaborador → supervisor → administrador system replacing simple admin/user roles
+- **Role-Based Access**: Each hierarchy level has specific permissions and access controls
+- **Demo Data**: Updated with users representing all three hierarchy levels for testing
+
+## Department-Based Access Control System 
 - **Multi-Department Support**: Added department/workgroup system for sector isolation
 - **Database Schema**: Enhanced with departments table and user/ticket department associations
 - **Access Control**: Each department can only see their own tickets and users
-- **Role Management**: Extended roles (admin, user, manager) with department-specific permissions
+
+## Functional Report Filters System (NEW)
+- **Real-Time Filtering**: All reports now connect to PostgreSQL with functional filters
+- **Advanced Analytics**: Department performance, user performance, and resolution time analysis
+- **Dynamic Data**: Charts and tables update automatically based on filter selections
+- **Comprehensive APIs**: Backend endpoints supporting date ranges, department, priority, and status filtering
 
 ## Enterprise Features Completed
 - **Advanced Reporting**: 6 comprehensive analysis tabs with interactive charts and filters

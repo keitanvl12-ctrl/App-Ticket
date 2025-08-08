@@ -213,6 +213,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Advanced Reports API
+  app.get("/api/reports/filtered-tickets", async (req, res) => {
+    try {
+      const {
+        startDate,
+        endDate,
+        departmentId,
+        priority,
+        status,
+        assignedTo,
+        createdBy
+      } = req.query;
+
+      const tickets = await storage.getFilteredTickets({
+        startDate: startDate as string,
+        endDate: endDate as string,
+        departmentId: departmentId as string,
+        priority: priority as string,
+        status: status as string,
+        assignedTo: assignedTo as string,
+        createdBy: createdBy as string,
+      });
+      
+      res.json(tickets);
+    } catch (error) {
+      console.error("Error fetching filtered tickets:", error);
+      res.status(500).json({ message: "Failed to fetch filtered tickets" });
+    }
+  });
+
+  app.get("/api/reports/department-performance", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const performance = await storage.getDepartmentPerformance(
+        startDate as string,
+        endDate as string
+      );
+      res.json(performance);
+    } catch (error) {
+      console.error("Error fetching department performance:", error);
+      res.status(500).json({ message: "Failed to fetch department performance" });
+    }
+  });
+
+  app.get("/api/reports/user-performance", async (req, res) => {
+    try {
+      const { startDate, endDate, departmentId } = req.query;
+      const performance = await storage.getUserPerformance(
+        startDate as string,
+        endDate as string,
+        departmentId as string
+      );
+      res.json(performance);
+    } catch (error) {
+      console.error("Error fetching user performance:", error);
+      res.status(500).json({ message: "Failed to fetch user performance" });
+    }
+  });
+
+  app.get("/api/reports/resolution-time-analysis", async (req, res) => {
+    try {
+      const { startDate, endDate, departmentId } = req.query;
+      const analysis = await storage.getResolutionTimeAnalysis(
+        startDate as string,
+        endDate as string,
+        departmentId as string
+      );
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error fetching resolution time analysis:", error);
+      res.status(500).json({ message: "Failed to fetch resolution time analysis" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
