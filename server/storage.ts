@@ -308,7 +308,8 @@ export class DatabaseStorage implements IStorage {
         status: tickets.status,
         priority: tickets.priority,
         category: tickets.category,
-        departmentId: tickets.departmentId,
+        requesterDepartmentId: tickets.requesterDepartmentId,
+        responsibleDepartmentId: tickets.responsibleDepartmentId,
         createdBy: tickets.createdBy,
         assignedTo: tickets.assignedTo,
         createdAt: tickets.createdAt,
@@ -333,7 +334,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .from(tickets)
-      .leftJoin(departments, eq(tickets.departmentId, departments.id))
+      .leftJoin(departments, eq(tickets.responsibleDepartmentId, departments.id))
       .leftJoin(users, eq(tickets.createdBy, users.id))
       .where(eq(tickets.id, id));
 
@@ -707,7 +708,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters.departmentId && filters.departmentId !== 'all') {
-      conditions.push(eq(tickets.departmentId, filters.departmentId));
+      conditions.push(eq(tickets.responsibleDepartmentId, filters.departmentId));
     }
     
     if (filters.priority && filters.priority !== 'all') {
@@ -749,7 +750,7 @@ export class DatabaseStorage implements IStorage {
         .from(tickets)
         .where(
           and(
-            eq(tickets.departmentId, dept.id),
+            eq(tickets.responsibleDepartmentId, dept.id),
             gte(tickets.createdAt, new Date(startDate)),
             lte(tickets.createdAt, new Date(endDate))
           )
@@ -760,7 +761,7 @@ export class DatabaseStorage implements IStorage {
         .from(tickets)
         .where(
           and(
-            eq(tickets.departmentId, dept.id),
+            eq(tickets.responsibleDepartmentId, dept.id),
             eq(tickets.status, 'resolved'),
             gte(tickets.createdAt, new Date(startDate)),
             lte(tickets.createdAt, new Date(endDate))

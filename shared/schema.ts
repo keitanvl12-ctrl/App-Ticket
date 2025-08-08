@@ -32,7 +32,8 @@ export const tickets = pgTable("tickets", {
   status: text("status").notNull().default("open"), // open, in_progress, resolved, closed
   priority: text("priority").notNull().default("medium"), // low, medium, high, critical
   category: text("category"), // Nome da categoria selecionada
-  departmentId: varchar("department_id").references(() => departments.id),
+  requesterDepartmentId: varchar("requester_department_id").references(() => departments.id), // Departamento do solicitante (informativo)
+  responsibleDepartmentId: varchar("responsible_department_id").references(() => departments.id), // Departamento responsável (determina categorização)
   createdBy: varchar("created_by").references(() => users.id).notNull(),
   assignedTo: varchar("assigned_to").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),

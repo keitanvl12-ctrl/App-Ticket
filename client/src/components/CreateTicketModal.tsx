@@ -50,7 +50,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       description: "",
       priority: "medium",
       category: "",
-      departmentId: "",
+      responsibleDepartmentId: "",
       assignedTo: "",
       createdBy: "", // This would typically come from auth context
     },
@@ -63,10 +63,12 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     }
   }, [selectedDepartment, form]);
 
+  // Simular usuário logado (pegar do primeiro usuário para demo)
+  const currentUser = users?.[0];
+
   const createTicketMutation = useMutation({
     mutationFn: async (data: InsertTicket) => {
       // In a real app, createdBy would come from authenticated user
-      const currentUser = users?.[0]; // Usando primeiro usuário como demo
       if (!currentUser) {
         throw new Error("Usuário não encontrado");
       }
@@ -74,7 +76,8 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       const ticketData = { 
         ...data, 
         createdBy: currentUser.id,
-        departmentId: data.departmentId // Garantir que o departmentId seja passado
+        requesterDepartmentId: currentUser.departmentId, // Departamento do solicitante
+        responsibleDepartmentId: data.responsibleDepartmentId // Departamento responsável
       };
       const response = await apiRequest("POST", "/api/tickets", ticketData);
       return response.json();
@@ -191,15 +194,31 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
             <div className="space-y-4">
               <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                 <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
-                  Categorização
+                  Informações do Departamento
                 </h3>
+                
+                {/* Departamento do Solicitante (informativo) */}
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      Departamento do Solicitante:
+                    </span>
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
+                      {currentUser?.departmentId ? 
+                        departments?.find(d => d.id === currentUser.departmentId)?.name || 'Não especificado'
+                        : 'Não especificado'
+                      }
+                    </span>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="departmentId"
+                    name="responsibleDepartmentId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Departamento *</FormLabel>
+                        <FormLabel>Departamento Responsável *</FormLabel>
                         <Select 
                           onValueChange={(value) => {
                             field.onChange(value);
@@ -210,7 +229,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                         >
                           <FormControl>
                             <SelectTrigger className="focus:ring-primary focus:border-primary">
-                              <SelectValue placeholder="Selecionar departamento" />
+                              <SelectValue placeholder="Selecionar departamento responsável" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
