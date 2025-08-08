@@ -13,6 +13,7 @@ import {
   type TrendData,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { nanoid } from "nanoid";
 import { format, subDays, startOfDay, endOfDay, differenceInHours } from "date-fns";
 
 export interface IStorage {
@@ -248,7 +249,20 @@ export class MemStorage implements IStorage {
     ];
 
     for (const ticketData of tickets) {
-      await this.createTicket(ticketData as InsertTicket);
+      const ticket: Ticket = {
+        id: nanoid(),
+        subject: ticketData.subject,
+        description: ticketData.description,
+        status: ticketData.status as "open" | "in_progress" | "resolved" | "closed",
+        priority: ticketData.priority as "low" | "medium" | "high" | "critical",
+        category: ticketData.category,
+        createdBy: ticketData.createdBy,
+        assignedTo: ticketData.assignedTo,
+        createdAt: ticketData.createdAt,
+        updatedAt: ticketData.updatedAt,
+        resolvedAt: ticketData.resolvedAt,
+      };
+      this.tickets.set(ticket.id, ticket);
     }
   }
 
