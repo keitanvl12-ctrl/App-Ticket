@@ -32,7 +32,7 @@ export const tickets = pgTable("tickets", {
   status: text("status").notNull().default("open"), // open, in_progress, resolved, closed
   priority: text("priority").notNull().default("medium"), // low, medium, high, critical
   category: text("category"), // bug, feature, support, improvement
-  departmentId: varchar("department_id").references(() => departments.id).notNull(),
+  departmentId: varchar("department_id").references(() => departments.id),
   createdBy: varchar("created_by").references(() => users.id).notNull(),
   assignedTo: varchar("assigned_to").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
