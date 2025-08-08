@@ -94,8 +94,85 @@ export class MemStorage implements IStorage {
       role: "user",
     });
 
-    // Create demo tickets
+    // Create demo tickets with distributed dates for trending data
     const tickets = [
+      // Tickets from 7 days ago
+      {
+        subject: "Sistema de backup está falhando",
+        description: "Backup automático não está funcionando corretamente desde a última atualização",
+        status: "resolved",
+        priority: "high",
+        category: "bug",
+        createdBy: adminUser.id,
+        assignedTo: user1.id,
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        resolvedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      },
+      {
+        subject: "Erro na integração com API externa",
+        description: "A integração com o sistema de pagamentos está retornando erro 500",
+        status: "resolved",
+        priority: "critical",
+        category: "bug",
+        createdBy: user2.id,
+        assignedTo: user3.id,
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        resolvedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      },
+      // Tickets from 5 days ago
+      {
+        subject: "Interface de usuário precisa de melhorias",
+        description: "Feedback dos usuários sobre dificuldades na navegação",
+        status: "resolved",
+        priority: "medium",
+        category: "improvement",
+        createdBy: user1.id,
+        assignedTo: user2.id,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        resolvedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+      },
+      {
+        subject: "Atualização de segurança necessária",
+        description: "Aplicar patches de segurança mais recentes",
+        status: "resolved",
+        priority: "high",
+        category: "security",
+        createdBy: adminUser.id,
+        assignedTo: user1.id,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        resolvedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      },
+      // Tickets from 3 days ago
+      {
+        subject: "Performance lenta no carregamento de relatórios",
+        description: "Relatórios estão demorando mais de 30 segundos para carregar",
+        status: "resolved",
+        priority: "medium",
+        category: "performance",
+        createdBy: user3.id,
+        assignedTo: user2.id,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        resolvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      },
+      // Tickets from yesterday
+      {
+        subject: "Problemas de conectividade com banco de dados",
+        description: "Timeouts frequentes nas consultas ao banco de dados principal",
+        status: "resolved",
+        priority: "high",
+        category: "bug",
+        createdBy: adminUser.id,
+        assignedTo: user1.id,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
+        resolvedAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
+      },
+      // Current tickets (today)
       {
         subject: "Problemas de autenticação no aplicativo móvel",
         description: "Usuários estão enfrentando falhas de login no aplicativo móvel. O problema parece estar relacionado à integração OAuth.",
@@ -119,16 +196,15 @@ export class MemStorage implements IStorage {
         updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
       },
       {
-        subject: "Notificações por email não estão funcionando corretamente",
-        description: "Notificações por email não estão sendo enviadas para atualizações de tickets. A configuração SMTP pode precisar de revisão.",
-        status: "resolved",
+        subject: "Configuração de monitoramento avançado",
+        description: "Implementar sistema de alertas proativo para identificar problemas antes que afetem os usuários",
+        status: "open",
         priority: "low",
-        category: "bug",
-        createdBy: adminUser.id,
-        assignedTo: user3.id,
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        resolvedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        category: "improvement",
+        createdBy: user3.id,
+        assignedTo: user2.id,
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+        updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
       },
     ];
 
@@ -367,16 +443,19 @@ export class MemStorage implements IStorage {
       const dayStart = startOfDay(date);
       const dayEnd = endOfDay(date);
 
-      const created = allTickets.filter(t => 
-        t.createdAt >= dayStart && t.createdAt <= dayEnd
-      ).length;
+      const created = allTickets.filter(t => {
+        const ticketDate = new Date(t.createdAt);
+        return ticketDate >= dayStart && ticketDate <= dayEnd;
+      }).length;
 
-      const resolved = allTickets.filter(t => 
-        t.resolvedAt && t.resolvedAt >= dayStart && t.resolvedAt <= dayEnd
-      ).length;
+      const resolved = allTickets.filter(t => {
+        if (!t.resolvedAt) return false;
+        const resolvedDate = new Date(t.resolvedAt);
+        return resolvedDate >= dayStart && resolvedDate <= dayEnd;
+      }).length;
 
       trendData.push({
-        date: format(date, 'MMM dd'),
+        date: format(date, 'dd/MM'),
         created,
         resolved,
       });

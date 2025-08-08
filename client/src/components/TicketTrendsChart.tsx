@@ -19,10 +19,10 @@ export default function TicketTrendsChart({ days }: TicketTrendsChartProps) {
     );
   }
 
-  if (!trendData) {
+  if (!trendData || trendData.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center">
-        <div className="text-gray-50">No data available</div>
+        <div className="text-gray-500">No data available</div>
       </div>
     );
   }
