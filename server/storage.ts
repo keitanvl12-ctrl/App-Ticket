@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { users, tickets, comments, attachments, departments } from "@shared/schema";
-import { eq, desc, count, sql, and, gte } from "drizzle-orm";
+import { eq, desc, count, sql, and, gte, lte } from "drizzle-orm";
 import {
   type User,
   type InsertUser,
@@ -171,6 +171,34 @@ export class DatabaseStorage implements IStorage {
       ];
 
       await db.insert(tickets).values(demoTickets);
+
+      // Adicionar tickets mais recentes para o gráfico de tendências
+      const recentTickets = [];
+      for (let i = 0; i < 7; i++) {
+        const ticketDate = subDays(now, i);
+        
+        // Criar 2-4 tickets por dia nos últimos 7 dias
+        const ticketsPerDay = Math.floor(Math.random() * 3) + 2;
+        
+        for (let j = 0; j < ticketsPerDay; j++) {
+          recentTickets.push({
+            ticketNumber: `TICK-${nanoid(6)}`,
+            subject: `Ticket ${i}-${j} - Problema exemplo`,
+            description: `Descrição do ticket criado em ${format(ticketDate, "dd/MM/yyyy")}`,
+            status: Math.random() > 0.6 ? "resolved" : "open",
+            priority: ["low", "medium", "high", "critical"][Math.floor(Math.random() * 4)],
+            category: ["bug", "feature", "support"][Math.floor(Math.random() * 3)],
+            departmentId: null,
+            createdBy: [adminUser.id, supervisor.id, colaborador1.id, colaborador2.id][Math.floor(Math.random() * 4)],
+            assignedTo: [adminUser.id, supervisor.id][Math.floor(Math.random() * 2)],
+            createdAt: ticketDate,
+            updatedAt: ticketDate,
+            resolvedAt: Math.random() > 0.6 ? subDays(ticketDate, -Math.floor(Math.random() * 2)) : null,
+          });
+        }
+      }
+      
+      await db.insert(tickets).values(recentTickets);
     } catch (error) {
       console.error("Error initializing demo data:", error);
     }
@@ -444,7 +472,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             gte(tickets.createdAt, startDate),
-            gte(endDate, tickets.createdAt)
+            lte(tickets.createdAt, endDate)
           )
         );
       const created = createdResult[0]?.count || 0;
@@ -456,7 +484,7 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(tickets.status, 'resolved'),
             gte(tickets.resolvedAt, startDate),
-            gte(endDate, tickets.resolvedAt)
+            lte(tickets.resolvedAt, endDate)
           )
         );
       const resolved = resolvedResult[0]?.count || 0;
@@ -480,7 +508,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(
         and(
           gte(tickets.createdAt, new Date(filters.startDate)),
-          gte(new Date(filters.endDate), tickets.createdAt)
+          lte(tickets.createdAt, new Date(filters.endDate))
         )
       );
     }
@@ -530,7 +558,7 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(tickets.departmentId, dept.id),
             gte(tickets.createdAt, new Date(startDate)),
-            gte(new Date(endDate), tickets.createdAt)
+            lte(tickets.createdAt, new Date(endDate))
           )
         );
 
@@ -542,7 +570,7 @@ export class DatabaseStorage implements IStorage {
             eq(tickets.departmentId, dept.id),
             eq(tickets.status, 'resolved'),
             gte(tickets.createdAt, new Date(startDate)),
-            gte(new Date(endDate), tickets.createdAt)
+            lte(tickets.createdAt, new Date(endDate))
           )
         );
 
@@ -581,7 +609,7 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(tickets.assignedTo, user.id),
             gte(tickets.createdAt, new Date(startDate)),
-            gte(new Date(endDate), tickets.createdAt)
+            lte(tickets.createdAt, new Date(endDate))
           )
         );
 
@@ -593,7 +621,7 @@ export class DatabaseStorage implements IStorage {
             eq(tickets.assignedTo, user.id),
             eq(tickets.status, 'resolved'),
             gte(tickets.createdAt, new Date(startDate)),
-            gte(new Date(endDate), tickets.createdAt)
+            lte(tickets.createdAt, new Date(endDate))
           )
         );
 
@@ -619,7 +647,7 @@ export class DatabaseStorage implements IStorage {
     let conditions = [
       eq(tickets.status, 'resolved'),
       gte(tickets.createdAt, new Date(startDate)),
-      gte(new Date(endDate), tickets.createdAt)
+      lte(tickets.createdAt, new Date(endDate))
     ];
 
     if (departmentId && departmentId !== 'all') {
