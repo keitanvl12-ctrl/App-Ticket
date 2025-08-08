@@ -1,12 +1,37 @@
-import React, { useState } from 'react';
-import Button from '@/components/Button';
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Icon from '@/components/AppIcon';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Calendar, 
+  Shield, 
+  Activity, 
+  BarChart3, 
+  Clock, 
+  CheckCircle, 
+  Star, 
+  Edit, 
+  Save, 
+  X, 
+  Settings,
+  Award,
+  Target,
+  TrendingUp,
+  Users,
+  Ticket
+} from 'lucide-react';
 
-interface User {
+interface UserType {
   id: string;
   name: string;
   email: string;
@@ -42,9 +67,10 @@ interface Role {
 interface UserDetailsPanelProps {
   userId: string;
   onClose: () => void;
-  user?: User;
+  user?: UserType;
   departments: Department[];
   roles: Role[];
+  isEditing?: boolean;
 }
 
 export default function UserDetailsPanel({
@@ -52,9 +78,10 @@ export default function UserDetailsPanel({
   onClose,
   user,
   departments,
-  roles
+  roles,
+  isEditing: initialIsEditing = false
 }: UserDetailsPanelProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialIsEditing);
   const [activeTab, setActiveTab] = useState('overview');
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -68,21 +95,25 @@ export default function UserDetailsPanel({
     manager: user?.manager || ''
   });
 
+  useEffect(() => {
+    setIsEditing(initialIsEditing);
+  }, [initialIsEditing]);
+
   if (!user) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md">
-          <div className="text-center">
-            <Icon name="AlertCircle" size={48} className="text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-              Usuário não encontrado
-            </h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-4">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Usuário não encontrado</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
               O usuário selecionado não pôde ser carregado.
             </p>
-            <Button onClick={onClose}>Fechar</Button>
-          </div>
-        </div>
+            <Button onClick={onClose} className="w-full">Fechar</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -90,7 +121,7 @@ export default function UserDetailsPanel({
   const handleSave = () => {
     console.log('Saving user data:', formData);
     setIsEditing(false);
-    // Implementar salvamento aqui
+    // TODO: Implementar salvamento real
   };
 
   const handleCancel = () => {
@@ -119,7 +150,13 @@ export default function UserDetailsPanel({
   };
 
   const getRoleName = (roleId: string) => {
-    return roles.find(r => r.id === roleId)?.name || roleId;
+    switch (roleId) {
+      case 'admin': return 'Administrador';
+      case 'manager': return 'Gerente';
+      case 'operator': return 'Operador';
+      case 'user': return 'Usuário';
+      default: return roleId;
+    }
   };
 
   const getStatusLabel = (status: string) => {
@@ -133,10 +170,20 @@ export default function UserDetailsPanel({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-600';
-      case 'inactive': return 'text-red-600';
-      case 'pending': return 'text-yellow-600';
-      default: return 'text-slate-600';
+      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+      case 'inactive': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      default: return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
+      case 'manager': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'operator': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+      case 'user': return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
+      default: return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
     }
   };
 
@@ -144,429 +191,604 @@ export default function UserDetailsPanel({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  // Mock activity data
+  // Mock performance data
+  const performanceData = [
+    { month: 'Jan', tickets: 45, satisfaction: 4.5 },
+    { month: 'Fev', tickets: 52, satisfaction: 4.7 },
+    { month: 'Mar', tickets: 48, satisfaction: 4.6 },
+    { month: 'Abr', tickets: 61, satisfaction: 4.8 },
+    { month: 'Mai', tickets: 55, satisfaction: 4.7 },
+    { month: 'Jun', tickets: 67, satisfaction: 4.9 }
+  ];
+
+  const weeklyActivity = [
+    { day: 'Seg', hours: 8.5 },
+    { day: 'Ter', hours: 7.2 },
+    { day: 'Qua', hours: 8.8 },
+    { day: 'Qui', hours: 6.5 },
+    { day: 'Sex', hours: 8.0 },
+    { day: 'Sáb', hours: 2.5 },
+    { day: 'Dom', hours: 0 }
+  ];
+
   const recentActivity = [
     { 
       id: '1', 
       type: 'ticket_resolved', 
-      description: 'Resolveu o ticket #1234 - Problema de rede', 
-      timestamp: '2024-01-15T14:30:00Z' 
+      icon: CheckCircle,
+      title: 'Ticket #1234 resolvido', 
+      description: 'Problema de rede solucionado com sucesso', 
+      timestamp: '2024-01-15T14:30:00Z',
+      color: 'text-green-600'
     },
     { 
       id: '2', 
       type: 'login', 
-      description: 'Fez login no sistema', 
-      timestamp: '2024-01-15T09:00:00Z' 
+      icon: Activity,
+      title: 'Login realizado', 
+      description: 'Acesso ao sistema às 09:00', 
+      timestamp: '2024-01-15T09:00:00Z',
+      color: 'text-blue-600'
     },
     { 
       id: '3', 
       type: 'ticket_assigned', 
-      description: 'Recebeu o ticket #1235 - Solicitação de acesso', 
-      timestamp: '2024-01-14T16:45:00Z' 
+      icon: Users,
+      title: 'Novo ticket atribuído', 
+      description: 'Ticket #1235 - Solicitação de acesso', 
+      timestamp: '2024-01-14T16:45:00Z',
+      color: 'text-orange-600'
     },
     { 
       id: '4', 
       type: 'profile_updated', 
-      description: 'Atualizou informações do perfil', 
-      timestamp: '2024-01-14T11:20:00Z' 
+      icon: Settings,
+      title: 'Perfil atualizado', 
+      description: 'Informações de contato modificadas', 
+      timestamp: '2024-01-14T11:20:00Z',
+      color: 'text-purple-600'
     }
   ];
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'ticket_resolved': return 'CheckCircle';
-      case 'ticket_assigned': return 'UserPlus';
-      case 'login': return 'LogIn';
-      case 'profile_updated': return 'Edit';
-      default: return 'Activity';
-    }
-  };
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'ticket_resolved': return 'text-green-600';
-      case 'ticket_assigned': return 'text-blue-600';
-      case 'login': return 'text-slate-600';
-      case 'profile_updated': return 'text-orange-600';
-      default: return 'text-slate-600';
-    }
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  {getInitials(user.name)}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden">
+        {/* Header com Gradiente */}
+        <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-20 h-20 rounded-full object-cover border-4 border-white/20"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-2xl font-bold border-4 border-white/20">
+                    {getInitials(user.name)}
+                  </div>
+                )}
+                <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white ${
+                  user.status === 'active' ? 'bg-green-500' : 
+                  user.status === 'inactive' ? 'bg-red-500' : 'bg-yellow-500'
+                }`}></div>
+              </div>
+              
+              <div className="text-white">
+                <h1 className="text-3xl font-bold">{user.name}</h1>
+                <div className="flex items-center space-x-4 mt-2">
+                  <Badge className={`${getRoleColor(user.role)} text-sm font-medium`}>
+                    <Shield className="w-3 h-3 mr-1" />
+                    {getRoleName(user.role)}
+                  </Badge>
+                  <Badge className={`${getStatusColor(user.status)} text-sm font-medium`}>
+                    {getStatusLabel(user.status)}
+                  </Badge>
                 </div>
-              )}
-              <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-white dark:border-slate-800 ${
-                user.status === 'active' ? 'bg-green-500' : 
-                user.status === 'inactive' ? 'bg-red-500' : 'bg-yellow-500'
-              }`}></div>
-            </div>
-            
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                {user.name}
-              </h2>
-              <div className="flex items-center space-x-3 mt-1">
-                <span className="text-slate-600 dark:text-slate-400">
-                  {getRoleName(user.role)} • {user.department}
-                </span>
-                <span className={`text-sm ${getStatusColor(user.status)}`}>
-                  {getStatusLabel(user.status)}
-                </span>
+                <p className="text-white/80 mt-1 flex items-center">
+                  <Mail className="w-4 h-4 mr-2" />
+                  {user.email}
+                </p>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center space-x-3">
-            {!isEditing ? (
+            <div className="flex items-center space-x-3">
+              {!isEditing ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsEditing(true)}
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={handleCancel}
+                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    className="bg-green-600 hover:bg-green-700 text-white border-0"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar
+                  </Button>
+                </>
+              )}
+              
               <Button
-                variant="outline"
-                onClick={() => setIsEditing(true)}
-                iconName="Edit"
-                iconPosition="left"
+                variant="ghost"
+                onClick={onClose}
+                className="text-white hover:bg-white/20"
+                size="sm"
               >
-                Editar
+                <X className="w-5 h-5" />
               </Button>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  iconName="X"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  iconName="Save"
-                  iconPosition="left"
-                >
-                  Salvar
-                </Button>
-              </>
-            )}
-            
-            <Button
-              variant="ghost"
-              onClick={onClose}
-              iconName="X"
-            />
+            </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[calc(90vh-8rem)] overflow-y-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-              <TabsTrigger value="permissions">Permissões</TabsTrigger>
-              <TabsTrigger value="activity">Atividade</TabsTrigger>
-              <TabsTrigger value="performance">Performance</TabsTrigger>
-            </TabsList>
+        <div className="max-h-[calc(95vh-8rem)] overflow-y-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+              <TabsList className="grid w-full grid-cols-4 bg-transparent">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
+                  <User className="w-4 h-4 mr-2" />
+                  Informações
+                </TabsTrigger>
+                <TabsTrigger value="performance" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Performance
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Atividade
+                </TabsTrigger>
+                <TabsTrigger value="permissions" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Permissões
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value="overview" className="mt-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    Informações Pessoais
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                        Nome Completo
-                      </label>
-                      {isEditing ? (
-                        <Input
-                          value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        />
-                      ) : (
-                        <p className="text-slate-600 dark:text-slate-400">{user.name}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                        Email
-                      </label>
-                      {isEditing ? (
-                        <Input
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        />
-                      ) : (
-                        <p className="text-slate-600 dark:text-slate-400">{user.email}</p>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                          Telefone
-                        </label>
-                        {isEditing ? (
-                          <Input
-                            value={formData.phone}
-                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                          />
-                        ) : (
-                          <p className="text-slate-600 dark:text-slate-400">{user.phone || 'Não informado'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                          Ramal
-                        </label>
-                        {isEditing ? (
-                          <Input
-                            value={formData.extension}
-                            onChange={(e) => setFormData({...formData, extension: e.target.value})}
-                          />
-                        ) : (
-                          <p className="text-slate-600 dark:text-slate-400">{user.extension || 'Não informado'}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Professional Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    Informações Profissionais
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                        Função
-                      </label>
-                      {isEditing ? (
-                        <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {roles.map(role => (
-                              <SelectItem key={role.id} value={role.id}>
-                                {role.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <p className="text-slate-600 dark:text-slate-400">{getRoleName(user.role)}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                        Departamento
-                      </label>
-                      {isEditing ? (
-                        <Select value={formData.department} onValueChange={(value) => setFormData({...formData, department: value})}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {departments.map(dept => (
-                              <SelectItem key={dept.id} value={dept.name}>
-                                {dept.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <p className="text-slate-600 dark:text-slate-400">{user.department}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                        Local
-                      </label>
-                      {isEditing ? (
-                        <Input
-                          value={formData.location}
-                          onChange={(e) => setFormData({...formData, location: e.target.value})}
-                        />
-                      ) : (
-                        <p className="text-slate-600 dark:text-slate-400">{user.location || 'Não informado'}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
-                        Gerente
-                      </label>
-                      <p className="text-slate-600 dark:text-slate-400">{user.manager || 'Não informado'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Status */}
-              {isEditing && (
-                <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                    Status da Conta
-                  </h3>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        checked={formData.status === 'active'}
-                        onCheckedChange={(checked) => setFormData({...formData, status: checked ? 'active' : 'inactive'})}
-                      />
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        Conta ativa
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* System Information */}
-              <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                  Informações do Sistema
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-slate-600 dark:text-slate-400">Criado em:</span>
-                    <p className="text-slate-900 dark:text-slate-100">{formatDate(user.createdAt)}</p>
-                  </div>
-                  <div>
-                    <span className="text-slate-600 dark:text-slate-400">Último login:</span>
-                    <p className="text-slate-900 dark:text-slate-100">{formatDate(user.lastLogin)}</p>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="permissions" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Permissões do Usuário
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {user.permissions?.map((permission, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <div className="p-6">
+              <TabsContent value="overview" className="space-y-6">
+                {/* Estatísticas Rápidas */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
                       <div className="flex items-center space-x-3">
-                        <Icon name="Shield" size={16} className="text-green-600 dark:text-green-400" />
-                        <span className="text-sm text-slate-900 dark:text-slate-100">
-                          {permission.replace('.', ' - ').replace('_', ' ').toUpperCase()}
-                        </span>
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                          <Ticket className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{user.ticketsAssigned || 0}</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Tickets Ativos</p>
+                        </div>
                       </div>
-                      <Icon name="CheckCircle" size={16} className="text-green-600 dark:text-green-400" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
+                    </CardContent>
+                  </Card>
 
-            <TabsContent value="activity" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Atividade Recente
-                </h3>
-                
-                <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                      <Icon 
-                        name={getActivityIcon(activity.type) as any} 
-                        size={20} 
-                        className={getActivityColor(activity.type)} 
-                      />
-                      <div className="flex-1">
-                        <p className="text-sm text-slate-900 dark:text-slate-100">
-                          {activity.description}
-                        </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                          {formatDate(activity.timestamp)}
-                        </p>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{user.ticketsResolved || 0}</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Resolvidos</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
+                    </CardContent>
+                  </Card>
 
-            <TabsContent value="performance" className="mt-6">
-              {user.role === 'operator' ? (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    Métricas de Performance
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                        {user.ticketsAssigned || 0}
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{user.averageResolutionTime || '0h'}</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Tempo Médio</p>
+                        </div>
                       </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        Tickets Ativos
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex items-center justify-center">
+                          <Star className="w-5 h-5 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">{user.satisfactionRating || '0.0'}</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Satisfação</p>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                        {user.ticketsResolved || 0}
-                      </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        Tickets Resolvidos
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                        {user.averageResolutionTime || '-'}
-                      </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        Tempo Médio
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                        {user.satisfactionRating?.toFixed(1) || '-'}
-                      </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        Satisfação
-                      </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Icon name="BarChart3" size={48} className="text-slate-400 dark:text-slate-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                    Métricas não disponíveis
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    As métricas de performance estão disponíveis apenas para operadores.
-                  </p>
+
+                {/* Informações Pessoais e Profissionais */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <User className="w-5 h-5" />
+                        <span>Informações Pessoais</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Nome Completo
+                        </label>
+                        {isEditing ? (
+                          <Input
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          />
+                        ) : (
+                          <p className="text-slate-600 dark:text-slate-400">{user.name}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Email
+                        </label>
+                        {isEditing ? (
+                          <Input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          />
+                        ) : (
+                          <p className="text-slate-600 dark:text-slate-400">{user.email}</p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                            Telefone
+                          </label>
+                          {isEditing ? (
+                            <Input
+                              value={formData.phone}
+                              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                            />
+                          ) : (
+                            <p className="text-slate-600 dark:text-slate-400">{user.phone || 'Não informado'}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                            Ramal
+                          </label>
+                          {isEditing ? (
+                            <Input
+                              value={formData.extension}
+                              onChange={(e) => setFormData({...formData, extension: e.target.value})}
+                            />
+                          ) : (
+                            <p className="text-slate-600 dark:text-slate-400">{user.extension || 'Não informado'}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Localização
+                        </label>
+                        {isEditing ? (
+                          <Input
+                            value={formData.location}
+                            onChange={(e) => setFormData({...formData, location: e.target.value})}
+                          />
+                        ) : (
+                          <div className="flex items-center text-slate-600 dark:text-slate-400">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            {user.location || 'Não informado'}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Shield className="w-5 h-5" />
+                        <span>Informações Profissionais</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Função
+                        </label>
+                        {isEditing ? (
+                          <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roles.map(role => (
+                                <SelectItem key={role.id} value={role.id}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge className={`${getRoleColor(user.role)} text-sm`}>
+                            {getRoleName(user.role)}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Departamento
+                        </label>
+                        {isEditing ? (
+                          <Select value={formData.department} onValueChange={(value) => setFormData({...formData, department: value})}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {departments.map(dept => (
+                                <SelectItem key={dept.id} value={dept.name}>
+                                  {dept.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <p className="text-slate-600 dark:text-slate-400">{user.department}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Status
+                        </label>
+                        {isEditing ? (
+                          <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Ativo</SelectItem>
+                              <SelectItem value="inactive">Inativo</SelectItem>
+                              <SelectItem value="pending">Pendente</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge className={`${getStatusColor(user.status)} text-sm`}>
+                            {getStatusLabel(user.status)}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Gerente
+                        </label>
+                        <p className="text-slate-600 dark:text-slate-400">{user.manager || 'Não informado'}</p>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Membro desde
+                        </label>
+                        <div className="flex items-center text-slate-600 dark:text-slate-400">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          {formatDate(user.createdAt)}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-slate-900 dark:text-slate-100 block mb-2">
+                          Último acesso
+                        </label>
+                        <div className="flex items-center text-slate-600 dark:text-slate-400">
+                          <Activity className="w-4 h-4 mr-2" />
+                          {formatDate(user.lastLogin)}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              )}
-            </TabsContent>
+              </TabsContent>
+
+              <TabsContent value="performance" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <TrendingUp className="w-5 h-5" />
+                        <span>Performance Mensal</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={performanceData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="tickets" stroke="#3b82f6" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5" />
+                        <span>Atividade Semanal</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={weeklyActivity}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="day" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="hours" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Métricas de Performance */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                          <Target className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Meta Mensal</p>
+                          <p className="text-2xl font-bold">85%</p>
+                          <p className="text-sm text-green-600">+5% vs mês anterior</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                          <Award className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Qualidade</p>
+                          <p className="text-2xl font-bold">4.8/5</p>
+                          <p className="text-sm text-green-600">Excelente</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+                          <Clock className="w-6 h-6 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Eficiência</p>
+                          <p className="text-2xl font-bold">92%</p>
+                          <p className="text-sm text-green-600">Acima da média</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="activity" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Activity className="w-5 h-5" />
+                      <span>Atividade Recente</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {recentActivity.map((activity) => {
+                        const IconComponent = activity.icon;
+                        return (
+                          <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800`}>
+                              <IconComponent className={`w-5 h-5 ${activity.color}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                                {activity.title}
+                              </h4>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                {activity.description}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                                {formatDate(activity.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="permissions" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Shield className="w-5 h-5" />
+                      <span>Permissões do Sistema</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">Gerenciar Usuários</h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Criar, editar e excluir usuários</p>
+                        </div>
+                        <Switch checked={user.permissions?.includes('users.write')} />
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">Visualizar Relatórios</h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Acesso aos relatórios do sistema</p>
+                        </div>
+                        <Switch checked={user.permissions?.includes('reports.read')} />
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">Gerenciar Tickets</h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Criar e editar tickets</p>
+                        </div>
+                        <Switch checked={user.permissions?.includes('tickets.write')} />
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">Configurações do Sistema</h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Acesso às configurações administrativas</p>
+                        </div>
+                        <Switch checked={user.permissions?.includes('admin.settings')} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
       </div>

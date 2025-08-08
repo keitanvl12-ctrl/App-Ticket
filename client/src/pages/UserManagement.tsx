@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 export default function UserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     role: '',
@@ -137,6 +138,12 @@ export default function UserManagement() {
   ];
 
   const handleUserSelect = (userId: string) => {
+    setSelectedUser(userId);
+    setEditingUser(null);
+  };
+
+  const handleUserEdit = (userId: string) => {
+    setEditingUser(userId);
     setSelectedUser(userId);
   };
 
@@ -450,6 +457,7 @@ export default function UserManagement() {
             selectedUsers={selectedUsers}
             onUserSelect={handleUserSelect}
             onUserMultiSelect={handleUserMultiSelect}
+            onUserEdit={handleUserEdit}
             viewMode={viewMode}
             departments={departments}
             roles={roles}
@@ -461,10 +469,14 @@ export default function UserManagement() {
       {selectedUser && (
         <UserDetailsPanel
           userId={selectedUser}
-          onClose={() => setSelectedUser(null)}
+          onClose={() => {
+            setSelectedUser(null);
+            setEditingUser(null);
+          }}
           user={users.find(u => u.id === selectedUser)}
           departments={departments}
           roles={roles}
+          isEditing={editingUser === selectedUser}
         />
       )}
 

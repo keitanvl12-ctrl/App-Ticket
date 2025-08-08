@@ -42,6 +42,7 @@ interface UserDataGridProps {
   selectedUsers: string[];
   onUserSelect: (userId: string) => void;
   onUserMultiSelect: (userIds: string[]) => void;
+  onUserEdit: (userId: string) => void;
   viewMode: 'grid' | 'list';
   departments: Department[];
   roles: Role[];
@@ -52,6 +53,7 @@ export default function UserDataGrid({
   selectedUsers,
   onUserSelect,
   onUserMultiSelect,
+  onUserEdit,
   viewMode,
   departments,
   roles
@@ -259,22 +261,20 @@ export default function UserDataGrid({
               </span>
             </div>
             
-            <div className="col-span-1 flex items-center space-x-2">
+            <div className="col-span-1 flex items-center space-x-1">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => onUserSelect(user.id)}
                 iconName="Eye"
+                title="Visualizar usuário"
               />
               <Button
                 size="sm"
                 variant="ghost"
+                onClick={() => onUserEdit(user.id)}
                 iconName="Edit"
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                iconName="MoreHorizontal"
+                title="Editar usuário"
               />
             </div>
           </div>
