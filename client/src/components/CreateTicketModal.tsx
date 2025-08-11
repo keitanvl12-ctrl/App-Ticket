@@ -324,11 +324,42 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
               />
 
               {/* DEBUG - Sempre mostrar para testar */}
-              <div className="mt-4 p-4 border-2 border-red-500 bg-red-50 dark:bg-red-900/20">
-                <h4 className="text-red-700 font-bold">DEBUG INFO</h4>
-                <p>Selected Category ID: {selectedCategoryId || "NONE"}</p>
-                <p>Custom Fields Count: {customFields?.length || 0}</p>
-                <p>Custom Fields: {JSON.stringify(customFields, null, 2)}</p>
+              <div className="mt-4 p-4 border-2 border-red-500 bg-red-50 dark:bg-red-900/20" style={{ backgroundColor: 'red', color: 'white', fontSize: '16px', fontWeight: 'bold' }}>
+                <h4 className="text-red-700 font-bold" style={{ color: 'white' }}>🚨 DEBUG INFO - TESTE 🚨</h4>
+                <p style={{ color: 'white' }}>Selected Department: {selectedDepartment || "NONE"}</p>
+                <p style={{ color: 'white' }}>Selected Category ID: {selectedCategoryId || "NONE"}</p>
+                <p style={{ color: 'white' }}>Custom Fields Count: {customFields?.length || 0}</p>
+                <p style={{ color: 'white', fontSize: '12px' }}>Custom Fields: {JSON.stringify(customFields, null, 2)}</p>
+                <p style={{ color: 'yellow', fontWeight: 'bold' }}>Modal está funcionando: SIM</p>
+              </div>
+
+              {/* TESTE - Força mostrar campos */}
+              <div className="mt-4 p-4 bg-green-100 border-2 border-green-500">
+                <h4 className="text-green-700 font-bold">TESTE FORÇADO - Campos de Bug de Sistema:</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">Passos para Reproduzir *</Label>
+                    <Textarea placeholder="Descreva os passos detalhados para reproduzir o bug" rows={3} />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Versão do Sistema *</Label>
+                    <Input placeholder="Ex: v2.1.0" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Navegador</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o navegador" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="chrome">Chrome</SelectItem>
+                        <SelectItem value="firefox">Firefox</SelectItem>
+                        <SelectItem value="safari">Safari</SelectItem>
+                        <SelectItem value="edge">Edge</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
               {/* Campos Customizados - Aparece quando categoria é selecionada */}
