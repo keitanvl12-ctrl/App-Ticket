@@ -10,7 +10,8 @@ import {
   LogOut,
   User,
   Bell,
-  Shield
+  Shield,
+  Building2
 } from "lucide-react";
 import { getCurrentUser } from '@/lib/userService';
 
@@ -24,10 +25,12 @@ const getNavigationItems = (userRole: string) => {
     { path: "/config", icon: Settings, label: "Status e Prioridades" },
   ];
 
-  // Adicionar itens de configuração apenas para administradores
+  // Adicionar seção de administração apenas para administradores
   if (userRole === 'administrador') {
-    baseItems.push({ path: "/hierarchy", icon: Shield, label: "Configurar Hierarquias" });
-    baseItems.push({ path: "/roles", icon: Shield, label: "Configurar Funções" });
+    baseItems.push({ path: "/departments", icon: Building2, label: "Departamentos" });
+    baseItems.push({ path: "/users", icon: Users, label: "Usuários" });
+    baseItems.push({ path: "/hierarchy", icon: Shield, label: "Hierarquias" });
+    baseItems.push({ path: "/roles", icon: Shield, label: "Funções" });
   }
 
   baseItems.push({ path: "/settings", icon: Settings, label: "Configurações" });

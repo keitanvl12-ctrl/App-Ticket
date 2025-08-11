@@ -112,17 +112,13 @@ export default function RolesManagement() {
     refetchInterval: 30000,
   }) as { data: any[] };
 
-  const updateUserCount = () => {
+  useEffect(() => {
     setRoles(prevRoles => 
       prevRoles.map(role => ({
         ...role,
         userCount: users.filter((user: any) => user.role === role.id).length
       }))
     );
-  };
-
-  useEffect(() => {
-    updateUserCount();
   }, [users]);
 
   const handleCreateRole = async () => {

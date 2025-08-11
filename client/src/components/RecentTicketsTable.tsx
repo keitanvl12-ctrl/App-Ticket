@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Edit, MoreHorizontal, User, Calendar, AlertTriangle, Clock, CheckCircle2, Circle, Timer, ArrowRight } from "lucide-react";
+import { Eye, Edit, MoreHorizontal, User, Calendar, AlertTriangle, Clock, CheckCircle2, Circle, Timer, ArrowRight, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 import type { TicketWithDetails } from "@shared/schema";
 
@@ -35,6 +45,45 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
   const { data: tickets = [], isLoading } = useQuery<TicketWithDetails[]>({
     queryKey: ["/api/tickets"],
   });
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mutation para deletar ticket
+  const deleteTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      const response = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Falha ao excluir ticket');
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Ticket excluído",
+        description: "O ticket foi excluído com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir ticket:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o ticket. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteTicket = (ticketId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.')) {
+      deleteTicketMutation.mutate(ticketId);
+    }
+  };
 
   // Buscar configurações dinâmicas
   const { data: statusConfigs } = useQuery<any[]>({
@@ -74,8 +123,8 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
     return config?.name || priority;
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -225,14 +274,36 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-600 hover:text-slate-900"
-                        title="Mais opções"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-slate-600 hover:text-slate-900"
+                            title="Mais opções"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Visualizar ticket
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar ticket
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                            onClick={() => handleDeleteTicket(ticket.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir ticket
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

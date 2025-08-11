@@ -84,11 +84,7 @@ function Router() {
             <Categories />
           </SupervisorOnly>
         </Route>
-        <Route path="/forms">
-          <SupervisorOnly>
-            <TicketForms />
-          </SupervisorOnly>
-        </Route>
+
         <Route path="/fields">
           <SupervisorOnly>
             <CustomFieldsManager />
