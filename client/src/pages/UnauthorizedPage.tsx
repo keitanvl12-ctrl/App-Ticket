@@ -2,14 +2,12 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldX, ArrowLeft } from 'lucide-react';
+import { ShieldX } from 'lucide-react';
 
 const UnauthorizedPage: React.FC = () => {
   const [, setLocation] = useLocation();
 
-  const goBack = () => {
-    window.history.back();
-  };
+
 
   const goHome = () => {
     setLocation('/');
@@ -35,19 +33,10 @@ const UnauthorizedPage: React.FC = () => {
             Entre em contato com o administrador do sistema se você acredita que deveria ter acesso a esta funcionalidade.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              variant="outline" 
-              onClick={goBack}
-              className="flex items-center justify-center"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            
+          <div className="flex justify-center">
             <Button 
               onClick={goHome}
-              className="bg-[#2c4257] hover:bg-[#1e2e3a] text-white"
+              className="bg-[#2c4257] hover:bg-[#1e2e3a] text-white w-full"
             >
               Ir para Dashboard
             </Button>
