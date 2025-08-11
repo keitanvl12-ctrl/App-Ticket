@@ -777,9 +777,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePriorityConfig(id: string, updates: Partial<PriorityConfig>): Promise<PriorityConfig | undefined> {
+    // Remove campos de timestamp para evitar conflitos
+    const { createdAt, updatedAt, ...updateData } = updates;
+    
     const [result] = await db
       .update(priorityConfig)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: sql`NOW()` })
       .where(eq(priorityConfig.id, id))
       .returning();
     return result;

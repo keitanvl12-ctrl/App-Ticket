@@ -68,6 +68,41 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   // Usuário atual (assumindo que é o primeiro admin para demo)
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
+  // Calcular SLA baseado na configuração de prioridade
+  const calculateSLA = () => {
+    const priorityConfig = priorityConfigs?.find(p => p.value === editedTicket.priority);
+    if (!priorityConfig) return { percentage: 0, timeRemaining: 0, isViolation: false };
+
+    const createdAt = new Date(editedTicket.createdAt);
+    const now = new Date();
+    const elapsed = now.getTime() - createdAt.getTime();
+    const slaTarget = priorityConfig.slaHours * 60 * 60 * 1000; // Convert hours to milliseconds
+    
+    const percentage = Math.min((elapsed / slaTarget) * 100, 100);
+    const timeRemaining = slaTarget - elapsed;
+    const isViolation = timeRemaining < 0;
+
+    return { 
+      percentage: Math.max(percentage, 0), 
+      timeRemaining: Math.abs(timeRemaining), 
+      isViolation,
+      slaHours: priorityConfig.slaHours
+    };
+  };
+
+  const slaData = calculateSLA();
+
+  // Função para formatar tempo restante
+  const formatTimeRemaining = (ms: number, isViolation: boolean) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (isViolation) {
+      return `Vencido há ${hours}h ${minutes}m`;
+    }
+    return `${hours}h ${minutes}m restantes`;
+  };
+
   // Mutation para criar comentário
   const createCommentMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -229,10 +264,10 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
           <DialogTitle className="flex items-center space-x-3">
             <span className="text-xl font-bold">Chamado {ticket.ticketNumber}</span>
             <Badge variant="outline" className={`${getStatusColor(editedTicket.status)}`}>
-              {editedTicket.status}
+              {statusConfigs?.find(s => s.value === editedTicket.status)?.name || editedTicket.status}
             </Badge>
             <Badge variant="outline" className={`${getPriorityColor(editedTicket.priority)}`}>
-              {editedTicket.priority}
+              {priorityConfigs?.find(p => p.value === editedTicket.priority)?.name || editedTicket.priority}
             </Badge>
           </DialogTitle>
           <div className="flex items-center space-x-2">
@@ -386,17 +421,33 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium">Progresso</Label>
+                    <Label className="text-sm font-medium">SLA</Label>
                     <div className="mt-2 space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>Concluído</span>
-                        <span>{editedTicket.progress || 0}%</span>
+                        <span>Progresso SLA</span>
+                        <span className={slaData.isViolation ? 'text-red-600 font-semibold' : slaData.percentage > 80 ? 'text-yellow-600 font-semibold' : 'text-green-600'}>
+                          {Math.round(slaData.percentage)}%
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div 
-                          className="bg-blue-500 h-2 rounded-full transition-all"
-                          style={{ width: `${editedTicket.progress || 0}%` }}
+                          className={`h-2 rounded-full transition-all ${
+                            slaData.isViolation 
+                              ? 'bg-red-500 dark:bg-red-600' 
+                              : slaData.percentage > 80 
+                                ? 'bg-yellow-500 dark:bg-yellow-600'
+                                : 'bg-green-500 dark:bg-green-600'
+                          }`}
+                          style={{ width: `${Math.min(slaData.percentage, 100)}%` }}
                         />
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-500">
+                          SLA: {slaData.slaHours || 24}h
+                        </span>
+                        <span className={slaData.isViolation ? 'text-red-600 font-medium' : 'text-gray-500'}>
+                          {formatTimeRemaining(slaData.timeRemaining, slaData.isViolation)}
+                        </span>
                       </div>
                     </div>
                   </div>
