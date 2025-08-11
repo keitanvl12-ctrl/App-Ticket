@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Search, Bell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import CreateTicketPopup from "./CreateTicketPopup";
-// Forçar atualização do componente
+import SimpleTicketModal from "./SimpleTicketModal";
 
 interface TopBarProps {
   title: string;
@@ -61,7 +60,7 @@ export default function TopBar({ title, description }: TopBarProps) {
         </div>
       </header>
 
-      <CreateTicketPopup 
+      <SimpleTicketModal 
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
       />
