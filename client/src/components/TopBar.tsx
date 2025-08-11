@@ -3,6 +3,7 @@ import { Search, Bell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CreateTicketPopup from "./CreateTicketPopup";
+// Forçar atualização do componente
 
 interface TopBarProps {
   title: string;
