@@ -1,421 +1,296 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   User, 
   Mail, 
-  Phone, 
   Building, 
   Calendar, 
-  Edit, 
-  Save, 
-  Camera,
-  Clock,
+  Shield,
   Activity,
-  Award,
-  TrendingUp,
+  Ticket,
+  Clock,
   CheckCircle,
-  AlertCircle,
-  Users
+  AlertCircle
 } from 'lucide-react';
 
-export default function Profile() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [userData, setUserData] = useState({
-    name: '',
-    email: '',
-    phone: '(11) 99999-9999',
-    department: 'Tecnologia da Informação',
-    role: '',
-    joinDate: '15/03/2023',
-    extension: '1234'
-  });
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+}
 
-  // Load current user data
+interface TicketData {
+  id: string;
+  status: string;
+  assignedTo?: string;
+  requesterId?: string;
+  createdAt: string;
+}
+
+export default function Profile() {
+  const [currentUser, setCurrentUser] = useState<UserData | null>(null);
+
+  // Load current user from localStorage
   useEffect(() => {
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
+    const userData = localStorage.getItem('currentUser');
+    if (userData) {
       try {
-        const user = JSON.parse(currentUser);
-        setUserData(prev => ({
-          ...prev,
-          name: user.name || 'Usuário',
-          email: user.email || '',
-          role: user.role === 'admin' ? 'Administrador' : 
-                user.role === 'supervisor' ? 'Supervisor' : 
-                'Colaborador'
-        }));
+        const user = JSON.parse(userData);
+        setCurrentUser(user);
       } catch (error) {
         console.error('Error parsing current user:', error);
       }
     }
   }, []);
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // TODO: Implementar salvamento real
-    console.log('Salvando dados do perfil...');
+  // Fetch user's tickets for statistics
+  const { data: tickets = [] } = useQuery<TicketData[]>({
+    queryKey: ['/api/tickets'],
+    enabled: !!currentUser,
+  });
+
+  // Calculate statistics
+  const createdTickets = tickets.filter(ticket => ticket.requesterId === currentUser?.id);
+  const assignedTickets = tickets.filter(ticket => ticket.assignedTo === currentUser?.id);
+  const resolvedTickets = assignedTickets.filter(ticket => ticket.status === 'resolved');
+  const pendingTickets = assignedTickets.filter(ticket => 
+    ['open', 'in_progress'].includes(ticket.status)
+  );
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrador';
+      case 'supervisor':
+        return 'Supervisor';
+      case 'colaborador':
+        return 'Colaborador';
+      default:
+        return role;
+    }
   };
 
-  const stats = {
-    ticketsCreated: 124,
-    ticketsResolved: 98,
-    avgResolutionTime: '2.5h',
-    satisfaction: 4.8
+  const getRoleBadgeVariant = (role: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (role) {
+      case 'admin':
+        return 'destructive';
+      case 'supervisor':
+        return 'default';
+      case 'colaborador':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
   };
 
-  const recentActivity = [
-    { id: 1, action: 'Resolveu ticket #TK-2045', time: '2h atrás', type: 'resolved' },
-    { id: 2, action: 'Comentou no ticket #TK-2041', time: '4h atrás', type: 'comment' },
-    { id: 3, action: 'Criou ticket #TK-2046', time: '1 dia atrás', type: 'created' },
-    { id: 4, action: 'Atribuiu ticket #TK-2044', time: '2 dias atrás', type: 'assigned' }
-  ];
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  if (!currentUser) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 bg-background min-h-screen">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Avatar className="w-16 h-16">
-                <AvatarImage src="" />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xl font-semibold">
-                  {userData.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <Button 
-                size="icon" 
-                variant="outline" 
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-background"
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">{userData.name}</h1>
-              <p className="text-muted-foreground">{userData.role} • {userData.department}</p>
-              <div className="flex items-center space-x-4 mt-2">
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  Ativo
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  Desde {userData.joinDate}
-                </span>
-              </div>
-            </div>
-          </div>
-          <Button 
-            onClick={() => isEditing ? handleSave() : setIsEditing(!isEditing)}
-            className="bg-primary hover:bg-primary-hover"
-          >
-            {isEditing ? (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
-              </>
-            ) : (
-              <>
-                <Edit className="w-4 h-4 mr-2" />
-                Editar Perfil
-              </>
-            )}
-          </Button>
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <User className="w-6 h-6 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Perfil do Usuário
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Informações pessoais e estatísticas
+          </p>
         </div>
       </div>
 
-      <Tabs defaultValue="info" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="info" className="flex items-center space-x-2">
-            <User className="w-4 h-4" />
-            <span>Informações</span>
-          </TabsTrigger>
-          <TabsTrigger value="stats" className="flex items-center space-x-2">
-            <TrendingUp className="w-4 h-4" />
-            <span>Estatísticas</span>
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex items-center space-x-2">
-            <Activity className="w-4 h-4" />
-            <span>Atividade</span>
-          </TabsTrigger>
-          <TabsTrigger value="achievements" className="flex items-center space-x-2">
-            <Award className="w-4 h-4" />
-            <span>Conquistas</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Informações Pessoais */}
-        <TabsContent value="info" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5" />
-                  <span>Dados Pessoais</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">Nome</Label>
-                    <Input 
-                      id="firstName" 
-                      value={userData.name.split(' ')[0]}
-                      disabled={!isEditing}
-                      className={!isEditing ? "bg-muted" : ""}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Sobrenome</Label>
-                    <Input 
-                      id="lastName" 
-                      value={userData.name.split(' ').slice(1).join(' ')}
-                      disabled={!isEditing}
-                      className={!isEditing ? "bg-muted" : ""}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    value={userData.email}
-                    disabled={!isEditing}
-                    className={!isEditing ? "bg-muted" : ""}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input 
-                      id="phone" 
-                      value={userData.phone}
-                      disabled={!isEditing}
-                      className={!isEditing ? "bg-muted" : ""}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="extension">Ramal</Label>
-                    <Input 
-                      id="extension" 
-                      value={userData.extension}
-                      disabled={!isEditing}
-                      className={!isEditing ? "bg-muted" : ""}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="w-5 h-5" />
-                  <span>Informações Profissionais</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Departamento</Label>
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    {userData.department}
-                  </div>
-                </div>
-                <div>
-                  <Label>Cargo</Label>
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    {userData.role}
-                  </div>
-                </div>
-                <div>
-                  <Label>Data de Admissão</Label>
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    {userData.joinDate}
-                  </div>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label>Permissões</Label>
-                  <div className="space-y-2">
-                    <Badge variant="secondary">Gerenciar Usuários</Badge>
-                    <Badge variant="secondary">Visualizar Relatórios</Badge>
-                    <Badge variant="secondary">Configurar Sistema</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Estatísticas */}
-        <TabsContent value="stats" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tickets Criados</p>
-                    <p className="text-2xl font-bold">{stats.ticketsCreated}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tickets Resolvidos</p>
-                    <p className="text-2xl font-bold">{stats.ticketsResolved}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tempo Médio</p>
-                    <p className="text-2xl font-bold">{stats.avgResolutionTime}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Award className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Satisfação</p>
-                    <p className="text-2xl font-bold">{stats.satisfaction}/5</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* User Info Card */}
+        <div className="lg:col-span-1">
           <Card>
-            <CardHeader>
-              <CardTitle>Performance Mensal</CardTitle>
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Avatar className="w-20 h-20">
+                  <AvatarFallback className="bg-gradient-to-br from-[#2c4257] to-[#6b8fb0] text-white text-2xl font-semibold">
+                    {currentUser.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <CardTitle className="text-xl">{currentUser.name}</CardTitle>
+              <p className="text-muted-foreground">{currentUser.email}</p>
             </CardHeader>
-            <CardContent>
-              <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground">Gráfico de performance será exibido aqui</p>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Função:</span>
+                <Badge variant={getRoleBadgeVariant(currentUser.role)}>
+                  {getRoleLabel(currentUser.role)}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Status:</span>
+                {currentUser.isActive ? (
+                  <Badge variant="outline" className="text-green-600 border-green-200">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Ativo
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-red-600 border-red-200">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Inativo
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Membro desde:</span>
+                <span className="text-sm text-muted-foreground">
+                  {formatDate(currentUser.createdAt)}
+                </span>
+              </div>
+
+              <div className="pt-4 space-y-3">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Mail className="w-4 h-4" />
+                  <span>{currentUser.email}</span>
+                </div>
+                
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Shield className="w-4 h-4" />
+                  <span>Nível: {getRoleLabel(currentUser.role)}</span>
+                </div>
+                
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>Cadastrado em {formatDate(currentUser.createdAt)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-        {/* Atividade Recente */}
-        <TabsContent value="activity" className="space-y-6">
+        {/* Statistics Cards */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Ticket Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Chamados Criados</CardTitle>
+                <Ticket className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{createdTickets.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total de chamados abertos por você
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Chamados Atribuídos</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{assignedTickets.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Chamados sob sua responsabilidade
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Chamados Resolvidos</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{resolvedTickets.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Chamados finalizados com sucesso
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+                <Clock className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{pendingTickets.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Chamados aguardando resolução
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Performance Summary */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle className="flex items-center gap-2">
                 <Activity className="w-5 h-5" />
-                <span>Atividades Recentes</span>
+                Resumo de Performance
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.type === 'resolved' ? 'bg-green-500' :
-                      activity.type === 'comment' ? 'bg-blue-500' :
-                      activity.type === 'created' ? 'bg-orange-500' :
-                      'bg-purple-500'
-                    }`} />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
-                    </div>
-                    <div className={`p-1 rounded ${
-                      activity.type === 'resolved' ? 'bg-green-100 text-green-700' :
-                      activity.type === 'comment' ? 'bg-blue-100 text-blue-700' :
-                      activity.type === 'created' ? 'bg-orange-100 text-orange-700' :
-                      'bg-purple-100 text-purple-700'
-                    }`}>
-                      {activity.type === 'resolved' && <CheckCircle className="w-4 h-4" />}
-                      {activity.type === 'comment' && <Mail className="w-4 h-4" />}
-                      {activity.type === 'created' && <AlertCircle className="w-4 h-4" />}
-                      {activity.type === 'assigned' && <Users className="w-4 h-4" />}
-                    </div>
+            <CardContent className="space-y-4">
+              {assignedTickets.length > 0 && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Taxa de Resolução:</span>
+                    <span className="text-sm font-bold">
+                      {Math.round((resolvedTickets.length / assignedTickets.length) * 100)}%
+                    </span>
                   </div>
-                ))}
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full" 
+                      style={{ 
+                        width: `${(resolvedTickets.length / assignedTickets.length) * 100}%` 
+                      }}
+                    ></div>
+                  </div>
+                </>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {createdTickets.length + assignedTickets.length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Total de Interações</div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {currentUser.role === 'admin' ? 'Todas' : 'Limitadas'}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Permissões</div>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Conquistas */}
-        <TabsContent value="achievements" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border-l-4 border-l-yellow-500">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <Award className="w-6 h-6 text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Solucionador Rápido</h3>
-                    <p className="text-sm text-muted-foreground">Resolveu 50+ tickets em menos de 1h</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-blue-500">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Colaborador Ativo</h3>
-                    <p className="text-sm text-muted-foreground">Participou de 100+ discussões</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-green-500">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Satisfação Alta</h3>
-                    <p className="text-sm text-muted-foreground">Manteve rating 4.5+ por 3 meses</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

@@ -104,15 +104,20 @@ const useAuth = () => {
     if (!requiredRole) return true;
     
     const userRole = user.role || user.hierarchy || 'colaborador';
+    console.log('Verificando permissão:', { userRole, requiredRole, user });
     
     // Para usuários com role 'admin', tratar como 'administrador'
     const normalizedRole = userRole === 'admin' ? 'administrador' : userRole;
     
     if (requiredRole === 'administrador') {
-      return normalizedRole === 'administrador';
+      const hasPermission = normalizedRole === 'administrador';
+      console.log('Admin check:', { normalizedRole, hasPermission });
+      return hasPermission;
     }
     if (requiredRole === 'supervisor') {
-      return ['supervisor', 'administrador'].includes(normalizedRole);
+      const hasPermission = ['supervisor', 'administrador'].includes(normalizedRole);
+      console.log('Supervisor check:', { normalizedRole, hasPermission });
+      return hasPermission;
     }
     return true;
   };
