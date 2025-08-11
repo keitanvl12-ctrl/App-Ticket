@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, tickets, comments, attachments, departments, categories, slaRules } from "@shared/schema";
+import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig } from "@shared/schema";
 import { eq, desc, count, sql, and, gte, lte } from "drizzle-orm";
 import {
   type User,
@@ -13,10 +13,14 @@ import {
   type InsertAttachment,
   type Category,
   type InsertCategory,
-  type SLARule,
-  type InsertSLARule,
+  type SlaRule,
+  type InsertSlaRule,
   type Department,
   type InsertDepartment,
+  type StatusConfig,
+  type PriorityConfig,
+  type InsertStatusConfig,
+  type InsertPriorityConfig,
   type DashboardStats,
   type PriorityStats,
   type TrendData,
@@ -57,6 +61,12 @@ export interface IStorage {
   getAllDepartments(): Promise<Department[]>;
   createDepartment(department: InsertDepartment): Promise<Department>;
 
+  // Configuration
+  getAllStatusConfigs(): Promise<StatusConfig[]>;
+  getAllPriorityConfigs(): Promise<PriorityConfig[]>;
+  createStatusConfig(config: InsertStatusConfig): Promise<StatusConfig>;
+  createPriorityConfig(config: InsertPriorityConfig): Promise<PriorityConfig>;
+
   // Analytics
   getDashboardStats(filters?: any): Promise<DashboardStats>;
   getPriorityStats(filters?: any): Promise<PriorityStats>;
@@ -73,6 +83,7 @@ export class DatabaseStorage implements IStorage {
   constructor() {
     // Initialize with some demo data for development
     this.initializeDemoData();
+    this.initializeConfigurationData();
   }
 
   private async initializeDemoData() {
@@ -279,6 +290,96 @@ export class DatabaseStorage implements IStorage {
       await db.insert(tickets).values(recentTickets);
     } catch (error) {
       console.error("Error initializing demo data:", error);
+    }
+  }
+
+  private async initializeConfigurationData() {
+    try {
+      // Check if status configs already exist
+      const existingStatusConfigs = await db.select().from(statusConfig).limit(1);
+      if (existingStatusConfigs.length === 0) {
+        // Create default status configurations
+        await db.insert(statusConfig).values([
+          {
+            name: "Aberto",
+            value: "open",
+            color: "#3b82f6",
+            order: 1,
+            isActive: true,
+            isDefault: true,
+          },
+          {
+            name: "Em Andamento",
+            value: "in_progress",
+            color: "#f59e0b",
+            order: 2,
+            isActive: true,
+            isDefault: false,
+          },
+          {
+            name: "Resolvido",
+            value: "resolved",
+            color: "#10b981",
+            order: 3,
+            isActive: true,
+            isDefault: false,
+          },
+          {
+            name: "Fechado",
+            value: "closed",
+            color: "#6b7280",
+            order: 4,
+            isActive: true,
+            isDefault: false,
+          },
+        ]);
+      }
+
+      // Check if priority configs already exist
+      const existingPriorityConfigs = await db.select().from(priorityConfig).limit(1);
+      if (existingPriorityConfigs.length === 0) {
+        // Create default priority configurations
+        await db.insert(priorityConfig).values([
+          {
+            name: "Crítica",
+            value: "critical",
+            color: "#dc2626",
+            slaHours: 4,
+            order: 1,
+            isActive: true,
+            isDefault: false,
+          },
+          {
+            name: "Alta",
+            value: "high",
+            color: "#f59e0b",
+            slaHours: 24,
+            order: 2,
+            isActive: true,
+            isDefault: false,
+          },
+          {
+            name: "Média",
+            value: "medium",
+            color: "#3b82f6",
+            slaHours: 72,
+            order: 3,
+            isActive: true,
+            isDefault: true,
+          },
+          {
+            name: "Baixa",
+            value: "low",
+            color: "#10b981",
+            slaHours: 168,
+            order: 4,
+            isActive: true,
+            isDefault: false,
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error initializing configuration data:", error);
     }
   }
 
@@ -551,6 +652,25 @@ export class DatabaseStorage implements IStorage {
   async createCategory(category: InsertCategory): Promise<Category> {
     const [newCategory] = await db.insert(categories).values(category).returning();
     return newCategory;
+  }
+
+  // Configuration methods
+  async getAllStatusConfigs(): Promise<StatusConfig[]> {
+    return await db.select().from(statusConfig).where(eq(statusConfig.isActive, true)).orderBy(statusConfig.order);
+  }
+
+  async getAllPriorityConfigs(): Promise<PriorityConfig[]> {
+    return await db.select().from(priorityConfig).where(eq(priorityConfig.isActive, true)).orderBy(priorityConfig.order);
+  }
+
+  async createStatusConfig(config: InsertStatusConfig): Promise<StatusConfig> {
+    const [result] = await db.insert(statusConfig).values(config).returning();
+    return result;
+  }
+
+  async createPriorityConfig(config: InsertPriorityConfig): Promise<PriorityConfig> {
+    const [result] = await db.insert(priorityConfig).values(config).returning();
+    return result;
   }
 
   // Departments methods

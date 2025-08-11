@@ -301,6 +301,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Configuration routes
+  app.get("/api/config/status", async (req, res) => {
+    try {
+      const statusConfigs = await storage.getAllStatusConfigs();
+      res.json(statusConfigs);
+    } catch (error) {
+      console.error("Error fetching status configs:", error);
+      res.status(500).json({ message: "Failed to fetch status configurations" });
+    }
+  });
+
+  app.get("/api/config/priority", async (req, res) => {
+    try {
+      const priorityConfigs = await storage.getAllPriorityConfigs();
+      res.json(priorityConfigs);
+    } catch (error) {
+      console.error("Error fetching priority configs:", error);
+      res.status(500).json({ message: "Failed to fetch priority configurations" });
+    }
+  });
+
   // SLA endpoints
   app.get("/api/sla/rules", async (req, res) => {
     try {

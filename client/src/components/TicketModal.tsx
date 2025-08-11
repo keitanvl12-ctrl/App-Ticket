@@ -48,6 +48,17 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     enabled: isOpen,
   });
 
+  // Buscar configurações de status e prioridade
+  const { data: statusConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/status'],
+    enabled: isOpen,
+  });
+
+  const { data: priorityConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/priority'],
+    enabled: isOpen,
+  });
+
   // Usuário atual (assumindo que é o primeiro admin para demo)
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
@@ -139,22 +150,33 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   };
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Alta': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Média': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Baixa': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    const config = priorityConfigs?.find(p => p.value === priority || p.name === priority);
+    if (config?.color) {
+      // Convert hex to Tailwind classes
+      const colorMap: Record<string, string> = {
+        '#dc2626': 'bg-red-100 text-red-800 border-red-200',
+        '#f59e0b': 'bg-orange-100 text-orange-800 border-orange-200',
+        '#3b82f6': 'bg-blue-100 text-blue-800 border-blue-200',
+        '#10b981': 'bg-green-100 text-green-800 border-green-200',
+      };
+      return colorMap[config.color] || 'bg-gray-100 text-gray-800 border-gray-200';
     }
+    return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Atrasado': return 'border-red-200 text-red-800 bg-red-50';
-      case 'Atendendo': return 'border-green-200 text-green-800 bg-green-50';
-      case 'Pausado': return 'border-yellow-200 text-yellow-800 bg-yellow-50';
-      case 'Resolvido': return 'border-gray-200 text-gray-800 bg-gray-50';
-      default: return 'border-gray-200 text-gray-800 bg-gray-50';
+    const config = statusConfigs?.find(s => s.value === status || s.name === status);
+    if (config?.color) {
+      // Convert hex to Tailwind classes  
+      const colorMap: Record<string, string> = {
+        '#3b82f6': 'border-blue-200 text-blue-800 bg-blue-50',
+        '#f59e0b': 'border-yellow-200 text-yellow-800 bg-yellow-50',
+        '#10b981': 'border-green-200 text-green-800 bg-green-50',
+        '#6b7280': 'border-gray-200 text-gray-800 bg-gray-50',
+      };
+      return colorMap[config.color] || 'border-gray-200 text-gray-800 bg-gray-50';
     }
+    return 'border-gray-200 text-gray-800 bg-gray-50';
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -305,10 +327,11 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Atrasado">Atrasado</SelectItem>
-                            <SelectItem value="Atendendo">Atendendo</SelectItem>
-                            <SelectItem value="Pausado">Pausado</SelectItem>
-                            <SelectItem value="Resolvido">Resolvido</SelectItem>
+                            {statusConfigs?.map((status) => (
+                              <SelectItem key={status.id} value={status.value}>
+                                {status.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       ) : (
@@ -329,9 +352,11 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Alta">Alta</SelectItem>
-                            <SelectItem value="Média">Média</SelectItem>
-                            <SelectItem value="Baixa">Baixa</SelectItem>
+                            {priorityConfigs?.map((priority) => (
+                              <SelectItem key={priority.id} value={priority.value}>
+                                {priority.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       ) : (

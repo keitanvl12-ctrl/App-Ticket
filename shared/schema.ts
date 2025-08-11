@@ -73,6 +73,33 @@ export const categories = pgTable("categories", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Status Configuration table
+export const statusConfig = pgTable("status_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(), // Nome do status (ex: "Aberto", "Em Andamento", "Resolvido")
+  value: text("value").notNull().unique(), // Valor técnico (ex: "open", "in_progress", "resolved")
+  color: text("color").notNull().default("#6b7280"), // Cor hexadecimal para exibição
+  order: integer("order").notNull().default(0), // Ordem de exibição
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false), // Status padrão para novos tickets
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Priority Configuration table
+export const priorityConfig = pgTable("priority_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(), // Nome da prioridade (ex: "Crítica", "Alta", "Média", "Baixa")
+  value: text("value").notNull().unique(), // Valor técnico (ex: "critical", "high", "medium", "low")
+  color: text("color").notNull().default("#6b7280"), // Cor hexadecimal para exibição
+  slaHours: integer("sla_hours").notNull().default(24), // SLA em horas para esta prioridade
+  order: integer("order").notNull().default(0), // Ordem de exibição
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false), // Prioridade padrão para novos tickets
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // SLA Rules table
 export const slaRules = pgTable("sla_rules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -123,41 +150,75 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   updatedAt: true,
 });
 
-export const insertSLARuleSchema = createInsertSchema(slaRules).omit({
+export const insertStatusConfigSchema = createInsertSchema(statusConfig).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-// Types
+export const insertPriorityConfigSchema = createInsertSchema(priorityConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSlaRuleSchema = createInsertSchema(slaRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Custom types that are not inferred from tables  
+export interface DashboardStats {
+  totalTickets: number;
+  openTickets: number;
+  resolvedTickets: number;
+  averageResolutionTime: number;
+}
+
+export interface PriorityStats {
+  critical: { count: number; percentage: number };
+  high: { count: number; percentage: number };
+  medium: { count: number; percentage: number };
+  low: { count: number; percentage: number };
+}
+
+export interface TrendData {
+  date: string;
+  created: number;
+  resolved: number;
+}
+
+export interface TicketWithDetails extends Ticket {
+  createdByUser?: User;
+  assignedToUser?: User | null;
+  department?: Department;
+  requesterDepartment?: Department;
+  responsibleDepartment?: Department;
+  comments?: Array<Comment & { user: User }>;
+  attachments?: Attachment[];
+}
+
+// Export types
 export type Department = typeof departments.$inferSelect;
-export type InsertDepartment = typeof departments.$inferInsert;
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
 export type Ticket = typeof tickets.$inferSelect;
-export type InsertTicket = z.infer<typeof insertTicketSchema>;
-
 export type Comment = typeof comments.$inferSelect;
-export type InsertComment = z.infer<typeof insertCommentSchema>;
-
 export type Attachment = typeof attachments.$inferSelect;
-export type InsertAttachment = z.infer<typeof insertAttachmentSchema>;
-
 export type Category = typeof categories.$inferSelect;
+export type StatusConfig = typeof statusConfig.$inferSelect;
+export type PriorityConfig = typeof priorityConfig.$inferSelect;
+export type SlaRule = typeof slaRules.$inferSelect;
+
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertTicket = z.infer<typeof insertTicketSchema>;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type InsertAttachment = z.infer<typeof insertAttachmentSchema>;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
-
-export type SLARule = typeof slaRules.$inferSelect;
-export type InsertSLARule = z.infer<typeof insertSLARuleSchema>;
-
-// Extended types for API responses
-export type TicketWithDetails = Ticket & {
-  department?: Department | null;
-  createdByUser: User;
-  assignedToUser: User | null;
-  comments: (Comment & { user: User })[];
-  attachments: Attachment[];
-};
+export type InsertStatusConfig = z.infer<typeof insertStatusConfigSchema>;
+export type InsertPriorityConfig = z.infer<typeof insertPriorityConfigSchema>;
+export type InsertSlaRule = z.infer<typeof insertSlaRuleSchema>;
 
 export type DashboardStats = {
   totalTickets: number;

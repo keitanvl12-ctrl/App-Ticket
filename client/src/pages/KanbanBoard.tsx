@@ -265,36 +265,31 @@ export default function KanbanBoard() {
   });
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
-  // Define columns with dynamic counts
-  const columns = [
-    { 
-      id: 'open', 
-      title: 'ABERTO', 
-      color: 'bg-red-500', 
-      headerColor: 'bg-red-500',
-      count: tickets.filter(t => t.status === 'open').length 
-    },
-    { 
-      id: 'in_progress', 
-      title: 'EM PROGRESSO', 
-      color: 'bg-green-500', 
-      headerColor: 'bg-green-500',
-      count: tickets.filter(t => t.status === 'in_progress').length 
-    },
-    { 
-      id: 'on_hold', 
-      title: 'PAUSADO', 
-      color: 'bg-yellow-500', 
-      headerColor: 'bg-yellow-500',
-      count: tickets.filter(t => t.status === 'on_hold').length 
-    },
-    { 
-      id: 'resolved', 
-      title: 'RESOLVIDO', 
-      color: 'bg-gray-500', 
-      headerColor: 'bg-gray-500',
-      count: tickets.filter(t => t.status === 'resolved').length 
-    }
+  // Buscar configurações de status e prioridade
+  const { data: statusConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/status'],
+  });
+
+  const { data: priorityConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/priority'],
+  });
+
+  // Define columns with dynamic counts using database configurations
+  const columns = statusConfigs?.map(status => ({
+    id: status.value,
+    title: status.name.toUpperCase(),
+    color: status.color === '#dc2626' ? 'bg-red-500' : 
+           status.color === '#f59e0b' ? 'bg-yellow-500' :
+           status.color === '#10b981' ? 'bg-green-500' : 'bg-gray-500',
+    headerColor: status.color === '#dc2626' ? 'bg-red-500' : 
+                 status.color === '#f59e0b' ? 'bg-yellow-500' :
+                 status.color === '#10b981' ? 'bg-green-500' : 'bg-gray-500',
+    count: tickets.filter(t => t.status === status.value).length
+  })) || [
+    { id: 'open', title: 'ABERTO', color: 'bg-red-500', headerColor: 'bg-red-500', count: 0 },
+    { id: 'in_progress', title: 'EM PROGRESSO', color: 'bg-green-500', headerColor: 'bg-green-500', count: 0 },
+    { id: 'on_hold', title: 'PAUSADO', color: 'bg-yellow-500', headerColor: 'bg-yellow-500', count: 0 },
+    { id: 'resolved', title: 'RESOLVIDO', color: 'bg-gray-500', headerColor: 'bg-gray-500', count: 0 }
   ];
 
   // Check for URL parameters on component mount
@@ -361,12 +356,17 @@ export default function KanbanBoard() {
   };
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Alta': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Média': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Baixa': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    const config = priorityConfigs?.find(p => p.value === priority || p.name === priority);
+    if (config?.color) {
+      const colorMap: Record<string, string> = {
+        '#dc2626': 'bg-red-100 text-red-800 border-red-200',
+        '#f59e0b': 'bg-orange-100 text-orange-800 border-orange-200',
+        '#3b82f6': 'bg-blue-100 text-blue-800 border-blue-200',
+        '#10b981': 'bg-green-100 text-green-800 border-green-200',
+      };
+      return colorMap[config.color] || 'bg-gray-100 text-gray-800 border-gray-200';
     }
+    return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   const getProgressColor = (progress: number, status: string) => {
