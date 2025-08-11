@@ -79,6 +79,9 @@ export interface IStorage {
   getDepartmentPerformance(startDate: string, endDate: string): Promise<any[]>;
   getUserPerformance(startDate: string, endDate: string, departmentId?: string): Promise<any[]>;
   getResolutionTimeAnalysis(startDate: string, endDate: string, departmentId?: string): Promise<any[]>;
+  
+  // Migration
+  migrateTicketNumbers(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -622,12 +625,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTicket(ticket: InsertTicket): Promise<Ticket> {
-    const ticketNumber = `TICK-${nanoid(6)}`;
+    // Gerar número sequencial do ticket
+    const ticketNumber = await this.generateNextTicketNumber();
     const [newTicket] = await db.insert(tickets).values({
       ...ticket,
       ticketNumber,
     }).returning();
     return newTicket;
+  }
+
+  private async generateNextTicketNumber(): Promise<string> {
+    try {
+      // Buscar o último ticket criado para obter o próximo número
+      const [lastTicket] = await db
+        .select({ ticketNumber: tickets.ticketNumber })
+        .from(tickets)
+        .orderBy(desc(tickets.createdAt))
+        .limit(1);
+
+      if (!lastTicket || !lastTicket.ticketNumber) {
+        // Primeiro ticket do sistema
+        return 'TICK-001';
+      }
+
+      // Extrair número do último ticket (formato: TICK-XXX)
+      const match = lastTicket.ticketNumber.match(/TICK-(\d+)/);
+      if (!match) {
+        // Fallback se não conseguir extrair o número
+        return 'TICK-001';
+      }
+
+      const lastNumber = parseInt(match[1], 10);
+      const nextNumber = lastNumber + 1;
+      
+      // Formatar com zeros à esquerda (3 dígitos)
+      return `TICK-${nextNumber.toString().padStart(3, '0')}`;
+    } catch (error) {
+      console.error('Erro ao gerar número do ticket:', error);
+      // Fallback para nanoid em caso de erro
+      return `TICK-${nanoid(6)}`;
+    }
   }
 
   async updateTicket(id: string, updates: Partial<InsertTicket>): Promise<Ticket | undefined> {
@@ -666,6 +703,31 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error deleting ticket:", error);
       return false;
+    }
+  }
+
+  async migrateTicketNumbers(): Promise<void> {
+    try {
+      // Buscar todos os tickets ordenados por data de criação
+      const allTickets = await db
+        .select({ id: tickets.id, ticketNumber: tickets.ticketNumber, createdAt: tickets.createdAt })
+        .from(tickets)
+        .orderBy(tickets.createdAt);
+
+      // Renumerar todos os tickets sequencialmente
+      for (let i = 0; i < allTickets.length; i++) {
+        const newTicketNumber = `TICK-${(i + 1).toString().padStart(3, '0')}`;
+        
+        await db
+          .update(tickets)
+          .set({ ticketNumber: newTicketNumber })
+          .where(eq(tickets.id, allTickets[i].id));
+      }
+
+      console.log(`Migrated ${allTickets.length} ticket numbers successfully`);
+    } catch (error) {
+      console.error('Error migrating ticket numbers:', error);
+      throw error;
     }
   }
 

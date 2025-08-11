@@ -554,6 +554,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para migrar números de tickets existentes
+  app.post("/api/migrate-ticket-numbers", async (req, res) => {
+    try {
+      await storage.migrateTicketNumbers();
+      res.json({ message: "Ticket numbers migrated successfully" });
+    } catch (error) {
+      console.error("Error migrating ticket numbers:", error);
+      res.status(500).json({ message: "Failed to migrate ticket numbers" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
