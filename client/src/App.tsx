@@ -82,9 +82,15 @@ const useAuth = () => {
           }
         } catch (error) {
           console.error('Erro ao verificar status do usuário:', error);
-          // Não remover tokens em caso de erro de rede, apenas em caso de usuário bloqueado
-          setUser(parsedUser);
-          setIsAuthenticated(true);
+          // Para usuários demo, aceitar sem verificação adicional
+          if (parsedUser.id && (parsedUser.id.includes('admin-') || parsedUser.id.includes('supervisor-') || parsedUser.id.includes('colaborador-'))) {
+            setUser(parsedUser);
+            setIsAuthenticated(true);
+          } else {
+            // Para usuários reais, tentar manter sessão ativa
+            setUser(parsedUser);
+            setIsAuthenticated(true);
+          }
         }
       }
       setIsLoading(false);

@@ -43,6 +43,8 @@ const LoginPage: React.FC = () => {
       const data = await response.json();
 
       if (response.ok) {
+        console.log('Login bem-sucedido, dados recebidos:', data);
+        
         // Store authentication data
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('currentUser', JSON.stringify(data.user));
@@ -52,8 +54,10 @@ const LoginPage: React.FC = () => {
           description: `Bem-vindo(a), ${data.user.name}!`,
         });
 
-        // Redirect to dashboard
-        setLocation('/');
+        console.log('Redirecionando para dashboard...');
+        
+        // Force page reload after successful login to reinitialize auth state
+        window.location.href = '/';
       } else {
         toast({
           title: "Erro no login",
