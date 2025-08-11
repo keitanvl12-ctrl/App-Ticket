@@ -86,15 +86,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply hierarchy-based filtering
       if (user) {
         const userHierarchy = user.hierarchy || user.role;
+        const userId = user.userId || user.id;
         
         if (userHierarchy === 'colaborador') {
           // Colaboradores só veem seus próprios tickets
-          filters.createdBy = user.userId;
+          filters.createdBy = userId;
         } else if (userHierarchy === 'supervisor') {
-          // Supervisores veem tickets do seu departamento
-          const userRecord = await storage.getUser(user.userId);
+          // Supervisores veem tickets do seu departamento inteiro
+          const userRecord = await storage.getUser(userId);
           if (userRecord?.departmentId) {
             filters.departmentId = userRecord.departmentId;
+            // Remove filtro do criador para ver todos do departamento
+            delete filters.createdBy;
           }
         }
         // Administradores veem todos os tickets (sem filtros adicionais)

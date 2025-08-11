@@ -235,16 +235,16 @@ export default function UserManagement() {
     }
   };
 
-  const getRoleBadgeVariant = (role: string): "default" | "secondary" | "destructive" | "outline" => {
+  const getRoleBadgeClass = (role: string): string => {
     switch (role) {
       case 'admin':
-        return 'destructive';
+        return 'bg-purple-100 text-purple-800';
       case 'supervisor':
-        return 'default';
+        return 'bg-blue-100 text-blue-800';
       case 'colaborador':
-        return 'secondary';
+        return 'bg-green-100 text-green-800';
       default:
-        return 'outline';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -446,9 +446,9 @@ export default function UserManagement() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${getRoleBadgeClass(user.role)}`}>
                       {getRoleLabel(user.role)}
-                    </Badge>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col space-y-1">
