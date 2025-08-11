@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit2, Trash2, Clock, Target, AlertTriangle, Settings } from 'lucide-react';
+import { Plus, Edit2, Trash2, Target, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -26,7 +25,6 @@ interface SLARule {
 }
 
 export default function SLAConfiguration() {
-  const [selectedTab, setSelectedTab] = useState('department');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSLA, setEditingSLA] = useState<SLARule | null>(null);
   const { toast } = useToast();
@@ -83,7 +81,7 @@ export default function SLAConfiguration() {
     },
   });
 
-  // Mutation para excluir SLA
+  // Mutation para deletar SLA
   const deleteSLAMutation = useMutation({
     mutationFn: async (id: string) => {
       return apiRequest(`/api/sla/rules/${id}`, 'DELETE');
@@ -91,14 +89,14 @@ export default function SLAConfiguration() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sla/rules'] });
       toast({
-        title: 'SLA excluído',
-        description: 'Regra SLA foi excluída com sucesso.',
+        title: 'SLA removido',
+        description: 'Regra SLA foi removida com sucesso.',
       });
     },
     onError: () => {
       toast({
         title: 'Erro',
-        description: 'Erro ao excluir regra SLA.',
+        description: 'Erro ao remover regra SLA.',
         variant: 'destructive',
       });
     },
@@ -190,14 +188,16 @@ export default function SLAConfiguration() {
       low: 'bg-green-100 text-green-800',
       medium: 'bg-yellow-100 text-yellow-800',
       high: 'bg-orange-100 text-orange-800',
-      critical: 'bg-red-100 text-red-800'
+      critical: 'bg-red-100 text-red-800',
     };
+
     const labels = {
       low: 'Baixa',
       medium: 'Média',
       high: 'Alta',
-      critical: 'Crítica'
+      critical: 'Crítica',
     };
+
     return (
       <Badge className={colors[priority as keyof typeof colors]}>
         {labels[priority as keyof typeof labels]}
@@ -211,12 +211,12 @@ export default function SLAConfiguration() {
     return `${Math.floor(hours / 24)}d ${hours % 24}h`;
   };
 
-  const filteredSLAs = slaRules?.filter(sla => {
-    if (selectedTab === 'department') return !!sla.departmentId && !sla.category;
-    if (selectedTab === 'category') return !!sla.category && !sla.departmentId;  
-    if (selectedTab === 'priority') return !sla.departmentId && !sla.category;
-    return true;
-  }) || [];
+  const getSLAType = (sla: SLARule) => {
+    if (sla.departmentId && !sla.category) return 'Por Departamento';
+    if (sla.category && !sla.departmentId) return 'Por Categoria';
+    if (!sla.departmentId && !sla.category) return 'Por Prioridade';
+    return 'Indefinido';
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -344,7 +344,7 @@ export default function SLAConfiguration() {
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4">
+              <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Cancelar
                 </Button>
@@ -357,110 +357,97 @@ export default function SLAConfiguration() {
         </Dialog>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
-          <TabsTrigger value="department">Por Departamento</TabsTrigger>
-          <TabsTrigger value="category">Por Categoria</TabsTrigger>
-          <TabsTrigger value="priority">Por Prioridade</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={selectedTab} className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="w-5 h-5" />
-                <span>
-                  {selectedTab === 'department' && 'Regras SLA por Departamento'}
-                  {selectedTab === 'category' && 'Regras SLA por Categoria'}
-                  {selectedTab === 'priority' && 'Regras SLA por Prioridade'}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-sm text-gray-500">Carregando regras SLA...</p>
-                </div>
-              ) : filteredSLAs.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      {selectedTab === 'department' && <TableHead>Departamento</TableHead>}
-                      {selectedTab === 'category' && <TableHead>Categoria</TableHead>}
-                      <TableHead>Prioridade</TableHead>
-                      <TableHead>Tempo SLA</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-[100px]">Ações</TableHead>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Settings className="w-5 h-5" />
+              <span>Regras SLA Configuradas</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-sm text-gray-500">Carregando regras SLA...</p>
+              </div>
+            ) : slaRules && slaRules.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Critério</TableHead>
+                    <TableHead>Tempo SLA</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {slaRules.map((sla) => (
+                    <TableRow key={sla.id}>
+                      <TableCell className="font-medium">{sla.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{getSLAType(sla)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {sla.departmentId && sla.departmentName && sla.departmentName}
+                        {sla.category && sla.category}
+                        {!sla.departmentId && !sla.category && getPriorityBadge(sla.priority)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-1">
+                          <Target className="w-4 h-4 text-green-500" />
+                          <span>{formatTime(sla.timeHours)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={sla.isActive ? 'default' : 'secondary'}>
+                          {sla.isActive ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8"
+                            onClick={() => handleEdit(sla)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 text-red-600 hover:text-red-700"
+                            onClick={() => deleteSLAMutation.mutate(sla.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSLAs.map((sla) => (
-                      <TableRow key={sla.id}>
-                        <TableCell className="font-medium">{sla.name}</TableCell>
-                        {selectedTab === 'department' && (
-                          <TableCell>{sla.departmentName}</TableCell>
-                        )}
-                        {selectedTab === 'category' && (
-                          <TableCell>{sla.category}</TableCell>
-                        )}
-                        <TableCell>{getPriorityBadge(sla.priority)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
-                            <Target className="w-4 h-4 text-green-500" />
-                            <span>{formatTime(sla.timeHours)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={sla.isActive ? 'default' : 'secondary'}>
-                            {sla.isActive ? 'Ativo' : 'Inativo'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="w-8 h-8"
-                              onClick={() => handleEdit(sla)}
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="w-8 h-8 text-red-600 hover:text-red-700"
-                              onClick={() => deleteSLAMutation.mutate(sla.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8">
-                  <Settings className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500">
-                    Nenhuma regra SLA configurada para {selectedTab === 'department' ? 'departamentos' : 
-                    selectedTab === 'category' ? 'categorias' : 'prioridades'}
-                  </p>
-                  <Button
-                    className="mt-4"
-                    onClick={() => setIsCreateModalOpen(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar primeira regra
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8">
+                <Settings className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-500">
+                  Nenhuma regra SLA configurada
+                </p>
+                <Button
+                  className="mt-4"
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar primeira regra
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
