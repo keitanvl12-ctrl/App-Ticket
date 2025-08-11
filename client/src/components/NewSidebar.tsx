@@ -145,17 +145,32 @@ const NewSidebar: React.FC<SidebarProps> = ({
 
             <div className="flex items-center space-x-2">
               {/* Expand/Collapse Button */}
-              <button
-                onClick={onToggleCollapse}
-                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
-                title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-              >
-                <Icon 
-                  name={isCollapsed ? "PanelLeftOpen" : "PanelLeftClose"} 
-                  size={16} 
-                  className="text-muted-foreground hover:text-foreground" 
-                />
-              </button>
+              {!isCollapsed && (
+                <button
+                  onClick={onToggleCollapse}
+                  className="hidden lg:flex items-center justify-center w-6 h-6 rounded-sm opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                  title="Recolher sidebar"
+                >
+                  <Icon 
+                    name="ChevronsLeft" 
+                    size={14} 
+                    className="text-gray-600 dark:text-gray-400" 
+                  />
+                </button>
+              )}
+              {isCollapsed && (
+                <button
+                  onClick={onToggleCollapse}
+                  className="flex items-center justify-center w-6 h-6 rounded-sm opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 mx-auto"
+                  title="Expandir sidebar"
+                >
+                  <Icon 
+                    name="ChevronsRight" 
+                    size={14} 
+                    className="text-gray-600 dark:text-gray-400" 
+                  />
+                </button>
+              )}
               
               {/* Close Button (Mobile only when not collapsed) */}
               {!isCollapsed && (
