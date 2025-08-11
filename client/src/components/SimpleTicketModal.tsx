@@ -60,13 +60,15 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
   // Auto-preencher dados do usuário quando o modal abrir
   useEffect(() => {
     if (isOpen && currentUser) {
+      const fullName = currentUser.firstName && currentUser.lastName 
+        ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
+        : currentUser.name || '';
+      
       setFormData(prev => ({
         ...prev,
-        requesterName: currentUser.firstName && currentUser.lastName 
-          ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
-          : prev.requesterName,
-        requesterEmail: currentUser.email || prev.requesterEmail,
-        requesterDepartment: currentUser.departmentId || prev.requesterDepartment
+        requesterName: fullName,
+        requesterEmail: currentUser.email || '',
+        requesterDepartment: currentUser.departmentId || ''
       }));
     }
   }, [isOpen, currentUser]);
@@ -277,14 +279,17 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                 <input
                   type="text"
                   value={formData.requesterName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, requesterName: e.target.value }))}
+                  readOnly
                   style={{
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
                     borderRadius: '8px',
                     fontSize: '14px',
-                    outline: 'none'
+                    outline: 'none',
+                    backgroundColor: '#f9fafb',
+                    color: '#6b7280',
+                    cursor: 'not-allowed'
                   }}
                   required
                 />
@@ -304,14 +309,17 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                 <input
                   type="email"
                   value={formData.requesterEmail}
-                  onChange={(e) => setFormData(prev => ({ ...prev, requesterEmail: e.target.value }))}
+                  readOnly
                   style={{
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
                     borderRadius: '8px',
                     fontSize: '14px',
-                    outline: 'none'
+                    outline: 'none',
+                    backgroundColor: '#f9fafb',
+                    color: '#6b7280',
+                    cursor: 'not-allowed'
                   }}
                   required
                 />
