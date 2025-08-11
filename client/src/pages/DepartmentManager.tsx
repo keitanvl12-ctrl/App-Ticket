@@ -87,33 +87,41 @@ export default function DepartmentManager() {
     setIsSubmitting(true);
     
     try {
+      let response;
+      
       if (editingDepartment) {
         // Editando departamento existente
-        const response = await fetch(`/api/departments/${editingDepartment.id}`, {
+        response = await fetch(`/api/departments/${editingDepartment.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
         });
-        
-        if (!response.ok) throw new Error('Erro ao atualizar departamento');
       } else {
         // Criando novo departamento
-        const response = await fetch('/api/departments', {
+        response = await fetch('/api/departments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
         });
-        
-        if (!response.ok) throw new Error('Erro ao criar departamento');
       }
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao salvar departamento');
+      }
+      
+      // Aguardar um pouco para garantir que a resposta foi processada
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Recarregar dados e fechar modal
       queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
       setIsModalOpen(false);
       resetForm();
+      
+      alert(editingDepartment ? 'Departamento atualizado com sucesso!' : 'Departamento criado com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar departamento:', error);
-      alert('Erro ao salvar departamento. Tente novamente.');
+      alert(`Erro: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -192,7 +200,10 @@ export default function DepartmentManager() {
       {/* Departamentos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {departments.map((department: Department) => (
-          <Card key={department.id} className="hover:shadow-lg transition-shadow">
+          <Card key={department.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+            {/* Barra colorida superior no padrão OPUS */}
+            <div className="h-1 bg-gradient-to-r from-opus-blue-dark to-opus-blue-light"></div>
+            
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
