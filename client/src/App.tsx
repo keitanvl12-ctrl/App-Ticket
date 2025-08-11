@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Provider } from "react-redux";
 import { queryClient } from "./lib/queryClient";
@@ -14,13 +14,12 @@ import Analytics from "@/pages/Analytics";
 import Team from "@/pages/Team";
 import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
-import Login from "@/pages/Login";
 import LoginPage from "@/pages/LoginPage";
+import UnauthorizedPage from "@/pages/UnauthorizedPage";
 import SLA from "@/pages/SLA";
 import CreateTicket from "@/pages/CreateTicket";
 import UserManagement from "@/pages/UserManagement";
 import Categories from "@/pages/Categories";
-
 import CustomFields from "@/pages/CustomFields";
 import CustomFieldsManager from "@/pages/CustomFieldsManager";
 import DepartmentManager from "@/pages/DepartmentManager";
@@ -37,90 +36,191 @@ import HierarchyManagement from "@/pages/HierarchyManagement";
 import RolesManagement from "@/pages/RolesManagement";
 import HierarchyDemo from "@/components/HierarchyDemo";
 import { PermissionGuard, AdminOnly, SupervisorOnly } from "@/components/PermissionGuard";
+import { useEffect, useState } from "react";
 
-function Router() {
+// Simple auth check
+const useAuth = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('currentUser');
+    
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const checkPermission = (requiredRole?: string) => {
+    if (!user) return false;
+    if (!requiredRole) return true;
+    
+    const userRole = user.role || user.hierarchy || 'colaborador';
+    
+    if (requiredRole === 'administrador') {
+      return userRole === 'administrador';
+    }
+    if (requiredRole === 'supervisor') {
+      return ['supervisor', 'administrador'].includes(userRole);
+    }
+    return true;
+  };
+
+  return { isAuthenticated, isLoading, user, checkPermission };
+};
+
+// Protected Route Component
+const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode, requiredRole?: string }) => {
+  const { isAuthenticated, isLoading, checkPermission } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        setLocation('/login');
+        return;
+      }
+      if (requiredRole && !checkPermission(requiredRole)) {
+        setLocation('/unauthorized');
+        return;
+      }
+    }
+  }, [isAuthenticated, isLoading, requiredRole, setLocation, checkPermission]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || (requiredRole && !checkPermission(requiredRole))) {
+    return null;
+  }
+
+  return <>{children}</>;
+};
+
+function AppRouter() {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/tickets" component={KanbanBoard} />
+    <Switch>
+      <Route path="/login" component={LoginPage} />
+      <Route path="/unauthorized" component={UnauthorizedPage} />
+      
+      <Route>
+        <ProtectedRoute>
+          <Layout>
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/tickets" component={KanbanBoard} />
+              <Route path="/create-ticket" component={CreateTicket} />
+              
+              <Route path="/analytics">
+                <ProtectedRoute requiredRole="supervisor">
+                  <Analytics />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/sla" component={SLA} />
+              
+              <Route path="/users">
+                <ProtectedRoute requiredRole="supervisor">
+                  <UserManagement />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/team">
+                <ProtectedRoute requiredRole="supervisor">
+                  <Team />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/departments">
+                <ProtectedRoute requiredRole="administrador">
+                  <DepartmentManager />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/roles">
+                <ProtectedRoute requiredRole="administrador">
+                  <RolesManagement />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/hierarchy-demo" component={() => <HierarchyDemo />} />
+              
+              <Route path="/categories">
+                <ProtectedRoute requiredRole="supervisor">
+                  <Categories />
+                </ProtectedRoute>
+              </Route>
 
-        <Route path="/analytics">
-          <SupervisorOnly>
-            <Analytics />
-          </SupervisorOnly>
-        </Route>
-        <Route path="/sla" component={SLA} />
-        <Route path="/users">
-          <SupervisorOnly>
-            <UserManagement />
-          </SupervisorOnly>
-        </Route>
-        <Route path="/departments">
-          <AdminOnly>
-            <DepartmentManager />
-          </AdminOnly>
-        </Route>
-        <Route path="/permissions">
-          <AdminOnly>
-            <PermissionSettings />
-          </AdminOnly>
-        </Route>
-        <Route path="/hierarchy">
-          <AdminOnly>
-            <HierarchyManagement />
-          </AdminOnly>
-        </Route>
-        <Route path="/roles">
-          <AdminOnly>
-            <RolesManagement />
-          </AdminOnly>
-        </Route>
-        <Route path="/login" component={LoginPage} />
-        <Route path="/hierarchy-demo" component={() => <HierarchyDemo />} />
-        <Route path="/categories">
-          <SupervisorOnly>
-            <Categories />
-          </SupervisorOnly>
-        </Route>
+              <Route path="/fields">
+                <ProtectedRoute requiredRole="supervisor">
+                  <CustomFieldsManager />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/approvals" component={Approvals} />
+              <Route path="/workflow-approvals" component={WorkflowApprovals} />
+              
+              <Route path="/reports">
+                <ProtectedRoute requiredRole="supervisor">
+                  <ReportsNew />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/user-profiles" component={UserProfiles} />
+              
+              <Route path="/sla-config">
+                <ProtectedRoute requiredRole="supervisor">
+                  <SLAConfiguration />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/config">
+                <ProtectedRoute requiredRole="administrador">
+                  <ConfigurationPage />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/settings" component={Settings} />
+              <Route path="/profile" component={Profile} />
 
-        <Route path="/fields">
-          <SupervisorOnly>
-            <CustomFieldsManager />
-          </SupervisorOnly>
-        </Route>
-        <Route path="/approvals" component={Approvals} />
-        <Route path="/workflow-approvals" component={WorkflowApprovals} />
-        <Route path="/reports">
-          <SupervisorOnly>
-            <ReportsNew />
-          </SupervisorOnly>
-        </Route>
-        <Route path="/user-profiles" component={UserProfiles} />
-        <Route path="/sla-config" component={SLAConfiguration} />
-        <Route path="/config" component={ConfigurationPage} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/profile" component={Profile} />
-
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+              <Route component={NotFound} />
+            </Switch>
+          </Layout>
+        </ProtectedRoute>
+      </Route>
+    </Switch>
   );
 }
 
-function App() {
+export default function App() {
   return (
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <ThemeProvider>
           <TooltipProvider>
+            <AppRouter />
             <Toaster />
-            <Router />
           </TooltipProvider>
         </ThemeProvider>
-      </QueryClientProvider>
-    </Provider>
+      </Provider>
+    </QueryClientProvider>
   );
 }
-
-export default App;

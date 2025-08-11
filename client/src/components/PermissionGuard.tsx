@@ -1,60 +1,108 @@
-import { ReactNode } from 'react';
-import { usePermissions, PermissionKey, UserRole } from '@/hooks/usePermissions';
+import React, { useEffect } from 'react';
+import { useLocation } from 'wouter';
+
+// Simple permission check function
+const getCurrentUser = () => {
+  try {
+    const userData = localStorage.getItem('currentUser');
+    return userData ? JSON.parse(userData) : null;
+  } catch {
+    return null;
+  }
+};
+
+const hasPermission = (userRole: string, requiredRole?: string) => {
+  if (!requiredRole) return true;
+  
+  if (requiredRole === 'administrador') {
+    return userRole === 'administrador';
+  }
+  if (requiredRole === 'supervisor') {
+    return ['supervisor', 'administrador'].includes(userRole);
+  }
+  return true;
+};
 
 interface PermissionGuardProps {
-  children: ReactNode;
-  // Verificar permissão específica
-  permission?: PermissionKey;
-  // Verificar nível de role mínimo
-  minRole?: UserRole;
-  // Fallback quando não tem permissão
-  fallback?: ReactNode;
-  // Classe CSS adicional para container
-  className?: string;
+  children: React.ReactNode;
+  requiredRole?: string;
+  fallback?: React.ReactNode;
 }
 
-export function PermissionGuard({ 
+export const PermissionGuard: React.FC<PermissionGuardProps> = ({ 
   children, 
-  permission, 
-  minRole, 
-  fallback = null,
-  className = ""
-}: PermissionGuardProps) {
-  const { hasPermission, hasRoleLevel, isLoading } = usePermissions();
-  
-  // Mostrar loading se ainda carregando
-  if (isLoading) {
-    return <div className={className}>{fallback}</div>;
-  }
-  
-  // Verificar permissão específica
-  if (permission && !hasPermission(permission)) {
-    return <div className={className}>{fallback}</div>;
-  }
-  
-  // Verificar nível de role
-  if (minRole && !hasRoleLevel(minRole)) {
-    return <div className={className}>{fallback}</div>;
-  }
-  
-  // Render children se tem permissão
-  return <div className={className}>{children}</div>;
-}
+  requiredRole, 
+  fallback 
+}) => {
+  const user = getCurrentUser();
+  const [, setLocation] = useLocation();
 
-// Componente específico para admins
-export function AdminOnly({ children, fallback }: { children: ReactNode, fallback?: ReactNode }) {
-  return (
-    <PermissionGuard minRole="administrador" fallback={fallback}>
-      {children}
-    </PermissionGuard>
-  );
-}
+  useEffect(() => {
+    if (!user) {
+      setLocation('/login');
+      return;
+    }
 
-// Componente para supervisores ou superior
-export function SupervisorOnly({ children, fallback }: { children: ReactNode, fallback?: ReactNode }) {
-  return (
-    <PermissionGuard minRole="supervisor" fallback={fallback}>
-      {children}
-    </PermissionGuard>
-  );
-}
+    const userRole = user.role || user.hierarchy || 'colaborador';
+    if (requiredRole && !hasPermission(userRole, requiredRole)) {
+      setLocation('/unauthorized');
+      return;
+    }
+  }, [user, requiredRole, setLocation]);
+
+  if (!user) {
+    return null;
+  }
+
+  const userRole = user.role || user.hierarchy || 'colaborador';
+  
+  if (requiredRole && !hasPermission(userRole, requiredRole)) {
+    return fallback || null;
+  }
+
+  return <>{children}</>;
+};
+
+// Specific role components
+export const AdminOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <PermissionGuard requiredRole="administrador">
+    {children}
+  </PermissionGuard>
+);
+
+export const SupervisorOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <PermissionGuard requiredRole="supervisor">
+    {children}
+  </PermissionGuard>
+);
+
+export const CollaboratorOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <PermissionGuard requiredRole="colaborador">
+    {children}
+  </PermissionGuard>
+);
+
+// Hook for checking permissions
+export const usePermissions = () => {
+  const user = getCurrentUser();
+  
+  const checkPermission = (requiredRole?: string) => {
+    if (!user) return false;
+    const userRole = user.role || user.hierarchy || 'colaborador';
+    return hasPermission(userRole, requiredRole);
+  };
+
+  const isAdmin = () => checkPermission('administrador');
+  const isSupervisor = () => checkPermission('supervisor');
+  const isCollaborator = () => checkPermission('colaborador');
+
+  return {
+    user,
+    checkPermission,
+    isAdmin,
+    isSupervisor,
+    isCollaborator
+  };
+};
+
+export default PermissionGuard;
