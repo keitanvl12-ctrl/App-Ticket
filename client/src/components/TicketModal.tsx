@@ -221,7 +221,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="flex items-center space-x-3">
-            <span className="text-xl font-bold">Ticket {ticket.number}</span>
+            <span className="text-xl font-bold">Ticket {ticket.ticketNumber}</span>
             <Badge variant="outline" className={`${getStatusColor(editedTicket.status)}`}>
               {editedTicket.status}
             </Badge>
@@ -270,12 +270,12 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     <Label className="text-sm font-medium">Título</Label>
                     {isEditing ? (
                       <Input
-                        value={editedTicket.title}
-                        onChange={(e) => setEditedTicket({...editedTicket, title: e.target.value})}
+                        value={editedTicket.subject}
+                        onChange={(e) => setEditedTicket({...editedTicket, subject: e.target.value})}
                         className="mt-1"
                       />
                     ) : (
-                      <p className="mt-1 text-sm text-gray-900">{editedTicket.title}</p>
+                      <p className="mt-1 text-sm text-gray-900">{editedTicket.subject}</p>
                     )}
                   </div>
 
@@ -371,31 +371,31 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     <div className="mt-2 flex items-center space-x-3">
                       <Avatar className="w-8 h-8">
                         <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                          {editedTicket.assignee.initials}
+                          {editedTicket.assignedToUser?.name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">{editedTicket.assignee.name}</p>
-                        <p className="text-xs text-gray-500">{editedTicket.department}</p>
+                        <p className="text-sm font-medium">{editedTicket.assignedToUser?.name || 'Não atribuído'}</p>
+                        <p className="text-xs text-gray-500">{editedTicket.department?.name || 'Sem departamento'}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <Label className="text-sm font-medium">Solicitante</Label>
-                    <p className="mt-1 text-sm text-gray-700">{editedTicket.requester}</p>
+                    <p className="mt-1 text-sm text-gray-700">{editedTicket.createdByUser?.name || 'Desconhecido'}</p>
                   </div>
 
                   <div>
                     <Label className="text-sm font-medium">Departamento</Label>
-                    <p className="mt-1 text-sm text-gray-700">{editedTicket.department}</p>
+                    <p className="mt-1 text-sm text-gray-700">{editedTicket.department?.name || 'Sem departamento'}</p>
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium">Data de Vencimento</Label>
+                    <Label className="text-sm font-medium">Data de Criação</Label>
                     <div className="mt-1 flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-700">{editedTicket.dueDate}</span>
+                      <span className="text-sm text-gray-700">{new Date(editedTicket.createdAt).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
 
