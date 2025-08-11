@@ -4,14 +4,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, ChevronDown, MoreHorizontal, Grid3X3, List, Eye, Edit, Trash, X } from 'lucide-react';
+import { Search, Filter, ChevronDown, MoreHorizontal, Grid3X3, List, Eye, Edit, Trash, X, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { TicketModal } from '@/components/TicketModal';
 import CreateTicketModal from '@/components/CreateTicketModal';
 import TicketFinalizationModal from '@/components/TicketFinalizationModal';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 // Enhanced ticket data matching the reference image
 const mockTickets = [
@@ -250,6 +258,9 @@ export default function KanbanBoard() {
   const [filterBy, setFilterBy] = useState('all');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [statusFilter, setStatusFilter] = useState('all');
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
@@ -534,36 +545,46 @@ export default function KanbanBoard() {
     setAssigneeFilter('all');
   };
 
-  const handleDeleteTicket = async (ticketId: string) => {
-    if (!currentUser || currentUser.role !== 'admin') {
-      console.warn('Apenas administradores podem excluir tickets');
-      return;
-    }
 
-    if (window.confirm('Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.')) {
-      try {
-        const response = await fetch(`/api/tickets/${ticketId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          // Refetch dos tickets para atualizar lista
-          refetchTickets();
-          console.log('Ticket excluído com sucesso');
-        } else {
-          console.error('Erro ao excluir ticket');
-        }
-      } catch (error) {
-        console.error('Erro na requisição:', error);
-      }
-    }
-  };
 
   const handleFinalizeTicket = (ticket: any) => {
     setFinalizationModal({ isOpen: true, ticket });
+  };
+
+  // Mutation para deletar ticket
+  const deleteTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      const response = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Falha ao excluir ticket');
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Ticket excluído",
+        description: "O ticket foi excluído com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir ticket:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o ticket. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteTicket = (ticketId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.')) {
+      deleteTicketMutation.mutate(ticketId);
+    }
   };
 
   const handleFinalizationConfirm = async (finalizationData: any) => {
@@ -828,9 +849,47 @@ export default function KanbanBoard() {
                                   </svg>
                                 </Button>
                               )}
-                              <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
-                                <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
+                                    <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Visualizar ticket:', ticket.id);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Visualizar ticket
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Editar ticket:', ticket.id);
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar ticket
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleDeleteTicket(ticket.id);
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Excluir ticket
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
 
