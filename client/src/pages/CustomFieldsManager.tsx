@@ -198,8 +198,8 @@ export default function CustomFieldsManager() {
     <div className="p-8 space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-100">Campos Customizados</h1>
-          <p className="text-gray-400 mt-2">Configure campos específicos para diferentes categorias de tickets</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Campos Customizados</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Configure campos específicos para diferentes categorias de tickets</p>
         </div>
         
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -377,33 +377,33 @@ export default function CustomFieldsManager() {
           <Card key={categoryName}>
             <CardHeader>
               <CardTitle className="text-xl text-primary">{categoryName}</CardTitle>
-              <p className="text-sm text-gray-400">{fields.length} campo(s) configurado(s)</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{fields.length} campo(s) configurado(s)</p>
             </CardHeader>
             <CardContent>
               {fields.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhum campo customizado configurado para esta categoria</p>
+                <p className="text-gray-600 dark:text-gray-400 text-center py-8">Nenhum campo customizado configurado para esta categoria</p>
               ) : (
                 <div className="space-y-4">
                   {fields
                     .sort((a, b) => a.order - b.order)
                     .map((field) => (
-                      <div key={field.id} className="flex items-center justify-between p-4 border border-gray-20 rounded-lg">
+                      <div key={field.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-medium text-gray-100">{field.name}</h3>
+                            <h3 className="font-medium text-gray-900 dark:text-gray-100">{field.name}</h3>
                             <Badge variant={field.required ? "destructive" : "secondary"}>
                               {field.required ? 'Obrigatório' : 'Opcional'}
                             </Badge>
                             <Badge variant="outline">{field.type}</Badge>
-                            <span className="text-sm text-gray-400">Ordem: {field.order}</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Ordem: {field.order}</span>
                           </div>
                           {field.placeholder && (
-                            <p className="text-sm text-gray-400">{field.placeholder}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{field.placeholder}</p>
                           )}
                           {field.options && field.options.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {field.options.map((option, idx) => (
-                                <span key={idx} className="text-xs bg-gray-80 text-gray-20 px-2 py-1 rounded">
+                                <span key={idx} className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded">
                                   {option}
                                 </span>
                               ))}
@@ -435,8 +435,8 @@ export default function CustomFieldsManager() {
           <Card>
             <CardContent className="text-center py-12">
               <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-100 mb-2">Nenhum campo customizado configurado</h3>
-              <p className="text-gray-400 mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Nenhum campo customizado configurado</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Crie campos específicos para diferentes categorias de tickets para coletar informações mais detalhadas.
               </p>
               <Button onClick={() => setIsOpen(true)}>
