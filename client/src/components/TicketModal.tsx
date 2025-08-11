@@ -98,6 +98,22 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     createCommentMutation.mutate(newComment);
   };
 
+  const handleDownloadAttachment = (attachment: any) => {
+    // Simular download do anexo
+    const link = document.createElement('a');
+    link.href = attachment.url || '#';
+    link.download = attachment.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Toast de confirmação
+    toast({
+      title: 'Download iniciado',
+      description: `Fazendo download de ${attachment.name}`,
+    });
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'Alta': return 'bg-red-100 text-red-800 border-red-200';
@@ -450,7 +466,11 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDownloadAttachment(attachment)}
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
                     </div>

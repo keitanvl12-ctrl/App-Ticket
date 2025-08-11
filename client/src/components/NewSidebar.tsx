@@ -64,7 +64,8 @@ const NewSidebar: React.FC<SidebarProps> = ({
         { label: 'Categorias', path: '/categories', icon: 'FolderTree' },
         { label: 'Formulários', path: '/forms', icon: 'FileText' },
         { label: 'Campos Customizáveis', path: '/fields', icon: 'Settings2' },
-        { label: 'Sistema de Aprovações', path: '/approvals', icon: 'CheckCircle' }
+        { label: 'Sistema de Aprovações', path: '/approvals', icon: 'CheckCircle' },
+        { label: 'Configuração SLA', path: '/sla-config', icon: 'Clock' }
       ]
     }
   ];

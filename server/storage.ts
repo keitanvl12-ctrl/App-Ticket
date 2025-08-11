@@ -441,9 +441,30 @@ export class DatabaseStorage implements IStorage {
     return updatedTicket || undefined;
   }
 
+  async getTicketById(id: string): Promise<Ticket | undefined> {
+    const [ticket] = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, id));
+    return ticket;
+  }
+
   async deleteTicket(id: string): Promise<boolean> {
-    const result = await db.delete(tickets).where(eq(tickets.id, id));
-    return result.rowCount > 0;
+    try {
+      // Primeiro, excluir comentários relacionados
+      await db.delete(comments).where(eq(comments.ticketId, id));
+      
+      // Depois, excluir anexos relacionados
+      await db.delete(attachments).where(eq(attachments.ticketId, id));
+      
+      // Finalmente, excluir o ticket
+      await db.delete(tickets).where(eq(tickets.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting ticket:", error);
+      return false;
+    }
   }
 
   async getCommentsByTicket(ticketId: string): Promise<(Comment & { user: User })[]> {

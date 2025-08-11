@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { TicketModal } from '@/components/TicketModal';
+import { useQuery } from '@tanstack/react-query';
 
 // Enhanced ticket data matching the reference image
 const mockTickets = [
@@ -280,6 +281,12 @@ export default function KanbanBoard() {
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
+  // Fetch current user for role checking
+  const { data: users } = useQuery<any[]>({
+    queryKey: ['/api/users'],
+  });
+  const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
+
   const handleDragStart = (e: any, ticket: any) => {
     setDraggedTicket(ticket);
     e.dataTransfer.effectAllowed = 'move';
@@ -355,11 +362,31 @@ export default function KanbanBoard() {
     setAssigneeFilter('all');
   };
 
-  const handleDeleteTicket = (ticketId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este ticket?')) {
-      setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
-      // Fechar modal se estiver aberto
-      setSelectedTicket(null);
+  const handleDeleteTicket = async (ticketId: string) => {
+    if (!currentUser || currentUser.role !== 'admin') {
+      console.warn('Apenas administradores podem excluir tickets');
+      return;
+    }
+
+    if (window.confirm('Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.')) {
+      try {
+        const response = await fetch(`/api/tickets/${ticketId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          // Remover o ticket da lista local
+          setTickets(prev => prev.filter(t => t.id !== ticketId));
+          console.log('Ticket excluído com sucesso');
+        } else {
+          console.error('Erro ao excluir ticket');
+        }
+      } catch (error) {
+        console.error('Erro na requisição:', error);
+      }
     }
   };
 
@@ -711,21 +738,17 @@ export default function KanbanBoard() {
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TicketModal>
-                      <TicketModal ticket={ticket} onUpdate={(updatedTicket) => {
-                        setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
-                      }}>
-                        <Button variant="ghost" size="icon" className="w-8 h-8">
-                          <Edit className="w-4 h-4" />
+                      {/* Botão de excluir apenas para administradores */}
+                      {currentUser?.role === 'admin' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-8 h-8 text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteTicket(ticket.id)}
+                        >
+                          <Trash className="w-4 h-4" />
                         </Button>
-                      </TicketModal>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="w-8 h-8 text-red-600 hover:text-red-700"
-                        onClick={() => handleDeleteTicket(ticket.id)}
-                      >
-                        <Trash className="w-4 h-4" />
-                      </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

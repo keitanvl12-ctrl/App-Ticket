@@ -343,6 +343,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Excluir ticket (apenas para administradores)
+  app.delete("/api/tickets/:id", async (req, res) => {
+    try {
+      const ticketId = req.params.id;
+      
+      // Verificar se o ticket existe
+      const ticket = await storage.getTicketById(ticketId);
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket não encontrado" });
+      }
+      
+      // Excluir o ticket
+      await storage.deleteTicket(ticketId);
+      
+      res.json({ message: "Ticket excluído com sucesso" });
+    } catch (error) {
+      console.error("Error deleting ticket:", error);
+      res.status(500).json({ message: "Erro ao excluir ticket" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
