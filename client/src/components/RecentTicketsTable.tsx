@@ -8,52 +8,21 @@ import { Separator } from "@/components/ui/separator";
 
 import type { TicketWithDetails } from "@shared/schema";
 
-// Configuração de status traduzida e melhorada
-const statusConfig = {
-  open: { 
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", 
-    label: "Aberto",
-    icon: Circle
-  },
-  in_progress: { 
-    color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400", 
-    label: "Em Progresso",
-    icon: Timer
-  },
-  resolved: { 
-    color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400", 
-    label: "Resolvido",
-    icon: CheckCircle2
-  },
-  closed: { 
-    color: "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300", 
-    label: "Fechado",
-    icon: CheckCircle2
-  },
-};
-
-// Configuração de prioridade traduzida e melhorada
-const priorityConfig = {
-  low: { 
-    color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400", 
-    label: "Baixa",
-    dot: "bg-green-500"
-  },
-  medium: { 
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", 
-    label: "Média",
-    dot: "bg-blue-500"
-  },
-  high: { 
-    color: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400", 
-    label: "Alta",
-    dot: "bg-orange-500"
-  },
-  critical: { 
-    color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400", 
-    label: "Crítica",
-    dot: "bg-red-500"
-  },
+// Função para converter cor hex para classes de badge
+const hexToBadgeClasses = (hex: string) => {
+  const colorMap: Record<string, string> = {
+    '#3b82f6': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+    '#f59e0b': 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400',
+    '#10b981': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400',
+    '#6b7280': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+    '#8b5cf6': 'bg-violet-100 text-violet-800 dark:bg-violet-900/20 dark:text-violet-400',
+    '#ef4444': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
+    '#f97316': 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
+    '#06b6d4': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/20 dark:text-cyan-400',
+    '#84cc16': 'bg-lime-100 text-lime-800 dark:bg-lime-900/20 dark:text-lime-400',
+    '#ec4899': 'bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-400',
+  };
+  return colorMap[hex] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 };
 
 interface RecentTicketsTableProps {
@@ -65,7 +34,43 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
     queryKey: ["/api/tickets"],
   });
 
+  // Buscar configurações dinâmicas
+  const { data: statusConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/status'],
+  });
+
+  const { data: priorityConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/priority'],
+  });
+
   const recentTickets = tickets.slice(0, limit);
+
+  // Funções para obter cores e labels dinâmicos
+  const getStatusColor = (status: string) => {
+    const config = statusConfigs?.find(s => s.value === status);
+    if (config?.color) {
+      return hexToBadgeClasses(config.color);
+    }
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  };
+
+  const getStatusLabel = (status: string) => {
+    const config = statusConfigs?.find(s => s.value === status);
+    return config?.name || status;
+  };
+
+  const getPriorityColor = (priority: string) => {
+    const config = priorityConfigs?.find(p => p.value === priority);
+    if (config?.color) {
+      return hexToBadgeClasses(config.color);
+    }
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    const config = priorityConfigs?.find(p => p.value === priority);
+    return config?.name || priority;
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -136,9 +141,6 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
         ) : (
           <div className="divide-y divide-slate-200 dark:divide-slate-700">
             {recentTickets.map((ticket, index) => {
-              const statusStyle = statusConfig[ticket.status as keyof typeof statusConfig];
-              const priorityStyle = priorityConfig[ticket.priority as keyof typeof priorityConfig];
-              const StatusIcon = statusStyle?.icon;
               
               return (
                 <div key={ticket.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
@@ -149,16 +151,12 @@ export default function RecentTicketsTable({ limit = 10 }: RecentTicketsTablePro
                         <span className="text-sm font-mono font-semibold text-blue-600 dark:text-blue-400">
                           #{ticket.ticketNumber}
                         </span>
-                        <Badge className={`${statusStyle?.color} text-xs font-medium flex items-center space-x-1`}>
-                          {StatusIcon && <StatusIcon className="w-3 h-3" />}
-                          <span>{statusStyle?.label}</span>
+                        <Badge className={`${getStatusColor(ticket.status)} text-xs font-medium`}>
+                          <span>{getStatusLabel(ticket.status)}</span>
                         </Badge>
-                        <div className="flex items-center space-x-1">
-                          <div className={`w-2 h-2 rounded-full ${priorityStyle?.dot}`}></div>
-                          <span className="text-xs text-slate-600 dark:text-slate-400">
-                            {priorityStyle?.label}
-                          </span>
-                        </div>
+                        <Badge className={`${getPriorityColor(ticket.priority)} text-xs font-medium`}>
+                          <span>{getPriorityLabel(ticket.priority)}</span>
+                        </Badge>
                       </div>
                       
                       {/* Título do Ticket */}

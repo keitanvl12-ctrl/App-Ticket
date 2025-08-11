@@ -279,16 +279,29 @@ export default function KanbanBoard() {
     queryKey: ['/api/departments'],
   });
 
+  // Função para converter cor hex para classes Tailwind
+  const hexToTailwindBg = (hex: string) => {
+    const colorMap: Record<string, string> = {
+      '#3b82f6': 'bg-blue-500',    // Azul
+      '#f59e0b': 'bg-amber-500',   // Amarelo/Amber  
+      '#10b981': 'bg-emerald-500', // Verde
+      '#6b7280': 'bg-gray-500',    // Cinza
+      '#8b5cf6': 'bg-violet-500',  // Roxo
+      '#ef4444': 'bg-red-500',     // Vermelho
+      '#f97316': 'bg-orange-500',  // Laranja
+      '#06b6d4': 'bg-cyan-500',    // Ciano
+      '#84cc16': 'bg-lime-500',    // Lima
+      '#ec4899': 'bg-pink-500',    // Rosa
+    };
+    return colorMap[hex] || 'bg-gray-500';
+  };
+
   // Define columns with dynamic counts using database configurations
   const columns = statusConfigs?.map(status => ({
     id: status.value,
     title: status.name.toUpperCase(),
-    color: status.color === '#dc2626' ? 'bg-red-500' : 
-           status.color === '#f59e0b' ? 'bg-yellow-500' :
-           status.color === '#10b981' ? 'bg-green-500' : 'bg-gray-500',
-    headerColor: status.color === '#dc2626' ? 'bg-red-500' : 
-                 status.color === '#f59e0b' ? 'bg-yellow-500' :
-                 status.color === '#10b981' ? 'bg-green-500' : 'bg-gray-500',
+    color: hexToTailwindBg(status.color),
+    headerColor: hexToTailwindBg(status.color),
     count: tickets.filter(t => t.status === status.value).length
   })) || [
     { id: 'open', title: 'A FAZER', color: 'bg-blue-500', headerColor: 'bg-blue-500', count: 0 },
@@ -370,16 +383,35 @@ export default function KanbanBoard() {
     }
   };
 
+  // Função para converter cor hex para classes de badge
+  const hexToBadgeClasses = (hex: string) => {
+    const colorMap: Record<string, string> = {
+      '#3b82f6': 'bg-blue-100 text-blue-800 border-blue-200',
+      '#f59e0b': 'bg-amber-100 text-amber-800 border-amber-200',
+      '#10b981': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      '#6b7280': 'bg-gray-100 text-gray-800 border-gray-200',
+      '#8b5cf6': 'bg-violet-100 text-violet-800 border-violet-200',
+      '#ef4444': 'bg-red-100 text-red-800 border-red-200',
+      '#f97316': 'bg-orange-100 text-orange-800 border-orange-200',
+      '#06b6d4': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      '#84cc16': 'bg-lime-100 text-lime-800 border-lime-200',
+      '#ec4899': 'bg-pink-100 text-pink-800 border-pink-200',
+    };
+    return colorMap[hex] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
   const getPriorityColor = (priority: string) => {
     const config = priorityConfigs?.find(p => p.value === priority || p.name === priority);
     if (config?.color) {
-      const colorMap: Record<string, string> = {
-        '#dc2626': 'bg-red-100 text-red-800 border-red-200',
-        '#f59e0b': 'bg-orange-100 text-orange-800 border-orange-200',
-        '#3b82f6': 'bg-blue-100 text-blue-800 border-blue-200',
-        '#10b981': 'bg-green-100 text-green-800 border-green-200',
-      };
-      return colorMap[config.color] || 'bg-gray-100 text-gray-800 border-gray-200';
+      return hexToBadgeClasses(config.color);
+    }
+    return 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getStatusColor = (status: string) => {
+    const config = statusConfigs?.find(s => s.value === status || s.name === status);
+    if (config?.color) {
+      return hexToBadgeClasses(config.color);
     }
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
@@ -890,13 +922,7 @@ export default function KanbanBoard() {
                   <TableCell>
                     <Badge 
                       variant="outline" 
-                      className={`text-xs ${
-                        ticket.status === 'open' ? 'border-blue-200 text-blue-800 bg-blue-50' :
-                        ticket.status === 'in_progress' ? 'border-green-200 text-green-800 bg-green-50' :
-                        ticket.status === 'on_hold' ? 'border-yellow-200 text-yellow-800 bg-yellow-50' :
-                        ticket.status === 'resolved' ? 'border-gray-200 text-gray-800 bg-gray-50' :
-                        'border-gray-200 text-gray-800 bg-gray-50'
-                      }`}
+                      className={`text-xs ${getStatusColor(ticket.status)}`}
                     >
                       {getStatusLabel(ticket.status)}
                     </Badge>

@@ -168,17 +168,27 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     createCommentMutation.mutate(newComment);
   };
 
+  // Função para converter cor hex para classes de badge
+  const hexToBadgeClasses = (hex: string) => {
+    const colorMap: Record<string, string> = {
+      '#3b82f6': 'border-blue-200 text-blue-800 bg-blue-50',
+      '#f59e0b': 'border-amber-200 text-amber-800 bg-amber-50',
+      '#10b981': 'border-emerald-200 text-emerald-800 bg-emerald-50',
+      '#6b7280': 'border-gray-200 text-gray-800 bg-gray-50',
+      '#8b5cf6': 'border-violet-200 text-violet-800 bg-violet-50',
+      '#ef4444': 'border-red-200 text-red-800 bg-red-50',
+      '#f97316': 'border-orange-200 text-orange-800 bg-orange-50',
+      '#06b6d4': 'border-cyan-200 text-cyan-800 bg-cyan-50',
+      '#84cc16': 'border-lime-200 text-lime-800 bg-lime-50',
+      '#ec4899': 'border-pink-200 text-pink-800 bg-pink-50',
+    };
+    return colorMap[hex] || 'border-gray-200 text-gray-800 bg-gray-50';
+  };
+
   const getStatusColor = (status: string) => {
     const config = statusConfigs?.find(s => s.value === status || s.name === status);
     if (config?.color) {
-      // Convert hex to Tailwind classes  
-      const colorMap: Record<string, string> = {
-        '#3b82f6': 'border-blue-200 text-blue-800 bg-blue-50',
-        '#f59e0b': 'border-yellow-200 text-yellow-800 bg-yellow-50',
-        '#10b981': 'border-green-200 text-green-800 bg-green-50',
-        '#6b7280': 'border-gray-200 text-gray-800 bg-gray-50',
-      };
-      return colorMap[config.color] || 'border-gray-200 text-gray-800 bg-gray-50';
+      return hexToBadgeClasses(config.color);
     }
     return 'border-gray-200 text-gray-800 bg-gray-50';
   };
@@ -186,14 +196,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   const getPriorityColor = (priority: string) => {
     const config = priorityConfigs?.find(p => p.value === priority || p.name === priority);
     if (config?.color) {
-      // Convert hex to Tailwind classes  
-      const colorMap: Record<string, string> = {
-        '#3b82f6': 'border-blue-200 text-blue-800 bg-blue-50',
-        '#f59e0b': 'border-yellow-200 text-yellow-800 bg-yellow-50',
-        '#10b981': 'border-green-200 text-green-800 bg-green-50',
-        '#6b7280': 'border-gray-200 text-gray-800 bg-gray-50',
-      };
-      return colorMap[config.color] || 'border-gray-200 text-gray-800 bg-gray-50';
+      return hexToBadgeClasses(config.color);
     }
     return 'border-gray-200 text-gray-800 bg-gray-50';
   };
