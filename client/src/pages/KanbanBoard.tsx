@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { TicketModal } from '@/components/TicketModal';
+import CreateTicketModal from '@/components/CreateTicketModal';
 import TicketFinalizationModal from '@/components/TicketFinalizationModal';
 import { useQuery } from '@tanstack/react-query';
 
