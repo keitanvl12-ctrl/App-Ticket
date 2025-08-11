@@ -24,9 +24,10 @@ const getNavigationItems = (userRole: string) => {
     { path: "/config", icon: Settings, label: "Status e Prioridades" },
   ];
 
-  // Adicionar item de hierarquia apenas para administradores
+  // Adicionar itens de configuração apenas para administradores
   if (userRole === 'administrador') {
     baseItems.push({ path: "/hierarchy", icon: Shield, label: "Configurar Hierarquias" });
+    baseItems.push({ path: "/roles", icon: Shield, label: "Configurar Funções" });
   }
 
   baseItems.push({ path: "/settings", icon: Settings, label: "Configurações" });

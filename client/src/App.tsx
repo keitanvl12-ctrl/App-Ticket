@@ -33,6 +33,7 @@ import SLAConfiguration from "@/pages/SLAConfiguration";
 import ConfigurationPage from "@/pages/ConfigurationPage";
 import PermissionSettings from "@/pages/PermissionSettings";
 import HierarchyManagement from "@/pages/HierarchyManagement";
+import RolesManagement from "@/pages/RolesManagement";
 import HierarchyDemo from "@/components/HierarchyDemo";
 import { PermissionGuard, AdminOnly, SupervisorOnly } from "@/components/PermissionGuard";
 
@@ -67,6 +68,11 @@ function Router() {
         <Route path="/hierarchy">
           <AdminOnly>
             <HierarchyManagement />
+          </AdminOnly>
+        </Route>
+        <Route path="/roles">
+          <AdminOnly>
+            <RolesManagement />
           </AdminOnly>
         </Route>
         <Route path="/login">

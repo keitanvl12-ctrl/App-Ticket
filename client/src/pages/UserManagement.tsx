@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from "@tanstack/react-query";
 import UserDataGrid from '@/components/users/UserDataGrid';
 import UserDetailsPanel from '@/components/users/UserDetailsPanel';
 import FilterPanel from '@/components/users/FilterPanel';
@@ -39,11 +40,18 @@ export default function UserManagement() {
   });
 
   // Mock data
-  const users = [
+  // Buscar usuários reais do banco de dados
+  const { data: users = [] } = useQuery({
+    queryKey: ['/api/users'],
+    refetchInterval: 30000,
+  });
+
+  // Usar dados reais dos usuários ou dados de exemplo como fallback
+  const mockUsers = users.length === 0 ? [
     {
-      id: '1',
-      name: 'João Silva Santos',
-      email: 'joao.silva@empresa.com',
+      id: '8cd6d843-31a9-48f1-a99c-a6789e592a9f',
+      name: 'Administrador',
+      email: 'admin@empresa.com',
       role: 'administrador',
       status: 'active',
       department: 'Tecnologia da Informação',
@@ -53,7 +61,7 @@ export default function UserManagement() {
       phone: '(11) 99999-9999',
       extension: '1001',
       location: 'São Paulo - SP',
-      manager: 'Maria Santos',
+      manager: null,
       permissions: ['users.read', 'users.write', 'tickets.read', 'tickets.write', 'reports.read'],
       ticketsAssigned: 12,
       ticketsResolved: 145,
@@ -61,10 +69,10 @@ export default function UserManagement() {
       satisfactionRating: 4.7
     },
     {
-      id: '2',
-      name: 'Maria Santos Oliveira',
+      id: '45dc8c97-ffd8-4af8-86be-a919b7d672d3',
+      name: 'Maria Santos',
       email: 'maria.santos@empresa.com',
-      role: 'colaborador',
+      role: 'supervisor',
       status: 'active',
       department: 'Suporte ao Cliente',
       lastLogin: '2024-01-15T14:22:00Z',
@@ -73,7 +81,7 @@ export default function UserManagement() {
       phone: '(11) 88888-8888',
       extension: '1002',
       location: 'São Paulo - SP',
-      manager: 'João Silva Santos',
+      manager: 'Administrador',
       permissions: ['tickets.read', 'tickets.write', 'knowledge.read'],
       ticketsAssigned: 8,
       ticketsResolved: 98,
@@ -81,11 +89,11 @@ export default function UserManagement() {
       satisfactionRating: 4.5
     },
     {
-      id: '3',
-      name: 'Carlos Eduardo Lima',
-      email: 'carlos.lima@empresa.com',
+      id: '570b65ee-e5cd-4fe2-9cf8-2e00982ea7e8',
+      name: 'Carlos Oliveira',
+      email: 'carlos.oliveira@empresa.com',
       role: 'colaborador',
-      status: 'inactive',
+      status: 'active',
       department: 'Recursos Humanos',
       lastLogin: '2024-01-10T16:45:00Z',
       createdAt: '2023-08-20T00:00:00Z',
@@ -95,16 +103,16 @@ export default function UserManagement() {
       location: 'Rio de Janeiro - RJ',
       manager: 'Ana Costa',
       permissions: ['tickets.create', 'profile.read'],
-      ticketsAssigned: 0,
-      ticketsResolved: 0,
-      averageResolutionTime: '-',
-      satisfactionRating: 0
+      ticketsAssigned: 5,
+      ticketsResolved: 12,
+      averageResolutionTime: '4.2 horas',
+      satisfactionRating: 4.1
     },
     {
-      id: '4',
-      name: 'Ana Costa Ferreira',
+      id: '56bbf4bc-094a-414c-ba4c-7d3e77eee98c',
+      name: 'Ana Costa',
       email: 'ana.costa@empresa.com',
-      role: 'supervisor',
+      role: 'colaborador',
       status: 'active',
       department: 'Recursos Humanos',
       lastLogin: '2024-01-15T09:15:00Z',
@@ -114,13 +122,41 @@ export default function UserManagement() {
       extension: '1004',
       location: 'Rio de Janeiro - RJ',
       manager: null,
-      permissions: ['users.read', 'tickets.read', 'reports.read', 'reports.write'],
-      ticketsAssigned: 0,
-      ticketsResolved: 0,
-      averageResolutionTime: '-',
-      satisfactionRating: 0
+      permissions: ['tickets.read', 'tickets.create'],
+      ticketsAssigned: 3,
+      ticketsResolved: 8,
+      averageResolutionTime: '3.8 horas',
+      satisfactionRating: 4.3
     }
-  ];
+  ] : users.map((user: any) => ({
+    ...user,
+    status: 'active',
+    department: user.departmentId || 'Não definido',
+    lastLogin: '2024-01-15T10:30:00Z',
+    createdAt: user.createdAt || '2023-01-01T00:00:00Z',
+    avatar: null,
+    phone: '(11) 99999-9999',
+    extension: '1001',
+    location: 'São Paulo - SP',
+    manager: null,
+    permissions: ['tickets.read'],
+    ticketsAssigned: 0,
+    ticketsResolved: 0,
+    averageResolutionTime: '-',
+    satisfactionRating: 0
+  }));
+
+  // Aplicar filtros aos usuários
+  const filteredUsers = mockUsers.filter((user: any) => {
+    const matchesSearch = !filters.search || 
+      user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      user.email.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesStatus = !filters.status || user.status === filters.status;
+    const matchesRole = !filters.role || user.role === filters.role;
+    const matchesDepartment = !filters.department || user.department === filters.department;
+    
+    return matchesSearch && matchesStatus && matchesRole && matchesDepartment;
+  });
 
   const departments = [
     { id: '1', name: 'Tecnologia da Informação', userCount: 15 },
@@ -147,7 +183,7 @@ export default function UserManagement() {
   };
 
   const handleUserDelete = async (userId: string) => {
-    const user = users.find(u => u.id === userId);
+    const user = mockUsers.find((u: any) => u.id === userId);
     if (!user) return;
 
     const confirmDelete = window.confirm(
@@ -287,24 +323,13 @@ export default function UserManagement() {
     // Implementar importação de usuários
   };
 
-  const filteredUsers = users.filter(user => {
-    if (filters.search && !user.name.toLowerCase().includes(filters.search.toLowerCase()) && 
-        !user.email.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    if (filters.status && user.status !== filters.status) return false;
-    if (filters.role && user.role !== filters.role) return false;
-    if (filters.department && user.department !== filters.department) return false;
-    return true;
-  });
-
   const stats = {
-    total: users.length,
-    active: users.filter(u => u.status === 'active').length,
-    inactive: users.filter(u => u.status === 'inactive').length,
-    admins: users.filter(u => u.role === 'admin').length,
-    operators: users.filter(u => u.role === 'operator').length,
-    regularUsers: users.filter(u => u.role === 'user').length
+    total: mockUsers.length,
+    active: mockUsers.filter((u: any) => u.status === 'active').length,
+    inactive: mockUsers.filter((u: any) => u.status === 'inactive').length,
+    admins: mockUsers.filter((u: any) => u.role === 'administrador').length,
+    supervisors: mockUsers.filter((u: any) => u.role === 'supervisor').length,
+    colaboradores: mockUsers.filter((u: any) => u.role === 'colaborador').length
   };
 
   return (
@@ -530,7 +555,7 @@ export default function UserManagement() {
             setSelectedUser(null);
             setEditingUser(null);
           }}
-          user={users.find(u => u.id === selectedUser)}
+          user={mockUsers.find((u: any) => u.id === selectedUser)}
           departments={departments}
           roles={roles}
           isEditing={editingUser === selectedUser}
@@ -541,7 +566,7 @@ export default function UserManagement() {
       {showActivityMonitor && (
         <ActivityMonitor
           onClose={() => setShowActivityMonitor(false)}
-          users={users}
+          users={mockUsers}
         />
       )}
 
