@@ -35,12 +35,14 @@ export default function SLAConfiguration() {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
-    departmentId: 'all',
+    departmentId: '',
     category: '',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
     timeHours: 24,
     isActive: true
   });
+
+  const [slaType, setSlaType] = useState<'category' | 'department' | 'priority'>('category');
 
   // Buscar departamentos
   const { data: departments } = useQuery<any[]>({
@@ -105,12 +107,13 @@ export default function SLAConfiguration() {
   const resetForm = () => {
     setFormData({
       name: '',
-      departmentId: 'all',
+      departmentId: '',
       category: '',
       priority: 'medium',
       timeHours: 24,
       isActive: true
     });
+    setSlaType('category');
     setEditingSLA(null);
     setIsCreateModalOpen(false);
   };
@@ -119,21 +122,58 @@ export default function SLAConfiguration() {
     setEditingSLA(sla);
     setFormData({
       name: sla.name,
-      departmentId: sla.departmentId || 'all',
+      departmentId: sla.departmentId || '',
       category: sla.category || '',
       priority: sla.priority,
       timeHours: sla.timeHours || 24,
       isActive: sla.isActive
     });
+    
+    // Determinar o tipo baseado nos campos preenchidos
+    if (sla.category && !sla.departmentId) {
+      setSlaType('category');
+    } else if (sla.departmentId && !sla.category) {
+      setSlaType('department');
+    } else {
+      setSlaType('priority');
+    }
+    
     setIsCreateModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveSLAMutation.mutate({
-      ...formData,
-      id: editingSLA?.id
-    });
+    
+    // Validação baseada no tipo de SLA
+    if (slaType === 'category' && !formData.category) {
+      toast({
+        title: "Erro de validação",
+        description: "Categoria é obrigatória para SLA por categoria",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (slaType === 'department' && !formData.departmentId) {
+      toast({
+        title: "Erro de validação", 
+        description: "Departamento é obrigatório para SLA por departamento",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Preparar dados baseado no tipo de SLA
+    const submitData = {
+      name: formData.name,
+      priority: formData.priority,
+      timeHours: formData.timeHours,
+      isActive: formData.isActive,
+      departmentId: slaType === 'department' ? formData.departmentId : null,
+      category: slaType === 'category' ? formData.category : null
+    };
+    
+    saveSLAMutation.mutate(submitData);
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -204,44 +244,63 @@ export default function SLAConfiguration() {
               </div>
 
               <div>
-                <Label htmlFor="departmentId">Departamento (Opcional)</Label>
+                <Label htmlFor="slaType">Tipo de SLA</Label>
                 <Select
-                  value={formData.departmentId}
-                  onValueChange={(value) => setFormData({...formData, departmentId: value})}
+                  value={slaType}
+                  onValueChange={(value: 'category' | 'department' | 'priority') => setSlaType(value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecionar departamento" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os departamentos</SelectItem>
-                    {departments?.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="category">Por Categoria</SelectItem>
+                    <SelectItem value="department">Por Departamento</SelectItem>
+                    <SelectItem value="priority">Por Prioridade</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="category">Categoria (Opcional)</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({...formData, category: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categories?.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {slaType === 'department' && (
+                <div>
+                  <Label htmlFor="departmentId">Departamento *</Label>
+                  <Select
+                    value={formData.departmentId}
+                    onValueChange={(value) => setFormData({...formData, departmentId: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar departamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments?.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {slaType === 'category' && (
+                <div>
+                  <Label htmlFor="category">Categoria *</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({...formData, category: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories?.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="priority">Prioridade</Label>
