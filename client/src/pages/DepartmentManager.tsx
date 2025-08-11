@@ -118,7 +118,7 @@ export default function DepartmentManager() {
             Gerenciar Departamentos
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Cadastre e gerencie os departamentos da organização
+            Configure departamentos responsáveis e solicitantes
           </p>
         </div>
         <Button
@@ -134,6 +134,35 @@ export default function DepartmentManager() {
         </Button>
       </div>
 
+      {/* Seção de Informações */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-blue-600 dark:text-blue-400">
+              Departamentos Responsáveis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Departamentos que <strong>atendem</strong> e resolvem chamados. Usuários escolhem qual departamento deve resolver o ticket.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-green-600 dark:text-green-400">
+              Departamentos Solicitantes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Departamento do usuário que <strong>solicita</strong> o chamado. Preenchido automaticamente baseado no perfil do usuário.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Departamentos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {departments.map((department: Department) => (
@@ -144,8 +173,8 @@ export default function DepartmentManager() {
                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                     {department.name}
                   </CardTitle>
-                  <Badge variant={department.isActive ? "default" : "secondary"}>
-                    {department.isActive ? 'Ativo' : 'Inativo'}
+                  <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                    Ativo
                   </Badge>
                 </div>
                 <div className="flex gap-2">

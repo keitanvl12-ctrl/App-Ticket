@@ -177,38 +177,67 @@ export default function UserManagement() {
     });
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.role || !newUser.department) {
       alert('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
 
-    const newUserData = {
-      id: (users.length + 1).toString(),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      status: 'active',
-      department: newUser.department,
-      lastLogin: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      avatar: null,
-      phone: newUser.phone,
-      extension: newUser.extension,
-      location: newUser.location || 'São Paulo - SP',
-      manager: newUser.manager || null,
-      permissions: getDefaultPermissions(newUser.role),
-      ticketsAssigned: 0,
-      ticketsResolved: 0,
-      averageResolutionTime: '-',
-      satisfactionRating: 0
-    };
+    try {
+      const userData = {
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        departmentId: newUser.department,
+        phone: newUser.phone,
+        extension: newUser.extension,
+        location: newUser.location || 'São Paulo - SP',
+        manager: newUser.manager || null,
+        firstName: newUser.name.split(' ')[0],
+        lastName: newUser.name.split(' ').slice(1).join(' '),
+        username: newUser.email.split('@')[0],
+        password: 'tempPassword123' // Should be generated or set by user
+      };
 
-    console.log('Novo usuário criado:', newUserData);
-    // Aqui você adicionaria a lógica para salvar no backend
-    
-    setShowCreateUserModal(false);
-    alert('Usuário criado com sucesso!');
+      console.log('Saving user data:', userData);
+      
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+
+      if (response.ok) {
+        const createdUser = await response.json();
+        console.log('User created successfully:', createdUser);
+        
+        setNewUser({
+          name: '',
+          email: '',
+          role: '',
+          department: '',
+          phone: '',
+          extension: '',
+          location: '',
+          manager: ''
+        });
+        
+        setShowCreateUserModal(false);
+        alert('Usuário criado com sucesso!');
+        
+        // Refresh page to show new user
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('Error creating user:', errorData);
+        alert(`Erro ao criar usuário: ${errorData.message || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Error saving user:', error);
+      alert('Erro ao salvar usuário. Verifique o console para mais detalhes.');
+    }
   };
 
   const getDefaultPermissions = (role: string) => {

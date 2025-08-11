@@ -97,8 +97,14 @@ export default function CustomFieldsManager() {
   // Update custom field mutation
   const updateFieldMutation = useMutation({
     mutationFn: async ({ id, ...fieldData }: { id: string } & Partial<CustomField>) => {
-      const response = await apiRequest(`/api/custom-fields/${id}`, "PUT", fieldData);
-      return response.json();
+      const cleanData = {
+        ...fieldData,
+        options: fieldData.options && fieldData.options.length > 0 ? fieldData.options : null
+      };
+      return apiRequest(`/api/custom-fields/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(cleanData)
+      });
     },
     onSuccess: () => {
       toast({ title: "Campo customizado atualizado!" });
@@ -108,9 +114,10 @@ export default function CustomFieldsManager() {
       setEditingField(null);
     },
     onError: (error: any) => {
+      console.error('Update error:', error);
       toast({ 
         title: "Erro ao atualizar campo", 
-        description: error.message,
+        description: error.message || "Falha ao atualizar",
         variant: "destructive" 
       });
     }

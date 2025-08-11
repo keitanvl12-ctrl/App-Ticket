@@ -224,6 +224,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/users", async (req, res) => {
+    try {
+      const userData = {
+        ...req.body,
+        username: req.body.email.split('@')[0]
+      };
+      
+      const validatedData = insertUserSchema.parse(userData);
+      const user = await storage.createUser(validatedData);
+      res.status(201).json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
   // Update user role
   app.patch("/api/users/:id", async (req, res) => {
     try {
@@ -634,13 +656,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/custom-fields/:id", async (req, res) => {
     try {
+      console.log("Updating custom field:", req.params.id, req.body);
       const field = await storage.updateCustomField(req.params.id, req.body);
       if (!field) {
         return res.status(404).json({ message: "Custom field not found" });
       }
       res.json(field);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update custom field" });
+      console.error("Error updating custom field:", error);
+      res.status(500).json({ message: "Failed to update custom field", error: error.message });
     }
   });
 
