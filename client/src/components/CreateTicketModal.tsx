@@ -40,13 +40,6 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     enabled: isOpen && !!selectedDepartment,
   });
 
-  // Fetch custom fields for selected category
-  const selectedCategory = form.watch("category");
-  const { data: customFields = [] } = useQuery({
-    queryKey: ["/api/custom-fields/category", selectedCategory],
-    enabled: isOpen && !!selectedCategory,
-  });
-
   const form = useForm<InsertTicket>({
     resolver: zodResolver(insertTicketSchema.extend({
       subject: insertTicketSchema.shape.subject.min(1, "Assunto é obrigatório").max(100, "Assunto deve ter menos de 100 caracteres"),
@@ -62,6 +55,18 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       assignedTo: null,
     },
   });
+
+  // Fetch custom fields for selected category
+  const selectedCategory = form.watch("category");
+  const { data: customFields = [] } = useQuery({
+    queryKey: ["/api/custom-fields/category", selectedCategory],
+    enabled: isOpen && !!selectedCategory,
+  });
+
+  // Add debug logging
+  console.log("Debug - Selected category:", selectedCategory);
+  console.log("Debug - Custom fields:", customFields);
+  console.log("Debug - Query enabled:", isOpen && !!selectedCategory);
 
   // Reset category when department changes
   useEffect(() => {
