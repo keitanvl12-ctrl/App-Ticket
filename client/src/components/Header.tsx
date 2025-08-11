@@ -137,6 +137,19 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
                     <Icon name="HelpCircle" size={16} />
                     <span>Ajuda</span>
                   </button>
+                  <button 
+                    onClick={() => {
+                      // Clear authentication data
+                      localStorage.removeItem('authToken');
+                      localStorage.removeItem('currentUser');
+                      // Redirect to login
+                      window.location.href = '/login';
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-enterprise"
+                  >
+                    <Icon name="LogOut" size={16} />
+                    <span>Sair</span>
+                  </button>
                 </div>
               </div>
             )}

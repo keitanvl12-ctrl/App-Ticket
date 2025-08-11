@@ -113,12 +113,14 @@ export default function RolesManagement() {
   }) as { data: any[] };
 
   useEffect(() => {
-    setRoles(prevRoles => 
-      prevRoles.map(role => ({
-        ...role,
-        userCount: users.filter((user: any) => user.role === role.id).length
-      }))
-    );
+    if (users && users.length > 0) {
+      setRoles(prevRoles => 
+        prevRoles.map(role => ({
+          ...role,
+          userCount: users.filter((user: any) => user.role === role.id).length
+        }))
+      );
+    }
   }, [users]);
 
   const handleCreateRole = async () => {

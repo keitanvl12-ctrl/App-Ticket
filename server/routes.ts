@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import authRouter from "./routes/auth";
 import { 
   requireRole, 
   requirePermission, 
@@ -17,6 +18,9 @@ import { z } from "zod";
 const updateTicketSchema = insertTicketSchema.partial();
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth routes
+  app.use('/api/auth', authRouter);
+  
   // Aplicar middleware de autenticação simulada em todas as rotas (temporário)
   app.use(mockAuth);
   

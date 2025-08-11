@@ -15,11 +15,12 @@ import Team from "@/pages/Team";
 import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
 import Login from "@/pages/Login";
+import LoginPage from "@/pages/LoginPage";
 import SLA from "@/pages/SLA";
 import CreateTicket from "@/pages/CreateTicket";
 import UserManagement from "@/pages/UserManagement";
 import Categories from "@/pages/Categories";
-import TicketForms from "@/pages/TicketForms";
+
 import CustomFields from "@/pages/CustomFields";
 import CustomFieldsManager from "@/pages/CustomFieldsManager";
 import DepartmentManager from "@/pages/DepartmentManager";
@@ -75,9 +76,7 @@ function Router() {
             <RolesManagement />
           </AdminOnly>
         </Route>
-        <Route path="/login">
-          <Login />
-        </Route>
+        <Route path="/login" component={LoginPage} />
         <Route path="/hierarchy-demo" component={() => <HierarchyDemo />} />
         <Route path="/categories">
           <SupervisorOnly>
@@ -102,7 +101,7 @@ function Router() {
         <Route path="/config" component={ConfigurationPage} />
         <Route path="/settings" component={Settings} />
         <Route path="/profile" component={Profile} />
-        <Route path="/login" component={Login} />
+
         <Route component={NotFound} />
       </Switch>
     </Layout>

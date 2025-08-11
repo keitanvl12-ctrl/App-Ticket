@@ -63,8 +63,8 @@ const NewSidebar: React.FC<SidebarProps> = ({
       submenu: [
         { label: 'Gerenciar Usuários', path: '/users', icon: 'Users' },
         { label: 'Departamentos', path: '/departments', icon: 'Building2' },
+        { label: 'Funções', path: '/roles', icon: 'Shield' },
         { label: 'Categorias', path: '/categories', icon: 'FolderTree' },
-        { label: 'Formulários', path: '/forms', icon: 'FileText' },
         { label: 'Campos Customizáveis', path: '/fields', icon: 'Settings2' },
         { label: 'Sistema de Aprovações', path: '/approvals', icon: 'CheckCircle' },
         { label: 'Configuração SLA', path: '/sla-config', icon: 'Clock' },

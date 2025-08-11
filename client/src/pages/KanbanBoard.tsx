@@ -856,27 +856,6 @@ export default function KanbanBoard() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      console.log('Visualizar ticket:', ticket.id);
-                                    }}
-                                  >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Visualizar ticket
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      console.log('Editar ticket:', ticket.id);
-                                    }}
-                                  >
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Editar ticket
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
                                   <DropdownMenuItem 
                                     className="text-red-600 focus:text-red-600 focus:bg-red-50"
                                     onClick={(e) => {

@@ -21,8 +21,25 @@ const mockUser: User = {
 };
 
 export function getCurrentUser(): User {
-  // Em um sistema real, isso obteria dados do contexto de autenticação
-  // ou de um cookie/token JWT
+  // Try to get user from localStorage first (for demo login)
+  const storedUser = localStorage.getItem('currentUser');
+  if (storedUser) {
+    try {
+      const parsed = JSON.parse(storedUser);
+      return {
+        id: parsed.id || mockUser.id,
+        name: parsed.name || mockUser.name,
+        email: parsed.email || mockUser.email,
+        role: parsed.role || mockUser.role,
+        department: parsed.department?.name || mockUser.department,
+        avatar: parsed.avatar || mockUser.avatar
+      };
+    } catch {
+      // Fall back to mock user if parsing fails
+    }
+  }
+
+  // Default fallback user
   return mockUser;
 }
 
