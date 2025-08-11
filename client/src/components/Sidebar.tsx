@@ -30,11 +30,12 @@ export default function Sidebar() {
       {/* Logo and Brand */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
+          <div className="w-8 h-8 bg-opus-blue-dark rounded flex items-center justify-center">
             <Ticket className="text-white" size={16} />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-foreground">TicketFlow Pro</h1>
+            <h1 className="text-sm font-semibold text-foreground">Menu</h1>
+            <p className="text-xs text-muted-foreground">Navegação</p>
           </div>
         </div>
       </div>

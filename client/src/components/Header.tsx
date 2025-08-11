@@ -45,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-card border-b border-border shadow-enterprise">
       <div className="flex items-center justify-between h-16 px-4">
-        {/* Left Section - Logo and Mobile Menu */}
+        {/* Left Section - Logo e Menu Mobile */}
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -56,7 +56,18 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
             <Icon name="Menu" size={20} />
           </Button>
           
-          {/* Logo removido do header para evitar duplicação */}
+          {/* Logo do Grupo OPUS */}
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/logo-opus.png" 
+              alt="Grupo OPUS" 
+              className="w-10 h-auto object-contain"
+            />
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-semibold text-foreground">TicketFlow Pro</h1>
+              <p className="text-xs text-muted-foreground">Grupo OPUS</p>
+            </div>
+          </div>
         </div>
 
         {/* Center Section - Primary Navigation (Desktop) */}

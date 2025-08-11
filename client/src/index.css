@@ -6,39 +6,45 @@
 
 @layer base {
   :root {
-    /* Core Colors - Light Theme */
+    /* Grupo OPUS Brand Colors */
+    --opus-blue-dark: #2c4257;    /* Azul escuro da logo */
+    --opus-blue-light: #6b8fb0;   /* Azul claro da logo */
+    --opus-blue-accent: #4a6b85;  /* Tom intermediário */
+    --opus-gray-light: #9db4c7;   /* Cinza azulado claro */
+    
+    /* Core Colors - Light Theme com identidade OPUS */
     --background: #FAFBFC;
-    --foreground: #1E293B;
+    --foreground: #2c4257;
     --border: #E2E8F0;
     --input: #FFFFFF;
-    --ring: #2563EB;
+    --ring: #6b8fb0;
     
     /* Card Colors */
     --card: #FFFFFF;
-    --card-foreground: #1E293B;
+    --card-foreground: #2c4257;
     
     /* Popover Colors */
     --popover: #FFFFFF;
-    --popover-foreground: #1E293B;
+    --popover-foreground: #2c4257;
     
     /* Muted Colors */
-    --muted: #F1F5F9;
-    --muted-foreground: #64748B;
+    --muted: #F8FAFC;
+    --muted-foreground: #6b8fb0;
     
-    /* Primary Colors */
-    --primary: #2563EB;
+    /* Primary Colors - Usando azul OPUS */
+    --primary: #2c4257;
     --primary-foreground: #FFFFFF;
-    --primary-hover: #1D4ED8;
+    --primary-hover: #243549;
     
-    /* Secondary Colors */
-    --secondary: #64748B;
+    /* Secondary Colors - Usando azul claro OPUS */
+    --secondary: #6b8fb0;
     --secondary-foreground: #FFFFFF;
-    --secondary-hover: #475569;
+    --secondary-hover: #5a7a9a;
     
-    /* Accent Colors */
-    --accent: #F59E0B;
+    /* Accent Colors - Mantendo tom complementar */
+    --accent: #4a6b85;
     --accent-foreground: #FFFFFF;
-    --accent-hover: #D97706;
+    --accent-hover: #3d5870;
     
     /* Success Colors */
     --success: #059669;
@@ -68,11 +74,11 @@
   }
 
   .dark {
-    /* Core Colors - Dark Theme */
-    --background: #0F172A;
-    --foreground: #F1F5F9;
-    --border: #1E293B;
-    --input: #1E293B;
+    /* Core Colors - Dark Theme com identidade OPUS */
+    --background: #0F1419;
+    --foreground: #9db4c7;
+    --border: #2c4257;
+    --input: #2c4257;
     --ring: #3B82F6;
     
     /* Card Colors */
@@ -163,4 +169,14 @@
   .transition-modal {
     transition: all 300ms ease-in-out;
   }
+  
+  /* Grupo OPUS Custom Classes */
+  .bg-opus-blue-dark { background-color: var(--opus-blue-dark); }
+  .bg-opus-blue-light { background-color: var(--opus-blue-light); }
+  .bg-opus-blue-accent { background-color: var(--opus-blue-accent); }
+  .text-opus-blue-dark { color: var(--opus-blue-dark); }
+  .text-opus-blue-light { color: var(--opus-blue-light); }
+  .border-opus-blue-dark { border-color: var(--opus-blue-dark); }
+  .hover\:bg-opus-blue-dark:hover { background-color: var(--opus-blue-dark); }
+  .hover\:bg-opus-blue-light:hover { background-color: var(--opus-blue-light); }
 }
