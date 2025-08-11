@@ -181,6 +181,7 @@ export interface TicketWithDetails extends Ticket {
   slaStatus?: 'met' | 'at_risk' | 'violated';
   slaHoursRemaining?: number;
   slaHoursTotal?: number;
+  slaSource?: string;
 }
 
 // Export types

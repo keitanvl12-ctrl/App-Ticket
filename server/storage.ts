@@ -542,29 +542,54 @@ export class DatabaseStorage implements IStorage {
           ...ticket, 
           slaStatus: 'met' as const, 
           slaHoursRemaining: 0,
-          slaHoursTotal: 0
+          slaHoursTotal: 0,
+          slaSource: 'ticket resolvido'
         };
       }
 
-      // Buscar SLA da prioridade configurada
-      const [priorityConfigResult] = await db
-        .select()
-        .from(priorityConfig)
-        .where(eq(priorityConfig.value, ticket.priority));
+      let slaHours = 4; // Padrão de 4 horas conforme solicitado
+      let slaSource = 'padrão (4h)';
 
-      let slaHours = 24; // padrão
+      // 1. Primeiro, buscar regras SLA específicas (maior prioridade)
+      const slaRulesData = await db.select().from(slaRules).where(eq(slaRules.isActive, true));
+      
+      if (slaRulesData && slaRulesData.length > 0) {
+        const matchingRule = slaRulesData.find(rule => {
+          const matchesDepartment = !rule.departmentId || rule.departmentId === ticket.responsibleDepartmentId;
+          const matchesCategory = !rule.category || rule.category === ticket.category;
+          const matchesPriority = !rule.priority || rule.priority === ticket.priority;
+          return matchesDepartment && matchesCategory && matchesPriority;
+        });
 
-      if (priorityConfigResult?.slaHours) {
-        slaHours = priorityConfigResult.slaHours;
-      } else {
-        // Se não encontrar na prioridade, buscar na categoria
+        if (matchingRule) {
+          slaHours = matchingRule.timeHours;
+          slaSource = `regra SLA: ${matchingRule.name}`;
+        }
+      }
+
+      // 2. Se não encontrou regra SLA, buscar configuração de prioridade
+      if (slaSource === 'padrão (4h)') {
+        const [priorityConfigResult] = await db
+          .select()
+          .from(priorityConfig)
+          .where(eq(priorityConfig.value, ticket.priority));
+
+        if (priorityConfigResult?.slaHours) {
+          slaHours = priorityConfigResult.slaHours;
+          slaSource = `prioridade: ${priorityConfigResult.name}`;
+        }
+      }
+
+      // 3. Se não encontrou na prioridade, buscar na categoria
+      if (slaSource === 'padrão (4h)' && ticket.category) {
         const [category] = await db
           .select()
           .from(categories)
-          .where(eq(categories.name, ticket.category || ''));
+          .where(eq(categories.name, ticket.category));
         
         if (category?.slaHours) {
           slaHours = category.slaHours;
+          slaSource = `categoria: ${category.name}`;
         }
       }
 
@@ -572,7 +597,7 @@ export class DatabaseStorage implements IStorage {
       const now = new Date();
       const createdAt = new Date(ticket.createdAt);
       const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-      const hoursRemaining = Math.max(0, slaHours - hoursElapsed);
+      const hoursRemaining = slaHours - hoursElapsed;
 
       // Determinar status do SLA
       let slaStatus: 'met' | 'at_risk' | 'violated' = 'met';
@@ -587,7 +612,8 @@ export class DatabaseStorage implements IStorage {
         ...ticket,
         slaStatus,
         slaHoursRemaining: Math.round(hoursRemaining * 100) / 100,
-        slaHoursTotal: slaHours
+        slaHoursTotal: slaHours,
+        slaSource
       };
     } catch (error) {
       console.error('Erro ao calcular SLA:', error);

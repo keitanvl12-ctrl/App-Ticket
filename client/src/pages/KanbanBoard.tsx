@@ -279,6 +279,16 @@ export default function KanbanBoard() {
     queryKey: ['/api/departments'],
   });
 
+  // Buscar regras de SLA
+  const { data: slaRules } = useQuery<any[]>({
+    queryKey: ['/api/sla/rules'],
+  });
+
+  // Buscar categorias 
+  const { data: categories } = useQuery<any[]>({
+    queryKey: ['/api/categories'],
+  });
+
   // Função para converter cor hex para classes Tailwind
   const hexToTailwindBg = (hex: string) => {
     const colorMap: Record<string, string> = {
@@ -427,12 +437,14 @@ export default function KanbanBoard() {
     return 'bg-blue-500';
   };
 
-  // Função para calcular progresso baseado no SLA
+  // Função para calcular progresso baseado no SLA usando dados do backend
   const calculateSLAProgress = (ticket: any) => {
     if (!ticket.slaHoursTotal || ticket.slaHoursTotal <= 0) return 0;
     if (ticket.status === 'resolved') return 100;
     
-    const hoursElapsed = ticket.slaHoursTotal - (ticket.slaHoursRemaining || 0);
+    const now = new Date();
+    const createdAt = new Date(ticket.createdAt);
+    const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
     const progressPercentage = Math.min((hoursElapsed / ticket.slaHoursTotal) * 100, 100);
     return Math.max(progressPercentage, 0);
   };
@@ -449,7 +461,7 @@ export default function KanbanBoard() {
     return config?.name || priority;
   };
 
-  // Funções SLA conectadas ao banco de dados
+  // Funções SLA conectadas ao banco de dados com nova hierarquia
   const getSLAStatusColor = (ticket: any) => {
     if (!ticket.slaStatus) return 'bg-gray-500';
     
@@ -479,6 +491,11 @@ export default function KanbanBoard() {
       case 'met': return 'No Prazo';
       default: return 'N/A';
     }
+  };
+
+  // Função para exibir fonte do SLA (debug/informativo)
+  const getSLASource = (ticket: any) => {
+    return ticket.slaSource || 'padrão (4h)';
   };
 
   const filteredTickets = tickets.filter(ticket => {
