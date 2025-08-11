@@ -61,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
             <img 
               src="/logo-opus.png" 
               alt="Grupo OPUS" 
-              className="w-12 h-auto object-contain"
+              className="w-20 h-auto object-contain"
             />
           </div>
         </div>
