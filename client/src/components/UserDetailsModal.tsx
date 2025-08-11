@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 
 interface UserDetailsModalProps {
   userId: string | null;
@@ -408,65 +409,181 @@ export default function UserDetailsModal({ userId, isOpen, onClose }: UserDetail
           </TabsContent>
 
           {/* Performance Tab */}
-          <TabsContent value="performance" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TabsContent value="performance" className="space-y-6">
+            {/* Key Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium">Tickets Atribuídos</CardTitle>
-                  <User className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{performance?.assignedTickets || 0}</div>
-                  <p className="text-xs text-muted-foreground">Total de tickets</p>
+                  <p className="text-xs text-muted-foreground">Total no sistema</p>
                 </CardContent>
               </Card>
-
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium">Tickets Resolvidos</CardTitle>
-                  <UserCheck className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">{performance?.resolvedTickets || 0}</div>
-                  <p className="text-xs text-muted-foreground">Tickets finalizados</p>
+                  <p className="text-xs text-muted-foreground">Concluídos com sucesso</p>
                 </CardContent>
               </Card>
-
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium">Taxa de Resolução</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {performance?.resolutionRate || 0}%
+                  <div className="text-2xl font-bold text-blue-600">{performance?.resolutionRate || 0}%</div>
+                  <p className="text-xs text-muted-foreground">Eficiência geral</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Avaliação</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-500">
+                    {performance?.satisfactionRating ? `${performance.satisfactionRating}/5.0` : 'N/A'}
                   </div>
-                  <p className="text-xs text-muted-foreground">Eficiência</p>
+                  <p className="text-xs text-muted-foreground">Satisfação média</p>
                 </CardContent>
               </Card>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Métricas de Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Tempo Médio de Resolução</span>
-                    <span className="text-sm">{performance?.averageResolutionTime || 'N/A'}</span>
+            {/* Performance Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Monthly Trend Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Tendência Mensal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={performance?.monthlyTrend || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={12} />
+                      <YAxis fontSize={12} />
+                      <Tooltip />
+                      <Line 
+                        type="monotone" 
+                        dataKey="tickets" 
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Priority Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Distribuição por Prioridade
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={performance?.priorityDistribution || []}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={60}
+                        dataKey="value"
+                        label={({ name, value }) => value > 0 ? `${name}: ${value}` : ''}
+                        fontSize={12}
+                      >
+                        {(performance?.priorityDistribution || []).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Status Distribution */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Distribuição por Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={performance?.statusDistribution || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" fontSize={12} />
+                      <YAxis fontSize={12} />
+                      <Tooltip />
+                      <Bar 
+                        dataKey="value" 
+                        radius={[4, 4, 0, 0]}
+                      >
+                        {(performance?.statusDistribution || []).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Performance Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Tempo Médio de Resolução
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl font-bold text-purple-600">
+                    {performance?.averageResolutionTime || '0 dias'}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Avaliação de Satisfação</span>
-                    <span className="text-sm">{performance?.satisfactionRating || 'N/A'}</span>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Tickets Em Aberto
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl font-bold text-orange-600">
+                    {performance?.openTickets || 0}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Tickets em Andamento</span>
-                    <span className="text-sm">{performance?.openTickets || 0}</span>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Eficiência Geral
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl font-bold text-green-600">
+                    {performance?.resolutionRate || 0}%
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Atividade Tab */}

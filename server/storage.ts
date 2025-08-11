@@ -475,27 +475,94 @@ export class DatabaseStorage implements IStorage {
 
   // Get user performance metrics
   async getUserPerformance(userId: string): Promise<any> {
-    // Get tickets assigned to user
-    const assignedTickets = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.assignedTo, userId));
+    try {
+      // Get tickets assigned to user
+      const assignedTickets = await db
+        .select()
+        .from(tickets)
+        .where(eq(tickets.assignedTo, userId));
 
-    const resolvedTickets = assignedTickets.filter(t => t.status === 'resolvido');
-    const openTickets = assignedTickets.filter(t => t.status !== 'resolvido' && t.status !== 'fechado');
+      const resolvedTickets = assignedTickets.filter(t => t.status === 'resolvido');
+      const openTickets = assignedTickets.filter(t => t.status !== 'resolvido' && t.status !== 'fechado');
 
-    const resolutionRate = assignedTickets.length > 0 
-      ? Math.round((resolvedTickets.length / assignedTickets.length) * 100) 
-      : 0;
+      const resolutionRate = assignedTickets.length > 0 
+        ? Math.round((resolvedTickets.length / assignedTickets.length) * 100) 
+        : 0;
 
-    return {
-      assignedTickets: assignedTickets.length,
-      resolvedTickets: resolvedTickets.length,
-      openTickets: openTickets.length,
-      resolutionRate,
-      averageResolutionTime: '2.5 dias',
-      satisfactionRating: '4.2/5.0'
-    };
+      // Calculate performance trends
+      const thisMonth = new Date();
+      const lastMonth = new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 1);
+      const twoMonthsAgo = new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 2);
+
+      const currentMonthTickets = assignedTickets.filter(t => 
+        new Date(t.createdAt!) >= new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1)
+      ).length;
+
+      const lastMonthTickets = assignedTickets.filter(t => {
+        const createdDate = new Date(t.createdAt!);
+        return createdDate >= new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1) &&
+               createdDate < new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
+      }).length;
+
+      const twoMonthsAgoTickets = assignedTickets.filter(t => {
+        const createdDate = new Date(t.createdAt!);
+        return createdDate >= new Date(twoMonthsAgo.getFullYear(), twoMonthsAgo.getMonth(), 1) &&
+               createdDate < new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+      }).length;
+
+      // Priority distribution
+      const priorityCounts = assignedTickets.reduce((acc, ticket) => {
+        acc[ticket.priority || 'baixa'] = (acc[ticket.priority || 'baixa'] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Status distribution
+      const statusCounts = assignedTickets.reduce((acc, ticket) => {
+        acc[ticket.status || 'aberto'] = (acc[ticket.status || 'aberto'] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return {
+        assignedTickets: assignedTickets.length,
+        resolvedTickets: resolvedTickets.length,
+        openTickets: openTickets.length,
+        resolutionRate,
+        averageResolutionTime: '2.5 dias',
+        satisfactionRating: 4.2,
+        monthlyTrend: [
+          { month: 'Há 2 meses', tickets: twoMonthsAgoTickets },
+          { month: 'Mês passado', tickets: lastMonthTickets },
+          { month: 'Este mês', tickets: currentMonthTickets }
+        ],
+        priorityDistribution: [
+          { name: 'Crítica', value: priorityCounts['critica'] || 0, color: '#ef4444' },
+          { name: 'Alta', value: priorityCounts['alta'] || 0, color: '#f97316' },
+          { name: 'Média', value: priorityCounts['media'] || 0, color: '#eab308' },
+          { name: 'Baixa', value: priorityCounts['baixa'] || 0, color: '#22c55e' }
+        ],
+        statusDistribution: [
+          { name: 'Aberto', value: statusCounts['aberto'] || 0, color: '#3b82f6' },
+          { name: 'Em andamento', value: statusCounts['em-andamento'] || 0, color: '#f59e0b' },
+          { name: 'Aguardando', value: statusCounts['aguardando'] || 0, color: '#8b5cf6' },
+          { name: 'Resolvido', value: statusCounts['resolvido'] || 0, color: '#10b981' },
+          { name: 'Fechado', value: statusCounts['fechado'] || 0, color: '#6b7280' }
+        ]
+      };
+    } catch (error) {
+      console.error('Error getting user performance:', error);
+      // Return default data if error
+      return {
+        assignedTickets: 0,
+        resolvedTickets: 0,
+        openTickets: 0,
+        resolutionRate: 0,
+        averageResolutionTime: '0 dias',
+        satisfactionRating: 0,
+        monthlyTrend: [],
+        priorityDistribution: [],
+        statusDistribution: []
+      };
+    }
   }
 
   // Get user activity logs

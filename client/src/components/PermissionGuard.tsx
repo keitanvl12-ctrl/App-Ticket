@@ -14,11 +14,14 @@ const getCurrentUser = () => {
 const hasPermission = (userRole: string, requiredRole?: string) => {
   if (!requiredRole) return true;
   
+  // Normalizar role para admin -> administrador
+  const normalizedRole = userRole === 'admin' ? 'administrador' : userRole;
+  
   if (requiredRole === 'administrador') {
-    return userRole === 'administrador';
+    return normalizedRole === 'administrador';
   }
   if (requiredRole === 'supervisor') {
-    return ['supervisor', 'administrador'].includes(userRole);
+    return ['supervisor', 'administrador'].includes(normalizedRole);
   }
   return true;
 };
@@ -43,7 +46,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
       return;
     }
 
-    const userRole = user.role || user.hierarchy || 'colaborador';
+    const userRole = user.role === 'admin' ? 'administrador' : (user.role || user.hierarchy || 'colaborador');
     if (requiredRole && !hasPermission(userRole, requiredRole)) {
       setLocation('/unauthorized');
       return;
@@ -54,7 +57,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     return null;
   }
 
-  const userRole = user.role || user.hierarchy || 'colaborador';
+  const userRole = user.role === 'admin' ? 'administrador' : (user.role || user.hierarchy || 'colaborador');
   
   if (requiredRole && !hasPermission(userRole, requiredRole)) {
     return fallback || null;
