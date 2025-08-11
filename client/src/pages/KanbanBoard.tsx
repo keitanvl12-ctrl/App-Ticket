@@ -286,8 +286,8 @@ export default function KanbanBoard() {
                  status.color === '#10b981' ? 'bg-green-500' : 'bg-gray-500',
     count: tickets.filter(t => t.status === status.value).length
   })) || [
-    { id: 'open', title: 'ABERTO', color: 'bg-red-500', headerColor: 'bg-red-500', count: 0 },
-    { id: 'in_progress', title: 'EM PROGRESSO', color: 'bg-green-500', headerColor: 'bg-green-500', count: 0 },
+    { id: 'open', title: 'A FAZER', color: 'bg-blue-500', headerColor: 'bg-blue-500', count: 0 },
+    { id: 'in_progress', title: 'ATENDENDO', color: 'bg-green-500', headerColor: 'bg-green-500', count: 0 },
     { id: 'on_hold', title: 'PAUSADO', color: 'bg-yellow-500', headerColor: 'bg-yellow-500', count: 0 },
     { id: 'resolved', title: 'RESOLVIDO', color: 'bg-gray-500', headerColor: 'bg-gray-500', count: 0 }
   ];

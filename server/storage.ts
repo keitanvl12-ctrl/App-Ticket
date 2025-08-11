@@ -303,7 +303,7 @@ export class DatabaseStorage implements IStorage {
         // Create default status configurations
         await db.insert(statusConfig).values([
           {
-            name: "Aberto",
+            name: "A Fazer",
             value: "open",
             color: "#3b82f6",
             order: 1,
@@ -311,24 +311,24 @@ export class DatabaseStorage implements IStorage {
             isDefault: true,
           },
           {
-            name: "Em Andamento",
+            name: "Atendendo",
             value: "in_progress",
-            color: "#f59e0b",
+            color: "#10b981",
             order: 2,
+            isActive: true,
+            isDefault: false,
+          },
+          {
+            name: "Pausado",
+            value: "on_hold",
+            color: "#f59e0b",
+            order: 3,
             isActive: true,
             isDefault: false,
           },
           {
             name: "Resolvido",
             value: "resolved",
-            color: "#10b981",
-            order: 3,
-            isActive: true,
-            isDefault: false,
-          },
-          {
-            name: "Fechado",
-            value: "closed",
             color: "#6b7280",
             order: 4,
             isActive: true,
