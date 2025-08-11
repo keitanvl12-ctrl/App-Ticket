@@ -9,27 +9,27 @@ const router = Router();
 const DEMO_USERS = [
   {
     id: 'admin-001',
-    email: 'admin@opus.com.br',
+    email: 'admin@empresa.com',
     password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: admin123
-    name: 'Administrador Sistema',
+    name: 'Administrador',
     role: 'administrador',
     hierarchy: 'administrador',
     department: { id: 'dept-1', name: 'Administração' }
   },
   {
     id: 'supervisor-001',
-    email: 'supervisor@opus.com.br',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: super123
-    name: 'João Supervisor',
+    email: 'maria.santos@empresa.com',
+    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: maria123
+    name: 'Maria Santos',
     role: 'supervisor',
     hierarchy: 'supervisor',
     department: { id: 'dept-2', name: 'TI' }
   },
   {
     id: 'colaborador-001',
-    email: 'colaborador@opus.com.br',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: colab123
-    name: 'Maria Colaboradora',
+    email: 'ana.costa@empresa.com',
+    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: ana123
+    name: 'Ana Costa',
     role: 'colaborador',
     hierarchy: 'colaborador',
     department: { id: 'dept-3', name: 'Suporte' }
@@ -93,9 +93,9 @@ router.post('/login', async (req, res) => {
 
     // For demo purposes, we'll accept the hardcoded passwords
     const isValidPassword = 
-      (email === 'admin@opus.com.br' && password === 'admin123') ||
-      (email === 'supervisor@opus.com.br' && password === 'super123') ||
-      (email === 'colaborador@opus.com.br' && password === 'colab123');
+      (email === 'admin@empresa.com' && password === 'admin123') ||
+      (email === 'maria.santos@empresa.com' && password === 'maria123') ||
+      (email === 'ana.costa@empresa.com' && password === 'ana123');
 
     if (!isValidPassword) {
       return res.status(401).json({
