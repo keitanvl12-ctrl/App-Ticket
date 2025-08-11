@@ -288,6 +288,8 @@ export default function KanbanBoard() {
       '#6b7280': 'bg-gray-500',    // Cinza
       '#8b5cf6': 'bg-violet-500',  // Roxo
       '#ef4444': 'bg-red-500',     // Vermelho
+      '#dc2626': 'bg-red-600',     // Vermelho mais escuro
+      '#f87171': 'bg-red-400',     // Vermelho mais claro
       '#f97316': 'bg-orange-500',  // Laranja
       '#06b6d4': 'bg-cyan-500',    // Ciano
       '#84cc16': 'bg-lime-500',    // Lima
@@ -297,13 +299,17 @@ export default function KanbanBoard() {
   };
 
   // Define columns with dynamic counts using database configurations
-  const columns = statusConfigs?.map(status => ({
-    id: status.value,
-    title: status.name.toUpperCase(),
-    color: hexToTailwindBg(status.color),
-    headerColor: hexToTailwindBg(status.color),
-    count: tickets.filter(t => t.status === status.value).length
-  })) || [
+  const columns = statusConfigs?.map(status => {
+    const bgColor = hexToTailwindBg(status.color);
+    console.log(`Status: ${status.name}, Color: ${status.color}, Mapped: ${bgColor}`); // Debug
+    return {
+      id: status.value,
+      title: status.name.toUpperCase(),
+      color: bgColor,
+      headerColor: bgColor,
+      count: tickets.filter(t => t.status === status.value).length
+    };
+  }) || [
     { id: 'open', title: 'A FAZER', color: 'bg-blue-500', headerColor: 'bg-blue-500', count: 0 },
     { id: 'in_progress', title: 'ATENDENDO', color: 'bg-green-500', headerColor: 'bg-green-500', count: 0 },
     { id: 'on_hold', title: 'PAUSADO', color: 'bg-yellow-500', headerColor: 'bg-yellow-500', count: 0 },
@@ -392,6 +398,8 @@ export default function KanbanBoard() {
       '#6b7280': 'bg-gray-100 text-gray-800 border-gray-200',
       '#8b5cf6': 'bg-violet-100 text-violet-800 border-violet-200',
       '#ef4444': 'bg-red-100 text-red-800 border-red-200',
+      '#dc2626': 'bg-red-100 text-red-800 border-red-200',
+      '#f87171': 'bg-red-100 text-red-800 border-red-200',
       '#f97316': 'bg-orange-100 text-orange-800 border-orange-200',
       '#06b6d4': 'bg-cyan-100 text-cyan-800 border-cyan-200',
       '#84cc16': 'bg-lime-100 text-lime-800 border-lime-200',

@@ -17,6 +17,8 @@ const hexToBadgeClasses = (hex: string) => {
     '#6b7280': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
     '#8b5cf6': 'bg-violet-100 text-violet-800 dark:bg-violet-900/20 dark:text-violet-400',
     '#ef4444': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
+    '#dc2626': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
+    '#f87171': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
     '#f97316': 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
     '#06b6d4': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/20 dark:text-cyan-400',
     '#84cc16': 'bg-lime-100 text-lime-800 dark:bg-lime-900/20 dark:text-lime-400',

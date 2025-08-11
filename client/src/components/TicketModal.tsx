@@ -204,6 +204,8 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
       '#6b7280': 'border-gray-200 text-gray-800 bg-gray-50',
       '#8b5cf6': 'border-violet-200 text-violet-800 bg-violet-50',
       '#ef4444': 'border-red-200 text-red-800 bg-red-50',
+      '#dc2626': 'border-red-200 text-red-800 bg-red-50',
+      '#f87171': 'border-red-200 text-red-800 bg-red-50',
       '#f97316': 'border-orange-200 text-orange-800 bg-orange-50',
       '#06b6d4': 'border-cyan-200 text-cyan-800 bg-cyan-50',
       '#84cc16': 'border-lime-200 text-lime-800 bg-lime-50',
