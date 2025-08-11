@@ -376,6 +376,57 @@ export default function KanbanBoard() {
     return 'bg-blue-500';
   };
 
+  // Funções SLA
+  const getSLAStatusColor = (ticket: any) => {
+    const slaTime = getSLATimeInHours(ticket);
+    const timeElapsed = getTimeElapsedInHours(ticket.createdAt);
+    const percentageUsed = (timeElapsed / slaTime) * 100;
+    
+    if (percentageUsed >= 100) return 'bg-red-500'; // Vencido
+    if (percentageUsed >= 80) return 'bg-orange-500'; // Crítico
+    if (percentageUsed >= 60) return 'bg-yellow-500'; // Atenção
+    return 'bg-green-500'; // Ok
+  };
+
+  const getSLATimeInHours = (ticket: any) => {
+    // SLA baseado na prioridade
+    switch (ticket.priority?.toLowerCase()) {
+      case 'crítica': return 4; // 4 horas
+      case 'alta': return 24; // 1 dia
+      case 'média': return 72; // 3 dias
+      case 'baixa': return 168; // 7 dias
+      default: return 24;
+    }
+  };
+
+  const getTimeElapsedInHours = (createdAt: string) => {
+    const now = new Date();
+    const created = new Date(createdAt);
+    return Math.abs(now.getTime() - created.getTime()) / (1000 * 60 * 60);
+  };
+
+  const getSLATimeRemaining = (ticket: any) => {
+    const slaTime = getSLATimeInHours(ticket);
+    const timeElapsed = getTimeElapsedInHours(ticket.createdAt);
+    const remaining = slaTime - timeElapsed;
+    
+    if (remaining <= 0) return 'Vencido';
+    if (remaining < 1) return `${Math.ceil(remaining * 60)}min`;
+    if (remaining < 24) return `${Math.ceil(remaining)}h`;
+    return `${Math.ceil(remaining / 24)}d`;
+  };
+
+  const getSLAStatus = (ticket: any) => {
+    const slaTime = getSLATimeInHours(ticket);
+    const timeElapsed = getTimeElapsedInHours(ticket.createdAt);
+    const percentageUsed = (timeElapsed / slaTime) * 100;
+    
+    if (percentageUsed >= 100) return 'Vencido';
+    if (percentageUsed >= 80) return 'Crítico';
+    if (percentageUsed >= 60) return 'Atenção';
+    return 'Ok';
+  };
+
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = (ticket.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (ticket.ticketNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -653,8 +704,8 @@ export default function KanbanBoard() {
                 {filteredTickets
                   .filter(ticket => ticket.status === column.id)
                   .map((ticket) => (
-                    <TicketModal key={ticket.id} ticket={ticket} onUpdate={(updatedTicket) => {
-                      setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+                    <TicketModal key={ticket.id} ticket={ticket} onUpdate={(updatedTicket: any) => {
+                      // Atualizar lista será feita pela revalidação de query
                     }}>
                       <Card 
                         className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-sm bg-white"
@@ -716,12 +767,21 @@ export default function KanbanBoard() {
                             </div>
                           </div>
 
-                          {/* Priority Badge */}
+                          {/* Priority Badge and SLA */}
                           <div className="flex items-center justify-between">
                             <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
                               {ticket.priority}
                             </Badge>
                             <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
+                          </div>
+
+                          {/* SLA Status */}
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                            <div className="flex items-center space-x-1">
+                              <div className={`w-2 h-2 rounded-full ${getSLAStatusColor(ticket)}`}></div>
+                              <span className="text-xs text-gray-600">SLA: {getSLATimeRemaining(ticket)}</span>
+                            </div>
+                            <span className="text-xs text-gray-400">{getSLAStatus(ticket)}</span>
                           </div>
 
                           {/* Progress Bar */}
@@ -768,14 +828,14 @@ export default function KanbanBoard() {
               {filteredTickets.map((ticket) => (
                 <TableRow key={ticket.id} className="hover:bg-gray-50">
                   <TableCell className="font-mono text-sm">
-                    {ticket.number}
+                    {ticket.ticketNumber}
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <p className="font-medium text-sm">{ticket.title}</p>
+                      <p className="font-medium text-sm">{ticket.subject}</p>
                       {ticket.tags && ticket.tags.length > 0 && (
                         <div className="flex gap-1">
-                          {ticket.tags.slice(0, 2).map((tag, index) => (
+                          {ticket.tags.slice(0, 2).map((tag: string, index: number) => (
                             <Badge key={index} variant="secondary" className="text-xs">
                               {tag}
                             </Badge>
@@ -814,14 +874,14 @@ export default function KanbanBoard() {
                     <div className="flex items-center space-x-2">
                       <Avatar className="w-6 h-6">
                         <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                          {ticket.assignee.initials}
+                          {ticket.assignedToUser?.name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm">{ticket.assignee.name}</span>
+                      <span className="text-sm">{ticket.assignedToUser?.name || 'Não atribuído'}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{ticket.requester}</TableCell>
-                  <TableCell className="text-sm">{ticket.department}</TableCell>
+                  <TableCell className="text-sm">{ticket.createdByUser?.name || 'Desconhecido'}</TableCell>
+                  <TableCell className="text-sm">{ticket.department?.name || 'Sem departamento'}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <div className="w-16 bg-gray-200 rounded-full h-2">
@@ -833,18 +893,18 @@ export default function KanbanBoard() {
                       <span className="text-xs text-gray-500 w-8">{ticket.progress}%</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{ticket.dueDate}</TableCell>
+                  <TableCell className="text-sm">{new Date(ticket.createdAt).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
-                      <TicketModal ticket={ticket} onUpdate={(updatedTicket) => {
-                        setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+                      <TicketModal ticket={ticket} onUpdate={(updatedTicket: any) => {
+                        // Atualizar lista será feita pela revalidação de query
                       }}>
                         <Button variant="ghost" size="icon" className="w-8 h-8">
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TicketModal>
                       {/* Botão Finalizar (apenas para tickets não resolvidos) */}
-                      {ticket.status !== 'Resolvido' && (
+                      {ticket.status !== 'resolved' && (
                         <Button 
                           variant="ghost" 
                           size="icon" 
