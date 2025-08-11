@@ -498,88 +498,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
               </div>
             </div>
 
-            {/* DEBUG - Sempre mostrar para testar */}
-            <div style={{ 
-              marginBottom: '24px',
-              padding: '16px',
-              backgroundColor: 'red',
-              color: 'white',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}>
-              <h4 style={{ color: 'white', marginBottom: '8px' }}>🚨 DEBUG INFO - TESTE 🚨</h4>
-              <p>Selected Category ID: {selectedCategoryId || "NONE"}</p>
-              <p>Custom Fields Count: {customFields?.length || 0}</p>
-              <p style={{ fontSize: '12px' }}>Custom Fields: {JSON.stringify(customFields, null, 2)}</p>
-              <p style={{ color: 'yellow', fontWeight: 'bold' }}>Modal SimpleTicketModal funcionando: SIM</p>
-            </div>
-
-            {/* TESTE FORÇADO - Campos de Bug de Sistema */}
-            <div style={{ 
-              marginBottom: '24px',
-              padding: '16px',
-              backgroundColor: '#dcfce7',
-              border: '2px solid #16a34a',
-              borderRadius: '8px'
-            }}>
-              <h4 style={{ color: '#16a34a', marginBottom: '12px', fontWeight: 'bold' }}>TESTE FORÇADO - Campos de Bug de Sistema:</h4>
-              <div style={{ display: 'grid', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-                    Passos para Reproduzir *
-                  </label>
-                  <textarea
-                    placeholder="Descreva os passos detalhados para reproduzir o bug"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      minHeight: '80px'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-                    Versão do Sistema *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: v2.1.0"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '14px'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-                    Navegador
-                  </label>
-                  <select style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    backgroundColor: 'white'
-                  }}>
-                    <option value="">Selecione o navegador</option>
-                    <option value="chrome">Chrome</option>
-                    <option value="firefox">Firefox</option>
-                    <option value="safari">Safari</option>
-                    <option value="edge">Edge</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Campos dinâmicos baseados na categoria - Nova API */}
+            {/* Campos Customizados por Categoria */}
             {selectedCategoryId && customFields && customFields.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ 
@@ -590,7 +509,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                   borderBottom: '2px solid #e5e7eb',
                   paddingBottom: '8px'
                 }}>
-                  Informações Específicas da Categoria (API)
+                  Informações Específicas
                 </h3>
                 <div style={{ 
                   display: 'grid', 
@@ -612,6 +531,8 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                         {field.type === 'text' && (
                           <input
                             type="text"
+                            value={formData.customFields[field.id] || ''}
+                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
                             placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
                             style={{
                               width: '100%',
@@ -620,10 +541,13 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                               borderRadius: '8px',
                               fontSize: '14px'
                             }}
+                            required={field.required}
                           />
                         )}
                         {field.type === 'textarea' && (
                           <textarea
+                            value={formData.customFields[field.id] || ''}
+                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
                             placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
                             style={{
                               width: '100%',
@@ -631,19 +555,26 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                               border: '1px solid #d1d5db',
                               borderRadius: '8px',
                               fontSize: '14px',
-                              minHeight: '80px'
+                              minHeight: '80px',
+                              resize: 'vertical'
                             }}
+                            required={field.required}
                           />
                         )}
                         {field.type === 'select' && field.options && (
-                          <select style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            backgroundColor: 'white'
-                          }}>
+                          <select 
+                            value={formData.customFields[field.id] || ''}
+                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              backgroundColor: 'white'
+                            }}
+                            required={field.required}
+                          >
                             <option value="">{field.placeholder || `Selecione ${field.name.toLowerCase()}`}</option>
                             {field.options.map((option, idx) => (
                               <option key={idx} value={option}>{option}</option>
