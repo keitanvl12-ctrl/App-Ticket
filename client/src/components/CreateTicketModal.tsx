@@ -321,11 +321,13 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
               </div>
             </div>
 
-            {/* Custom Fields Section - DEBUGGING */}
-            <div className="border rounded-lg p-4 bg-yellow-50 dark:bg-yellow-900/20 mb-4">
-              <p className="text-sm">DEBUG: selectedCategory = {selectedCategory || 'null'}</p>
-              <p className="text-sm">DEBUG: customFields.length = {customFields?.length || 0}</p>
-              <p className="text-sm">DEBUG: Query enabled = {String(isOpen && !!selectedCategory)}</p>
+            {/* DEBUGGING - SEMPRE VISÍVEL */}
+            <div className="border-2 border-red-500 bg-red-100 dark:bg-red-900/20 p-4 mb-4">
+              <h4 className="font-bold text-red-800 dark:text-red-200">🐛 DEBUG INFO</h4>
+              <p className="text-sm text-red-700 dark:text-red-300">selectedCategory = "{selectedCategory || 'EMPTY'}"</p>
+              <p className="text-sm text-red-700 dark:text-red-300">customFields.length = {customFields?.length || 0}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">Query enabled = {String(isOpen && !!selectedCategory)}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">isOpen = {String(isOpen)}</p>
             </div>
 
             {customFields && customFields.length > 0 && (
