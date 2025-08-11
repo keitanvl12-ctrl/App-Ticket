@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig } from "@shared/schema";
+import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig, customFields } from "@shared/schema";
 import { eq, desc, count, sql, and, gte, lte } from "drizzle-orm";
 import {
   type User,
@@ -24,6 +24,8 @@ import {
   type DashboardStats,
   type PriorityStats,
   type TrendData,
+  type CustomField,
+  type InsertCustomField,
 } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { format, subDays, startOfDay, endOfDay, differenceInHours } from "date-fns";
@@ -82,6 +84,13 @@ export interface IStorage {
   
   // Migration
   migrateTicketNumbers(): Promise<void>;
+
+  // Custom Fields
+  getCustomFields(): Promise<CustomField[]>;
+  getCustomFieldsByCategory(categoryId: string): Promise<CustomField[]>;
+  createCustomField(field: InsertCustomField): Promise<CustomField>;
+  updateCustomField(id: string, updates: Partial<CustomField>): Promise<CustomField | undefined>;
+  deleteCustomField(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1287,6 +1296,38 @@ export class DatabaseStorage implements IStorage {
       count,
       percentage: total > 0 ? Math.round((count / total) * 100) : 0
     }));
+  }
+
+  // Custom Fields methods
+  async getCustomFields(): Promise<CustomField[]> {
+    return await db.select().from(customFields).orderBy(customFields.order, customFields.name);
+  }
+
+  async getCustomFieldsByCategory(categoryId: string): Promise<CustomField[]> {
+    return await db
+      .select()
+      .from(customFields)
+      .where(and(eq(customFields.categoryId, categoryId), eq(customFields.isActive, true)))
+      .orderBy(customFields.order, customFields.name);
+  }
+
+  async createCustomField(field: InsertCustomField): Promise<CustomField> {
+    const [newField] = await db.insert(customFields).values(field).returning();
+    return newField;
+  }
+
+  async updateCustomField(id: string, updates: Partial<CustomField>): Promise<CustomField | undefined> {
+    const [updatedField] = await db
+      .update(customFields)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(customFields.id, id))
+      .returning();
+    return updatedField || undefined;
+  }
+
+  async deleteCustomField(id: string): Promise<boolean> {
+    const result = await db.delete(customFields).where(eq(customFields.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

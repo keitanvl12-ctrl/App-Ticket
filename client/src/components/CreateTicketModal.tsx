@@ -40,6 +40,13 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     enabled: isOpen && !!selectedDepartment,
   });
 
+  // Fetch custom fields for selected category
+  const selectedCategory = form.watch("category");
+  const { data: customFields } = useQuery({
+    queryKey: ["/api/custom-fields/category", selectedCategory],
+    enabled: isOpen && !!selectedCategory,
+  });
+
   const form = useForm<InsertTicket>({
     resolver: zodResolver(insertTicketSchema.extend({
       subject: insertTicketSchema.shape.subject.min(1, "Assunto é obrigatório").max(100, "Assunto deve ter menos de 100 caracteres"),
@@ -290,7 +297,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                           </FormControl>
                           <SelectContent>
                             {categories?.map((category) => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <SelectItem key={category.id} value={category.id}>
                                 {category.name}
                               </SelectItem>
                             ))}
@@ -308,6 +315,94 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                 </div>
               </div>
             </div>
+
+            {/* Custom Fields Section */}
+            {customFields && customFields.length > 0 && (
+              <div className="border-t border-gray-20 pt-6">
+                <h3 className="text-lg font-semibold text-gray-100 mb-4">Informações Específicas</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {customFields.map((field) => (
+                    <div key={field.id}>
+                      {field.type === 'text' && (
+                        <FormField
+                          control={form.control}
+                          name={`customFields.${field.id}`}
+                          render={({ field: formField }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {field.name}
+                                {field.required && <span className="text-red-400 ml-1">*</span>}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...formField}
+                                  placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                                  className="focus:ring-primary focus:border-primary"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      
+                      {field.type === 'select' && (
+                        <FormField
+                          control={form.control}
+                          name={`customFields.${field.id}`}
+                          render={({ field: formField }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {field.name}
+                                {field.required && <span className="text-red-400 ml-1">*</span>}
+                              </FormLabel>
+                              <Select onValueChange={formField.onChange} defaultValue={formField.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger className="focus:ring-primary focus:border-primary">
+                                    <SelectValue placeholder={field.placeholder || `Selecione ${field.name.toLowerCase()}`} />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {field.options?.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {field.type === 'textarea' && (
+                        <FormField
+                          control={form.control}
+                          name={`customFields.${field.id}`}
+                          render={({ field: formField }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {field.name}
+                                {field.required && <span className="text-red-400 ml-1">*</span>}
+                              </FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...formField}
+                                  placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                                  className="h-24 resize-none focus:ring-primary focus:border-primary"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField

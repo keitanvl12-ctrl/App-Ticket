@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { departmentStorage } from "./departmentStorage";
-import { insertDepartmentSchema, insertCategorySchema } from "@shared/schema";
+import { insertDepartmentSchema, insertCategorySchema, insertCustomFieldSchema } from "@shared/schema";
 import { insertTicketSchema, insertCommentSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -78,7 +78,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tickets", async (req, res) => {
     try {
       console.log("Request body:", req.body);
-      const validatedData = insertTicketSchema.parse(req.body);
+      
+      // Pegar usuário atual simulado (em produção viria da sessão)
+      const users = await storage.getAllUsers();
+      const currentUser = users.find(u => u.role === 'admin') || users[0];
+      
+      if (!currentUser) {
+        return res.status(400).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Adicionar createdBy automaticamente e converter prioridade
+      const ticketData = {
+        ...req.body,
+        createdBy: currentUser.id,
+        requesterDepartmentId: req.body.requesterDepartment || currentUser.departmentId || null,
+        responsibleDepartmentId: req.body.responsibleDepartment || null,
+        priority: req.body.priority === 'Baixa' ? 'low' : 
+                  req.body.priority === 'Média' ? 'medium' :
+                  req.body.priority === 'Alta' ? 'high' :
+                  req.body.priority === 'Crítica' ? 'critical' : 'medium'
+      };
+      
+      const validatedData = insertTicketSchema.parse(ticketData);
       console.log("Validated data:", validatedData);
       const ticket = await storage.createTicket(validatedData);
       res.status(201).json(ticket);
@@ -566,6 +587,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error migrating ticket numbers:", error);
       res.status(500).json({ message: "Failed to migrate ticket numbers" });
+    }
+  });
+
+  // Custom Fields
+  app.get("/api/custom-fields", async (req, res) => {
+    try {
+      const fields = await storage.getCustomFields();
+      res.json(fields);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch custom fields" });
+    }
+  });
+
+  app.get("/api/custom-fields/category/:categoryId", async (req, res) => {
+    try {
+      const fields = await storage.getCustomFieldsByCategory(req.params.categoryId);
+      res.json(fields);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch custom fields for category" });
+    }
+  });
+
+  app.post("/api/custom-fields", async (req, res) => {
+    try {
+      const validatedData = insertCustomFieldSchema.parse(req.body);
+      const field = await storage.createCustomField(validatedData);
+      res.status(201).json(field);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create custom field" });
+    }
+  });
+
+  app.patch("/api/custom-fields/:id", async (req, res) => {
+    try {
+      const field = await storage.updateCustomField(req.params.id, req.body);
+      if (!field) {
+        return res.status(404).json({ message: "Custom field not found" });
+      }
+      res.json(field);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update custom field" });
+    }
+  });
+
+  app.delete("/api/custom-fields/:id", async (req, res) => {
+    try {
+      await storage.deleteCustomField(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete custom field" });
     }
   });
 

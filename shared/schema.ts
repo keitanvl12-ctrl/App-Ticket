@@ -113,6 +113,30 @@ export const slaRules = pgTable("sla_rules", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Custom Fields table - fields specific to categories
+export const customFields = pgTable("custom_fields", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  categoryId: varchar("category_id").references(() => categories.id).notNull(),
+  name: text("name").notNull(), // Nome do campo (ex: "Número do Patrimônio", "Setor do Equipamento")
+  type: text("type").notNull().default("text"), // text, select, number, email, phone, date, checkbox
+  required: boolean("required").default(false),
+  placeholder: text("placeholder"),
+  options: text("options").array(), // Para campos tipo select
+  order: integer("order").notNull().default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Custom Field Values table - stores the actual values for each ticket
+export const customFieldValues = pgTable("custom_field_values", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").references(() => tickets.id).notNull(),
+  customFieldId: varchar("custom_field_id").references(() => customFields.id).notNull(),
+  value: text("value").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertDepartmentSchema = createInsertSchema(departments).omit({
   id: true,
@@ -132,6 +156,17 @@ export const insertTicketSchema = createInsertSchema(tickets).omit({
   createdAt: true,
   updatedAt: true,
   resolvedAt: true,
+});
+
+export const insertCustomFieldSchema = createInsertSchema(customFields).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCustomFieldValueSchema = createInsertSchema(customFieldValues).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertCommentSchema = createInsertSchema(comments).omit({
@@ -194,6 +229,8 @@ export type Category = typeof categories.$inferSelect;
 export type StatusConfig = typeof statusConfig.$inferSelect;
 export type PriorityConfig = typeof priorityConfig.$inferSelect;
 export type SlaRule = typeof slaRules.$inferSelect;
+export type CustomField = typeof customFields.$inferSelect;
+export type CustomFieldValue = typeof customFieldValues.$inferSelect;
 
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -204,6 +241,8 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertStatusConfig = z.infer<typeof insertStatusConfigSchema>;
 export type InsertPriorityConfig = z.infer<typeof insertPriorityConfigSchema>;
 export type InsertSlaRule = z.infer<typeof insertSlaRuleSchema>;
+export type InsertCustomField = z.infer<typeof insertCustomFieldSchema>;
+export type InsertCustomFieldValue = z.infer<typeof insertCustomFieldValueSchema>;
 
 export type DashboardStats = {
   totalTickets: number;
