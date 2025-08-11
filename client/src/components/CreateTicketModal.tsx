@@ -69,6 +69,9 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
   console.log("Debug - Selected category ID:", selectedCategoryId);
   console.log("Debug - Custom fields:", customFields);
   console.log("Debug - Query enabled:", isOpen && !!selectedCategoryId);
+  
+  // Força mostrar os campos para depuração
+  const showDebugFields = true;
 
   // Reset category when department changes
   useEffect(() => {
@@ -323,6 +326,16 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                       </FormItem>
                     )}
                   />
+
+                  {/* DEBUG - Sempre mostrar para testar */}
+                  {showDebugFields && (
+                    <div className="mt-4 p-4 border-2 border-red-500 bg-red-50">
+                      <h4 className="text-red-700 font-bold">DEBUG INFO</h4>
+                      <p>Selected Category ID: {selectedCategoryId || "NONE"}</p>
+                      <p>Custom Fields Count: {customFields?.length || 0}</p>
+                      <p>Custom Fields: {JSON.stringify(customFields)}</p>
+                    </div>
+                  )}
 
                   {/* Campos Customizados - Aparece quando categoria é selecionada */}
                   {selectedCategoryId && customFields && customFields.length > 0 && (
