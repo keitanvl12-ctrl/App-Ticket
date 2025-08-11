@@ -287,6 +287,30 @@ export default function KanbanBoard() {
   });
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
+  // Check for URL parameters on component mount
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const filter = urlParams.get('filter');
+    
+    if (filter) {
+      switch (filter) {
+        case 'open':
+          setStatusFilter('Aberto');
+          break;
+        case 'resolved':
+          setStatusFilter('Resolvido');
+          break;
+        case 'critical':
+          setPriorityFilter('Alta');
+          break;
+        case 'all':
+        default:
+          // Keep all filters as 'all'
+          break;
+      }
+    }
+  }, []);
+
   const handleDragStart = (e: any, ticket: any) => {
     setDraggedTicket(ticket);
     e.dataTransfer.effectAllowed = 'move';

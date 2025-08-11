@@ -8,6 +8,7 @@ interface StatsCardProps {
   icon: LucideIcon;
   iconColor: string;
   iconBgColor: string;
+  onClick?: () => void;
 }
 
 export default function StatsCard({ 
@@ -17,7 +18,8 @@ export default function StatsCard({
   changeType, 
   icon: Icon, 
   iconColor,
-  iconBgColor 
+  iconBgColor,
+  onClick
 }: StatsCardProps) {
   const getChangeColor = () => {
     switch (changeType) {
@@ -37,7 +39,10 @@ export default function StatsCard({
   };
 
   return (
-    <div className="bg-card border border-border rounded p-6 shadow-enterprise transition-enterprise hover:shadow-enterprise-lg">
+    <div 
+      className={`bg-card border border-border rounded p-6 shadow-enterprise transition-enterprise hover:shadow-enterprise-lg ${onClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>

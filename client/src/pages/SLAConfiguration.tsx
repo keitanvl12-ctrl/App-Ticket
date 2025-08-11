@@ -37,7 +37,7 @@ export default function SLAConfiguration() {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
-    departmentId: '',
+    departmentId: 'all',
     category: '',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
     responseTimeHours: 2,
@@ -144,7 +144,7 @@ export default function SLAConfiguration() {
   const resetForm = () => {
     setFormData({
       name: '',
-      departmentId: '',
+      departmentId: 'all',
       category: '',
       priority: 'medium',
       responseTimeHours: 2,
@@ -160,7 +160,7 @@ export default function SLAConfiguration() {
     setEditingSLA(sla);
     setFormData({
       name: sla.name,
-      departmentId: sla.departmentId || '',
+      departmentId: sla.departmentId || 'all',
       category: sla.category || '',
       priority: sla.priority,
       responseTimeHours: sla.responseTimeHours,
@@ -256,7 +256,7 @@ export default function SLAConfiguration() {
                     <SelectValue placeholder="Selecionar departamento" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os departamentos</SelectItem>
+                    <SelectItem value="all">Todos os departamentos</SelectItem>
                     {departments?.map((dept) => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name}

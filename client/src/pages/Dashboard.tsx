@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Ticket, Hourglass, CheckCircle, Clock, AlertTriangle, TrendingUp, Users, Timer, Target, Activity } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
 import TicketTrendsChart from "@/components/TicketTrendsChart";
@@ -15,11 +16,20 @@ import { Progress } from "@/components/ui/progress";
 import type { DashboardStats, Department } from "@shared/schema";
 
 export default function Dashboard() {
+  const [, setLocation] = useLocation();
   const [chartPeriod, setChartPeriod] = useState("7");
   const [showFilters, setShowFilters] = useState(false);
   const [dateFilter, setDateFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+
+  const navigateToTickets = (filter?: string) => {
+    let path = '/tickets';
+    if (filter) {
+      path += `?filter=${filter}`;
+    }
+    setLocation(path);
+  };
 
   // Build query parameters for filters
   const buildQueryParams = () => {
@@ -200,6 +210,7 @@ export default function Dashboard() {
             icon={Ticket}
             iconColor="text-blue-600"
             iconBgColor="bg-blue-50"
+            onClick={() => navigateToTickets('all')}
           />
           <StatsCard
             title="Tickets Abertos"
@@ -209,6 +220,7 @@ export default function Dashboard() {
             icon={Hourglass}
             iconColor="text-yellow-600"
             iconBgColor="bg-yellow-50"
+            onClick={() => navigateToTickets('open')}
           />
           <StatsCard
             title="Resolvidos Hoje"
@@ -218,6 +230,7 @@ export default function Dashboard() {
             icon={CheckCircle}
             iconColor="text-green-600"
             iconBgColor="bg-green-50"
+            onClick={() => navigateToTickets('resolved')}
           />
           <StatsCard
             title="Críticos Pendentes"
@@ -227,6 +240,7 @@ export default function Dashboard() {
             icon={AlertTriangle}
             iconColor="text-red-600"
             iconBgColor="bg-red-50"
+            onClick={() => navigateToTickets('critical')}
           />
         </div>
 
@@ -298,7 +312,8 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-4">
                 {teamMetrics.map((member, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                       onClick={() => navigateToTickets(`user-${member.name}`)}>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-gray-900">{member.name}</h4>
@@ -327,7 +342,8 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-4">
                 {departmentStats.map((dept, index) => (
-                  <div key={index} className="p-3 border rounded-lg">
+                  <div key={index} className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                       onClick={() => navigateToTickets(`dept-${dept.name}`)}>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-gray-900">{dept.name}</h4>
                       <div className="flex items-center space-x-2">
