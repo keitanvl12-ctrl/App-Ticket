@@ -168,27 +168,7 @@ export const insertSlaRuleSchema = createInsertSchema(slaRules).omit({
   updatedAt: true,
 });
 
-// Custom types that are not inferred from tables  
-export interface DashboardStats {
-  totalTickets: number;
-  openTickets: number;
-  resolvedTickets: number;
-  resolvedToday: number;
-  averageResolutionTime: number;
-}
-
-export interface PriorityStats {
-  critical: { count: number; percentage: number };
-  high: { count: number; percentage: number };
-  medium: { count: number; percentage: number };
-  low: { count: number; percentage: number };
-}
-
-export interface TrendData {
-  date: string;
-  created: number;
-  resolved: number;
-}
+// Custom types that are not inferred from tables
 
 export interface TicketWithDetails extends Ticket {
   createdByUser?: User;
