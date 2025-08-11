@@ -568,7 +568,7 @@ export class DatabaseStorage implements IStorage {
       if (slaRulesData && slaRulesData.length > 0) {
         const matchingRule = slaRulesData.find(rule => {
           const matchesDepartment = !rule.departmentId || rule.departmentId === ticket.responsibleDepartmentId;
-          const matchesCategory = !rule.category || rule.category === ticket.category;
+          const matchesCategory = !rule.category || rule.category === ticket.category; // ticket.category já é o ID
           const matchesPriority = !rule.priority || rule.priority === ticket.priority;
           return matchesDepartment && matchesCategory && matchesPriority;
         });
@@ -597,7 +597,7 @@ export class DatabaseStorage implements IStorage {
         const [category] = await db
           .select()
           .from(categories)
-          .where(eq(categories.name, ticket.category));
+          .where(eq(categories.id, ticket.category)); // Usar ID ao invés de name
         
         if (category?.slaHours) {
           slaHours = category.slaHours;
@@ -1301,6 +1301,14 @@ export class DatabaseStorage implements IStorage {
   // Custom Fields methods
   async getCustomFields(): Promise<CustomField[]> {
     return await db.select().from(customFields).orderBy(customFields.order, customFields.name);
+  }
+
+  async getCustomFieldsByCategory(categoryId: string): Promise<CustomField[]> {
+    return await db
+      .select()
+      .from(customFields)
+      .where(and(eq(customFields.categoryId, categoryId), eq(customFields.isActive, true)))
+      .orderBy(customFields.order, customFields.name);
   }
 
   async getCustomFieldsByCategory(categoryId: string): Promise<CustomField[]> {

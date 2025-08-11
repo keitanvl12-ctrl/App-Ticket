@@ -190,7 +190,7 @@ export default function CustomFieldsManager() {
     return acc;
   }, {} as Record<string, CustomField[]>);
 
-  const filteredFields = selectedCategory 
+  const filteredFields = selectedCategory && selectedCategory !== "all"
     ? customFields.filter(field => field.categoryId === selectedCategory)
     : customFields;
 
@@ -359,7 +359,7 @@ export default function CustomFieldsManager() {
                 <SelectValue placeholder="Todas as categorias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
+                <SelectItem value="all">Todas as categorias</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}

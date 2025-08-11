@@ -29,7 +29,7 @@
     
     /* Muted Colors */
     --muted: #F8FAFC;
-    --muted-foreground: #6b8fb0;
+    --muted-foreground: #334155;
     
     /* Primary Colors - Usando azul OPUS */
     --primary: #2c4257;
@@ -76,22 +76,22 @@
   .dark {
     /* Core Colors - Dark Theme com identidade OPUS */
     --background: #0F1419;
-    --foreground: #9db4c7;
-    --border: #2c4257;
-    --input: #2c4257;
-    --ring: #3B82F6;
+    --foreground: #F8FAFC;
+    --border: #475569;
+    --input: #334155;
+    --ring: #6b8fb0;
     
     /* Card Colors */
     --card: #1E293B;
-    --card-foreground: #F1F5F9;
+    --card-foreground: #F8FAFC;
     
     /* Popover Colors */
     --popover: #1E293B;
-    --popover-foreground: #F1F5F9;
+    --popover-foreground: #F8FAFC;
     
     /* Muted Colors */
     --muted: #334155;
-    --muted-foreground: #94A3B8;
+    --muted-foreground: #CBD5E1;
     
     /* Primary Colors */
     --primary: #3B82F6;

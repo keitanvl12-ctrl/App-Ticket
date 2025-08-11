@@ -42,7 +42,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
 
   // Fetch custom fields for selected category
   const selectedCategory = form.watch("category");
-  const { data: customFields } = useQuery({
+  const { data: customFields = [] } = useQuery({
     queryKey: ["/api/custom-fields/category", selectedCategory],
     enabled: isOpen && !!selectedCategory,
   });
@@ -318,11 +318,156 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
 
             {/* Custom Fields Section */}
             {customFields && customFields.length > 0 && (
-              <div className="border-t border-gray-20 pt-6">
-                <h3 className="text-lg font-semibold text-gray-100 mb-4">Informações Específicas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {customFields.map((field) => (
-                    <div key={field.id}>
+              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  Informações Específicas
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                  Campos adicionais para esta categoria
+                </p>
+                <div className="space-y-4">
+                  {customFields
+                    .sort((a, b) => a.order - b.order)
+                    .map((field) => (
+                      <div key={field.id}>
+                        {field.type === 'text' && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            <Input
+                              id={`custom_${field.id}`}
+                              placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                              className="w-full focus:ring-primary focus:border-primary"
+                            />
+                          </div>
+                        )}
+                        
+                        {field.type === 'textarea' && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            <Textarea
+                              id={`custom_${field.id}`}
+                              placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                              rows={3}
+                              className="w-full focus:ring-primary focus:border-primary"
+                            />
+                          </div>
+                        )}
+
+                        {field.type === 'select' && field.options && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            <Select>
+                              <SelectTrigger className="focus:ring-primary focus:border-primary">
+                                <SelectValue placeholder={field.placeholder || `Selecione ${field.name.toLowerCase()}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {field.options.map((option, idx) => (
+                                  <SelectItem key={idx} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {field.type === 'number' && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            <Input
+                              id={`custom_${field.id}`}
+                              type="number"
+                              placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                              className="w-full focus:ring-primary focus:border-primary"
+                            />
+                          </div>
+                        )}
+
+                        {field.type === 'email' && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            <Input
+                              id={`custom_${field.id}`}
+                              type="email"
+                              placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                              className="w-full focus:ring-primary focus:border-primary"
+                            />
+                          </div>
+                        )}
+
+                        {field.type === 'tel' && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            <Input
+                              id={`custom_${field.id}`}
+                              type="tel"
+                              placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                              className="w-full focus:ring-primary focus:border-primary"
+                            />
+                          </div>
+                        )}
+
+                        {field.type === 'date' && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            <Input
+                              id={`custom_${field.id}`}
+                              type="date"
+                              className="w-full focus:ring-primary focus:border-primary"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-4">
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prioridade *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="focus:ring-primary focus:border-primary">
+                          <SelectValue placeholder="Selecionar prioridade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Baixa</SelectItem>
+                        <SelectItem value="medium">Média</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="critical">Crítica</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
                       {field.type === 'text' && (
                         <FormField
                           control={form.control}
