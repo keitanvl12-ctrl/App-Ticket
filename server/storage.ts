@@ -532,13 +532,16 @@ export class DatabaseStorage implements IStorage {
     return detailedTickets.filter(ticket => ticket !== undefined) as TicketWithDetails[];
   }
 
-  async getAllTickets(filters?: { createdBy?: string, departmentId?: string }): Promise<TicketWithDetails[]> {
+  async getAllTickets(filters?: { createdBy?: string, departmentId?: string, assignedTo?: string }): Promise<TicketWithDetails[]> {
     // Aplicar filtros baseados na hierarquia
     let query = db.select().from(tickets);
     
     const conditions = [];
     if (filters?.createdBy) {
       conditions.push(eq(tickets.createdBy, filters.createdBy));
+    }
+    if (filters?.assignedTo) {
+      conditions.push(eq(tickets.assignedTo, filters.assignedTo));
     }
     if (filters?.departmentId) {
       conditions.push(

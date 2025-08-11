@@ -71,6 +71,7 @@ interface UserDetailsPanelProps {
   departments: Department[];
   roles: Role[];
   isEditing?: boolean;
+  onUserUpdate?: (updatedUser: any) => void;
 }
 
 export default function UserDetailsPanel({
@@ -79,7 +80,8 @@ export default function UserDetailsPanel({
   user,
   departments,
   roles,
-  isEditing: initialIsEditing = false
+  isEditing: initialIsEditing = false,
+  onUserUpdate
 }: UserDetailsPanelProps) {
   const [isEditing, setIsEditing] = useState(initialIsEditing);
   const [activeTab, setActiveTab] = useState('overview');
@@ -118,10 +120,42 @@ export default function UserDetailsPanel({
     );
   }
 
-  const handleSave = () => {
-    console.log('Saving user data:', formData);
-    setIsEditing(false);
-    // TODO: Implementar salvamento real
+  const handleSave = async () => {
+    try {
+      console.log('Salvando dados do usuário:', formData);
+      
+      // Fazer chamada para API de atualização de usuário
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          departmentId: formData.department,
+          phone: formData.phone,
+          extension: formData.extension,
+          location: formData.location
+        }),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        console.log('Usuário atualizado com sucesso:', updatedUser);
+        setIsEditing(false);
+        setHasUnsavedChanges(false);
+        // Atualizar os dados locais se necessário
+        onUserUpdate?.(updatedUser);
+      } else {
+        console.error('Erro ao salvar usuário');
+        alert('Erro ao salvar as alterações. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+      alert('Erro ao salvar as alterações. Verifique sua conexão.');
+    }
   };
 
   const handleCancel = () => {
@@ -253,8 +287,8 @@ export default function UserDetailsPanel({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden">
-        {/* Header com Gradiente */}
-        <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-6">
+        {/* Header com Gradiente OPUS */}
+        <div className="relative bg-gradient-to-r from-opus-blue-dark to-opus-blue-light p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative">

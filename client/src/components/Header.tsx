@@ -4,6 +4,9 @@ import Icon from './AppIcon';
 import Button from './Button';
 import SimpleTicketModal from './SimpleTicketModal';
 import { ThemeToggle } from './ThemeToggle';
+import NotificationSystem, { useNotifications } from './NotificationSystem';
+import { Bell } from 'lucide-react';
+import { Badge } from './ui/badge';
 
 interface HeaderProps {
   onSidebarToggle: () => void;
@@ -14,6 +17,8 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
   const [location, setLocation] = useLocation();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const { unreadCount } = useNotifications();
   
   const navigate = (path: string) => setLocation(path);
 
@@ -153,14 +158,26 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
           <ThemeToggle />
 
           {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative transition-enterprise"
-          >
-            <Icon name="Bell" size={18} />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
-          </Button>
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className="relative transition-enterprise"
+              data-testid="button-notifications"
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  data-testid="badge-notification-count"
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
       
@@ -196,6 +213,12 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
       <SimpleTicketModal 
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Notification System */}
+      <NotificationSystem
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
       />
     </header>
   );

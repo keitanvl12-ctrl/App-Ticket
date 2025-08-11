@@ -355,6 +355,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para notificações
+  app.get('/api/notifications', async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      
+      if (!userId) {
+        return res.status(400).json({ message: 'userId é obrigatório' });
+      }
+
+      // Buscar tickets atribuídos ao usuário que estão abertos
+      const assignedTickets = await storage.getAllTickets({
+        assignedTo: userId
+      });
+
+      // Filtrar apenas tickets abertos/em progresso
+      const openTickets = assignedTickets.filter(ticket => 
+        ['open', 'in_progress', 'pending'].includes(ticket.status)
+      );
+
+      // Gerar notificações baseadas nos tickets
+      const notifications = openTickets.map(ticket => {
+        const createdTime = new Date(ticket.createdAt);
+        const now = new Date();
+        const hoursPassed = (now.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
+        
+        let priority: 'low' | 'medium' | 'high' | 'critical' = 'low';
+        let type: 'ticket_assigned' | 'sla_warning' = 'ticket_assigned';
+        
+        // Determinar prioridade baseada no tempo
+        if (hoursPassed > 4) {
+          priority = 'critical';
+          type = 'sla_warning';
+        } else if (hoursPassed > 2) {
+          priority = 'high';
+        } else if (hoursPassed > 1) {
+          priority = 'medium';
+        }
+
+        return {
+          id: `ticket-${ticket.id}`,
+          type,
+          title: type === 'sla_warning' ? 'Alerta de SLA!' : 'Ticket Atribuído',
+          message: `${ticket.subject} - ${ticket.requesterName || 'Cliente'}`,
+          ticketId: ticket.id,
+          timestamp: ticket.createdAt,
+          read: false,
+          priority
+        };
+      });
+
+      res.json(notifications);
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   // Categories endpoints
   app.get("/api/categories", async (req, res) => {
     try {
