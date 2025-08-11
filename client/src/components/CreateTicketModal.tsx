@@ -79,7 +79,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
         createdBy: currentUser.id,
         requesterDepartmentId: currentUser.departmentId || null,
       };
-      const response = await apiRequest("POST", "/api/tickets", ticketData);
+      const response = await apiRequest("/api/tickets", "POST", ticketData);
       return response.json();
     },
     onSuccess: () => {

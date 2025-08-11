@@ -299,17 +299,13 @@ export default function KanbanBoard() {
   };
 
   // Define columns with dynamic counts using database configurations
-  const columns = statusConfigs?.map(status => {
-    const bgColor = hexToTailwindBg(status.color);
-    console.log(`Status: ${status.name}, Color: ${status.color}, Mapped: ${bgColor}`); // Debug
-    return {
-      id: status.value,
-      title: status.name.toUpperCase(),
-      color: bgColor,
-      headerColor: bgColor,
-      count: tickets.filter(t => t.status === status.value).length
-    };
-  }) || [
+  const columns = statusConfigs?.map(status => ({
+    id: status.value,
+    title: status.name.toUpperCase(),
+    color: hexToTailwindBg(status.color),
+    headerColor: hexToTailwindBg(status.color),
+    count: tickets.filter(t => t.status === status.value).length
+  })) || [
     { id: 'open', title: 'A FAZER', color: 'bg-blue-500', headerColor: 'bg-blue-500', count: 0 },
     { id: 'in_progress', title: 'ATENDENDO', color: 'bg-green-500', headerColor: 'bg-green-500', count: 0 },
     { id: 'on_hold', title: 'PAUSADO', color: 'bg-yellow-500', headerColor: 'bg-yellow-500', count: 0 },

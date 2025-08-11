@@ -56,10 +56,7 @@ function Categories() {
   // Mutations
   const createCategoryMutation = useMutation({
     mutationFn: async (categoryData: any) => {
-      return await apiRequest('/api/categories', {
-        method: 'POST',
-        body: JSON.stringify(categoryData),
-      });
+      return await apiRequest('/api/categories', 'POST', categoryData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
@@ -81,10 +78,7 @@ function Categories() {
 
   const updateCategoryMutation = useMutation({
     mutationFn: async ({ id, ...categoryData }: any) => {
-      return await apiRequest(`/api/categories/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(categoryData),
-      });
+      return await apiRequest(`/api/categories/${id}`, 'PUT', categoryData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
@@ -107,9 +101,7 @@ function Categories() {
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (categoryId: string) => {
-      return await apiRequest(`/api/categories/${categoryId}`, {
-        method: 'DELETE',
-      });
+      return await apiRequest(`/api/categories/${categoryId}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
