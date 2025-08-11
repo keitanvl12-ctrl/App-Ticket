@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import Icon from './AppIcon';
 import Button from './Button';
+import SimpleTicketModal from './SimpleTicketModal';
 
 interface HeaderProps {
   onSidebarToggle: () => void;
@@ -11,13 +12,14 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = false }) => {
   const [location, setLocation] = useLocation();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const navigate = (path: string) => setLocation(path);
 
   const primaryNavItems = [
     { label: 'Dashboard', path: '/', icon: 'LayoutDashboard' },
     { label: 'Tickets', path: '/tickets', icon: 'Ticket' },
-    { label: 'Criar Ticket', path: '/create', icon: 'Plus' },
+    { label: 'Criar Ticket', path: 'CREATE_MODAL', icon: 'Plus' },
     { label: 'SLA Monitor', path: '/sla', icon: 'Clock' },
   ];
 
@@ -26,11 +28,16 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
   ];
 
   const handleNavigation = (path: string) => {
-    navigate(path);
+    if (path === 'CREATE_MODAL') {
+      setIsCreateModalOpen(true);
+    } else {
+      navigate(path);
+    }
     setIsMoreMenuOpen(false);
   };
 
   const isActivePath = (path: string) => {
+    if (path === 'CREATE_MODAL') return false;
     return location === path;
   };
 
@@ -173,6 +180,12 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
           onClick={() => setIsMoreMenuOpen(false)}
         />
       )}
+      
+      {/* SimpleTicketModal */}
+      <SimpleTicketModal 
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </header>
   );
 };
