@@ -317,27 +317,134 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                       </FormItem>
                     )}
                   />
+
+                  {/* Campos Customizados - Aparece quando categoria é selecionada */}
+                  {selectedCategory && customFields && customFields.length > 0 && (
+                    <div className="mt-4 space-y-4 border-t pt-4">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Informações Específicas da Categoria
+                      </h4>
+                      {customFields
+                        .sort((a, b) => a.order - b.order)
+                        .map((field) => (
+                          <div key={field.id}>
+                            {field.type === 'text' && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {field.name}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </Label>
+                                <Input
+                                  id={`custom_${field.id}`}
+                                  placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                                  className="w-full focus:ring-primary focus:border-primary"
+                                />
+                              </div>
+                            )}
+                            
+                            {field.type === 'textarea' && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {field.name}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </Label>
+                                <Textarea
+                                  id={`custom_${field.id}`}
+                                  placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                                  rows={3}
+                                  className="w-full focus:ring-primary focus:border-primary"
+                                />
+                              </div>
+                            )}
+
+                            {field.type === 'select' && field.options && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {field.name}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </Label>
+                                <Select>
+                                  <SelectTrigger className="focus:ring-primary focus:border-primary">
+                                    <SelectValue placeholder={field.placeholder || `Selecione ${field.name.toLowerCase()}`} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {field.options.map((option, idx) => (
+                                      <SelectItem key={idx} value={option}>
+                                        {option}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+
+                            {field.type === 'number' && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {field.name}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </Label>
+                                <Input
+                                  id={`custom_${field.id}`}
+                                  type="number"
+                                  placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                                  className="w-full focus:ring-primary focus:border-primary"
+                                />
+                              </div>
+                            )}
+
+                            {field.type === 'email' && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {field.name}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </Label>
+                                <Input
+                                  id={`custom_${field.id}`}
+                                  type="email"
+                                  placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                                  className="w-full focus:ring-primary focus:border-primary"
+                                />
+                              </div>
+                            )}
+
+                            {field.type === 'tel' && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {field.name}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </Label>
+                                <Input
+                                  id={`custom_${field.id}`}
+                                  type="tel"
+                                  placeholder={field.placeholder || `Digite ${field.name.toLowerCase()}`}
+                                  className="w-full focus:ring-primary focus:border-primary"
+                                />
+                              </div>
+                            )}
+
+                            {field.type === 'date' && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`custom_${field.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {field.name}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </Label>
+                                <Input
+                                  id={`custom_${field.id}`}
+                                  type="date"
+                                  className="w-full focus:ring-primary focus:border-primary"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* DEBUGGING - SEMPRE VISÍVEL */}
-            <div className="border-2 border-red-500 bg-red-100 dark:bg-red-900/20 p-4 mb-4">
-              <h4 className="font-bold text-red-800 dark:text-red-200">🐛 DEBUG INFO</h4>
-              <p className="text-sm text-red-700 dark:text-red-300">selectedCategory = "{selectedCategory || 'EMPTY'}"</p>
-              <p className="text-sm text-red-700 dark:text-red-300">customFields.length = {customFields?.length || 0}</p>
-              <p className="text-sm text-red-700 dark:text-red-300">Query enabled = {String(isOpen && !!selectedCategory)}</p>
-              <p className="text-sm text-red-700 dark:text-red-300">isOpen = {String(isOpen)}</p>
-            </div>
 
-            {customFields && customFields.length > 0 && (
-              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
-                  Informações Específicas
-                </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-                  Campos adicionais para esta categoria
-                </p>
                 <div className="space-y-4">
                   {customFields
                     .sort((a, b) => a.order - b.order)
