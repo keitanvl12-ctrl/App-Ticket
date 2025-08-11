@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 interface CustomField {
   id: string;
   categoryId: string;
+  departmentId: string;
   name: string;
   type: 'text' | 'select' | 'textarea' | 'number' | 'email' | 'tel' | 'date';
   required: boolean;
@@ -34,6 +35,12 @@ interface Category {
   isActive: boolean;
 }
 
+interface Department {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
 export default function CustomFieldsManager() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingField, setEditingField] = useState<CustomField | null>(null);
@@ -45,6 +52,7 @@ export default function CustomFieldsManager() {
     placeholder: '',
     options: [] as string[],
     categoryId: '',
+    departmentId: '',
     order: 1
   });
   
@@ -58,6 +66,11 @@ export default function CustomFieldsManager() {
   // Fetch all categories
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+  });
+
+  // Fetch all departments
+  const { data: departments = [] } = useQuery<Department[]>({
+    queryKey: ["/api/departments"],
   });
 
   // Create custom field mutation
@@ -130,6 +143,7 @@ export default function CustomFieldsManager() {
       placeholder: '',
       options: [],
       categoryId: '',
+      departmentId: '',
       order: 1
     });
   };
@@ -143,6 +157,7 @@ export default function CustomFieldsManager() {
       placeholder: field.placeholder || '',
       options: field.options || [],
       categoryId: field.categoryId,
+      departmentId: field.departmentId,
       order: field.order
     });
     setIsOpen(true);
@@ -155,6 +170,15 @@ export default function CustomFieldsManager() {
       toast({ 
         title: "Erro", 
         description: "Por favor, selecione uma categoria",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    if (!fieldForm.departmentId) {
+      toast({ 
+        title: "Erro", 
+        description: "Por favor, selecione um departamento",
         variant: "destructive" 
       });
       return;
@@ -182,13 +206,20 @@ export default function CustomFieldsManager() {
     setFieldForm(prev => ({ ...prev, options: newOptions }));
   };
 
-  // Group fields by category
-  const fieldsByCategory = customFields.reduce((acc, field) => {
-    const categoryName = categories.find(c => c.id === field.categoryId)?.name || 'Categoria Desconhecida';
-    if (!acc[categoryName]) acc[categoryName] = [];
-    acc[categoryName].push(field);
+  // Group fields by department and category
+  const fieldsByDepartment = customFields.reduce((acc, field) => {
+    const department = departments.find(d => d.id === field.departmentId);
+    const category = categories.find(c => c.id === field.categoryId);
+    
+    const departmentName = department?.name || 'Departamento Desconhecido';
+    const categoryName = category?.name || 'Categoria Desconhecida';
+    
+    if (!acc[departmentName]) acc[departmentName] = {};
+    if (!acc[departmentName][categoryName]) acc[departmentName][categoryName] = [];
+    
+    acc[departmentName][categoryName].push(field);
     return acc;
-  }, {} as Record<string, CustomField[]>);
+  }, {} as Record<string, Record<string, CustomField[]>>);
 
   const filteredFields = selectedCategory && selectedCategory !== "all"
     ? customFields.filter(field => field.categoryId === selectedCategory)
@@ -218,7 +249,26 @@ export default function CustomFieldsManager() {
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="department">Departamento *</Label>
+                  <Select 
+                    value={fieldForm.departmentId} 
+                    onValueChange={(value) => setFieldForm(prev => ({ ...prev, departmentId: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um departamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((department) => (
+                        <SelectItem key={department.id} value={department.id}>
+                          {department.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div>
                   <Label htmlFor="category">Categoria *</Label>
                   <Select 
@@ -373,49 +423,63 @@ export default function CustomFieldsManager() {
 
       {/* Fields List */}
       <div className="space-y-6">
-        {Object.entries(fieldsByCategory).map(([categoryName, fields]) => (
-          <Card key={categoryName}>
-            <CardHeader>
-              <CardTitle className="text-xl text-primary">{categoryName}</CardTitle>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{fields.length} campo(s) configurado(s)</p>
+        {Object.entries(fieldsByDepartment).map(([departmentName, departmentCategories]) => (
+          <Card key={departmentName} className="border-l-4 border-blue-500">
+            <CardHeader className="bg-blue-50 dark:bg-blue-900/20">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                {departmentName}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              {fields.length === 0 ? (
-                <p className="text-gray-600 dark:text-gray-400 text-center py-8">Nenhum campo customizado configurado para esta categoria</p>
-              ) : (
-                <div className="space-y-4">
-                  {fields
-                    .sort((a, b) => a.order - b.order)
-                    .map((field) => (
-                      <div key={field.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+            <CardContent className="p-0">
+              {Object.entries(departmentCategories).map(([categoryName, categoryFields]) => (
+                <div key={categoryName} className="border-b last:border-b-0">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border-b">
+                    <h4 className="font-medium text-gray-700 dark:text-gray-300">{categoryName}</h4>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {categoryFields.map((field) => (
+                      <div
+                        key={field.id}
+                        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border"
+                      >
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-medium text-gray-900 dark:text-gray-100">{field.name}</h3>
-                            <Badge variant={field.required ? "destructive" : "secondary"}>
-                              {field.required ? 'Obrigatório' : 'Opcional'}
-                            </Badge>
-                            <Badge variant="outline">{field.type}</Badge>
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Ordem: {field.order}</span>
+                          <div className="flex items-center gap-3">
+                            <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                              {field.name}
+                            </h5>
+                            <Badge variant="secondary">{field.type}</Badge>
+                            {field.required && (
+                              <Badge variant="destructive" className="text-xs">
+                                Obrigatório
+                              </Badge>
+                            )}
                           </div>
                           {field.placeholder && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{field.placeholder}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {field.placeholder}
+                            </p>
                           )}
                           {field.options && field.options.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
-                              {field.options.map((option, idx) => (
-                                <span key={idx} className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded">
+                              {field.options.map((option, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
                                   {option}
-                                </span>
+                                </Badge>
                               ))}
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="icon" onClick={() => handleEdit(field)}>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleEdit(field)}
+                          >
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="icon"
                             onClick={() => deleteFieldMutation.mutate(field.id)}
                             disabled={deleteFieldMutation.isPending}
@@ -425,8 +489,9 @@ export default function CustomFieldsManager() {
                         </div>
                       </div>
                     ))}
+                  </div>
                 </div>
-              )}
+              ))}
             </CardContent>
           </Card>
         ))}
