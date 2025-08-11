@@ -36,39 +36,30 @@ export default function DepartmentManager() {
   const queryClient = useQueryClient();
 
   // Buscar departamentos
-  const { data: departments = [], isLoading } = useQuery({
+  const { data: departments = [], isLoading } = useQuery<Department[]>({
     queryKey: ['/api/departments']
   });
 
-  // Mutation para criar/editar departamento
-  const createDepartmentMutation = useMutation({
-    mutationFn: async (data: DepartmentFormData) => {
-      const url = editingDepartment ? `/api/departments/${editingDepartment.id}` : '/api/departments';
-      const method = editingDepartment ? 'PUT' : 'POST';
-      
-      return apiRequest(url, {
-        method,
-        body: JSON.stringify(data)
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
-      setIsModalOpen(false);
-      resetForm();
-    }
-  });
+  // Não usar mutation - fazer request direto no handleSubmit
 
-  // Mutation para deletar departamento
-  const deleteDepartmentMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return apiRequest(`/api/departments/${id}`, {
-        method: 'DELETE'
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
+  // Função para deletar departamento
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja deletar este departamento?')) {
+      try {
+        const response = await fetch(`/api/departments/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) throw new Error('Erro ao deletar departamento');
+        
+        queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
+        alert('Departamento deletado com sucesso!');
+      } catch (error) {
+        console.error('Erro ao deletar departamento:', error);
+        alert('Erro ao deletar departamento. Tente novamente.');
+      }
     }
-  });
+  };
 
   const resetForm = () => {
     setFormData({ 
@@ -233,12 +224,7 @@ export default function DepartmentManager() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => {
-                      if (confirm('Tem certeza que deseja excluir este departamento?')) {
-                        deleteDepartmentMutation.mutate(department.id);
-                      }
-                    }}
-                    disabled={deleteDepartmentMutation.isPending}
+                    onClick={() => handleDelete(department.id)}
                     data-testid={`button-delete-${department.id}`}
                   >
                     <Trash2 className="w-4 h-4" />
