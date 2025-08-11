@@ -52,8 +52,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
       category: "",
       responsibleDepartmentId: "",
       requesterDepartmentId: "",
-      assignedTo: "",
-      createdBy: "", // This would typically come from auth context
+      assignedTo: null,
     },
   });
 

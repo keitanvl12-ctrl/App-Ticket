@@ -65,6 +65,12 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     enabled: isOpen,
   });
 
+  // Buscar categorias com SLA
+  const { data: categories } = useQuery<any[]>({
+    queryKey: ['/api/categories'],
+    enabled: isOpen,
+  });
+
   // Usuário atual (assumindo que é o primeiro admin para demo)
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
@@ -74,9 +80,10 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     enabled: isOpen,
   });
 
-  // Calcular SLA baseado na hierarquia: Regras SLA → Configurações de Prioridade → Fallback
+  // Calcular SLA baseado na hierarquia: Regras SLA → Categorias → Configurações de Prioridade → Fallback
   const calculateSLA = () => {
     let slaHours = 24; // Fallback padrão
+    let source = "(padrão)";
 
     // 1. Primeiro, tentar encontrar uma regra SLA específica
     if (slaRules && slaRules.length > 0) {
@@ -89,14 +96,25 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
 
       if (matchingRule) {
         slaHours = matchingRule.timeHours;
+        source = "(regra SLA)";
       }
     }
 
-    // 2. Se não encontrou regra SLA, usar configuração de prioridade
-    if (slaHours === 24) {
+    // 2. Se não encontrou regra SLA, usar SLA da categoria
+    if (source === "(padrão)" && editedTicket.category) {
+      const categoryConfig = categories?.find(c => c.name === editedTicket.category);
+      if (categoryConfig && categoryConfig.slaHours) {
+        slaHours = categoryConfig.slaHours;
+        source = "(categoria)";
+      }
+    }
+
+    // 3. Se não encontrou categoria, usar configuração de prioridade
+    if (source === "(padrão)") {
       const priorityConfig = priorityConfigs?.find(p => p.value === editedTicket.priority);
       if (priorityConfig && priorityConfig.slaHours) {
         slaHours = priorityConfig.slaHours;
+        source = "(prioridade)";
       }
     }
 
@@ -113,7 +131,8 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
       percentage: Math.max(percentage, 0), 
       timeRemaining: Math.abs(timeRemaining), 
       isViolation,
-      slaHours
+      slaHours,
+      source
     };
   };
 
@@ -475,7 +494,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-500">
-                          SLA: {slaData.slaHours}h {!slaRules || slaRules.length === 0 ? '(padrão)' : '(configurado)'}
+                          SLA: {slaData.slaHours}h {slaData.source}
                         </span>
                         <span className={slaData.isViolation ? 'text-red-600 font-medium' : 'text-gray-500'}>
                           {formatTimeRemaining(slaData.timeRemaining, slaData.isViolation)}
