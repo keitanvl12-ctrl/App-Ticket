@@ -267,17 +267,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user role
+  // Update user - endpoint completo para edição de perfil
   app.patch("/api/users/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { role } = req.body;
+      const updateData = req.body;
       
-      if (!role || !['admin', 'supervisor', 'colaborador'].includes(role)) {
-        return res.status(400).json({ message: "Role inválido" });
+      console.log('Updating user:', id, updateData);
+      
+      // Verificar se o usuário existe
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) {
+        console.log(`User with id ${id} not found`);
+        return res.status(404).json({ message: `User with id ${id} not found` });
       }
 
-      const updatedUser = await storage.updateUser(id, { role });
+      const updatedUser = await storage.updateUser(id, updateData);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);

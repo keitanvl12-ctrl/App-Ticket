@@ -85,6 +85,7 @@ export default function UserDetailsPanel({
 }: UserDetailsPanelProps) {
   const [isEditing, setIsEditing] = useState(initialIsEditing);
   const [activeTab, setActiveTab] = useState('overview');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -124,8 +125,15 @@ export default function UserDetailsPanel({
     try {
       console.log('Salvando dados do usuário:', formData);
       
-      // Fazer chamada para API de atualização de usuário
-      const response = await fetch(`/api/users/${user.id}`, {
+      // Usar userId do prop ao invés de user.id
+      const userIdToUpdate = userId || user?.id;
+      
+      if (!userIdToUpdate) {
+        throw new Error('ID do usuário não encontrado');
+      }
+
+      // Fazer chamada para API de atualização de usuário  
+      const response = await fetch(`/api/users/${userIdToUpdate}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -141,20 +149,39 @@ export default function UserDetailsPanel({
         }),
       });
 
-      if (response.ok) {
-        const updatedUser = await response.json();
-        console.log('Usuário atualizado com sucesso:', updatedUser);
-        setIsEditing(false);
-        setHasUnsavedChanges(false);
-        // Atualizar os dados locais se necessário
-        onUserUpdate?.(updatedUser);
-      } else {
-        console.error('Erro ao salvar usuário');
-        alert('Erro ao salvar as alterações. Tente novamente.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
+
+      const updatedUser = await response.json();
+      console.log('Usuário atualizado com sucesso:', updatedUser);
+      
+      setIsEditing(false);
+      setHasUnsavedChanges(false);
+      
+      // Atualizar formData com os dados salvos
+      setFormData({
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || '',
+        extension: updatedUser.extension || '',
+        role: updatedUser.role,
+        department: updatedUser.departmentId || '',
+        status: updatedUser.status || 'active',
+        location: updatedUser.location || '',
+        manager: updatedUser.manager || ''
+      });
+      
+      // Notificar componente pai da atualização
+      if (onUserUpdate) {
+        onUserUpdate(updatedUser);
+      }
+      
+      alert('Dados do usuário salvos com sucesso!');
     } catch (error) {
       console.error('Erro na requisição:', error);
-      alert('Erro ao salvar as alterações. Verifique sua conexão.');
+      alert(`Erro ao salvar usuário: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -288,7 +315,7 @@ export default function UserDetailsPanel({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden">
         {/* Header com Gradiente OPUS */}
-        <div className="relative bg-gradient-to-r from-opus-blue-dark to-opus-blue-light p-6">
+        <div className="relative p-6" style={{ background: 'linear-gradient(90deg, #2c4257 0%, #6b8fb0 100%)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative">
