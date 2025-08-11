@@ -239,39 +239,7 @@ const mockTickets = [
   }
 ];
 
-const columns = [
-  { 
-    id: 'Atrasado', 
-    title: 'ATRASADO', 
-    color: 'bg-red-500', 
-    headerColor: 'bg-red-500',
-    count: mockTickets.filter(t => t.status === 'Atrasado').length 
-  },
-  { 
-    id: 'Atendendo', 
-    title: 'ATENDENDO', 
-    color: 'bg-green-500', 
-    headerColor: 'bg-green-500',
-    count: mockTickets.filter(t => t.status === 'Atendendo').length 
-  },
-  { 
-    id: 'Pausado', 
-    title: 'PAUSADO', 
-    color: 'bg-yellow-500', 
-    headerColor: 'bg-yellow-500',
-    count: mockTickets.filter(t => t.status === 'Pausado').length 
-  },
-  { 
-    id: 'Resolvido', 
-    title: 'RESOLVIDO', 
-    color: 'bg-gray-500', 
-    headerColor: 'bg-gray-500',
-    count: mockTickets.filter(t => t.status === 'Resolvido').length 
-  }
-];
-
 export default function KanbanBoard() {
-  const [tickets, setTickets] = useState(mockTickets);
   const [draggedTicket, setDraggedTicket] = useState<any>(null);
   const [finalizationModal, setFinalizationModal] = useState<{
     isOpen: boolean;
@@ -286,11 +254,48 @@ export default function KanbanBoard() {
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
+  // Fetch real tickets from API
+  const { data: tickets = [], refetch: refetchTickets } = useQuery<any[]>({
+    queryKey: ['/api/tickets'],
+  });
+
   // Fetch current user for role checking
   const { data: users } = useQuery<any[]>({
     queryKey: ['/api/users'],
   });
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
+
+  // Define columns with dynamic counts
+  const columns = [
+    { 
+      id: 'open', 
+      title: 'ABERTO', 
+      color: 'bg-red-500', 
+      headerColor: 'bg-red-500',
+      count: tickets.filter(t => t.status === 'open').length 
+    },
+    { 
+      id: 'in_progress', 
+      title: 'EM PROGRESSO', 
+      color: 'bg-green-500', 
+      headerColor: 'bg-green-500',
+      count: tickets.filter(t => t.status === 'in_progress').length 
+    },
+    { 
+      id: 'on_hold', 
+      title: 'PAUSADO', 
+      color: 'bg-yellow-500', 
+      headerColor: 'bg-yellow-500',
+      count: tickets.filter(t => t.status === 'on_hold').length 
+    },
+    { 
+      id: 'resolved', 
+      title: 'RESOLVIDO', 
+      color: 'bg-gray-500', 
+      headerColor: 'bg-gray-500',
+      count: tickets.filter(t => t.status === 'resolved').length 
+    }
+  ];
 
   // Check for URL parameters on component mount
   React.useEffect(() => {
@@ -333,19 +338,24 @@ export default function KanbanBoard() {
     e.preventDefault();
     if (draggedTicket && draggedTicket.status !== status) {
       // Se estiver movendo para "Resolvido", mostrar modal de finalização
-      if (status === 'Resolvido') {
+      if (status === 'resolved') {
         setFinalizationModal({ isOpen: true, ticket: draggedTicket });
         setDraggedTicket(null);
         return;
       }
       
-      setTickets(prev => 
-        prev.map(ticket => 
-          ticket.id === draggedTicket.id 
-            ? { ...ticket, status }
-            : ticket
-        )
-      );
+      // Para outros status, fazer update direto via API
+      fetch(`/api/tickets/${draggedTicket.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      }).then(() => {
+        refetchTickets();
+      }).catch(error => {
+        console.error('Erro ao atualizar status:', error);
+      });
       setDraggedTicket(null);
     }
   };
@@ -417,8 +427,8 @@ export default function KanbanBoard() {
         });
 
         if (response.ok) {
-          // Remover o ticket da lista local
-          setTickets(prev => prev.filter(t => t.id !== ticketId));
+          // Refetch dos tickets para atualizar lista
+          refetchTickets();
           console.log('Ticket excluído com sucesso');
         } else {
           console.error('Erro ao excluir ticket');
@@ -451,16 +461,8 @@ export default function KanbanBoard() {
       });
 
       if (response.ok) {
-        // Atualizar o status do ticket para "Resolvido"
-        setTickets(prev => 
-          prev.map(ticket => 
-            ticket.id === finalizationModal.ticket.id 
-              ? { ...ticket, status: 'Resolvido', progress: 100 }
-              : ticket
-          )
-        );
-        
-        // Poderia refetch dos tickets reais aqui se estivéssemos usando API real
+        // Refetch dos tickets para atualizar com dados reais do banco
+        refetchTickets();
         
         console.log('Ticket finalizado com sucesso');
       } else {
