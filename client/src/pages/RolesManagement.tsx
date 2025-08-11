@@ -104,14 +104,24 @@ export default function RolesManagement() {
   });
 
   // Fetch roles from API
-  const { data: rolesData, isLoading } = useQuery({
+  const { data: rolesData, isLoading, refetch } = useQuery({
     queryKey: ['/api/roles'],
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
+
+  // Force refetch when component mounts
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   // Update roles when data is fetched
   useEffect(() => {
+    console.log('Roles data received:', rolesData);
     if (rolesData) {
       const mappedRoles = rolesData.map((role: any) => {
+        console.log('Processing role:', role);
         // Map permissions based on role type
         let rolePermissions = [];
         switch (role.id) {
@@ -131,7 +141,7 @@ export default function RolesManagement() {
             break;
         }
         
-        return {
+        const mappedRole = {
           id: role.id,
           name: role.name,
           description: role.description,
@@ -140,8 +150,12 @@ export default function RolesManagement() {
           userCount: role.userCount,
           isSystem: role.isSystem
         };
+        
+        console.log('Mapped role:', mappedRole);
+        return mappedRole;
       });
       
+      console.log('Setting roles:', mappedRoles);
       setRoles(mappedRoles);
     }
   }, [rolesData]);
@@ -329,8 +343,8 @@ export default function RolesManagement() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{role.name}</CardTitle>
-                      <Badge className={role.color}>
-                        {role.userCount || 0} usuário(s)
+                      <Badge className={`${role.color} font-semibold`}>
+                        {role.userCount !== undefined ? role.userCount : 0} usuário(s)
                       </Badge>
                     </div>
                   </div>
