@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig, customFields } from "@shared/schema";
+import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig, customFields, permissions } from "@shared/schema";
 import { eq, desc, count, sql, and, gte, lte } from "drizzle-orm";
 import {
   type User,
@@ -26,6 +26,8 @@ import {
   type TrendData,
   type CustomField,
   type InsertCustomField,
+  type Permission,
+  type InsertPermission,
 } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { format, subDays, startOfDay, endOfDay, differenceInHours } from "date-fns";
@@ -413,6 +415,33 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
+  }
+
+  // Permissions methods
+  async getAllPermissions(): Promise<Permission[]> {
+    return await db.select().from(permissions);
+  }
+
+  async getPermissionByRole(role: string): Promise<Permission | undefined> {
+    const [permission] = await db.select().from(permissions).where(eq(permissions.role, role));
+    return permission || undefined;
+  }
+
+  async createPermission(permissionData: InsertPermission): Promise<Permission> {
+    const [permission] = await db
+      .insert(permissions)
+      .values(permissionData)
+      .returning();
+    return permission;
+  }
+
+  async updatePermission(role: string, permissionData: Partial<InsertPermission>): Promise<Permission | undefined> {
+    const [permission] = await db
+      .update(permissions)
+      .set({ ...permissionData, updatedAt: new Date() })
+      .where(eq(permissions.role, role))
+      .returning();
+    return permission || undefined;
   }
 
   async createUser(user: InsertUser): Promise<User> {

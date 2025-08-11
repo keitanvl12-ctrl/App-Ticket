@@ -21,6 +21,7 @@ import CreateTicket from "@/pages/CreateTicket";
 import UserManagement from "@/pages/UserManagement";
 import Categories from "@/pages/Categories";
 import CustomFields from "@/pages/CustomFields";
+import PermissionsConfig from "@/pages/PermissionsConfig";
 import CustomFieldsManager from "@/pages/CustomFieldsManager";
 import DepartmentManager from "@/pages/DepartmentManager";
 import WorkflowApprovals from "@/pages/WorkflowApprovals";
@@ -195,6 +196,12 @@ function AppRouter() {
               <Route path="/config">
                 <ProtectedRoute requiredRole="administrador">
                   <ConfigurationPage />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/permissions">
+                <ProtectedRoute requiredRole="administrador">
+                  <PermissionsConfig />
                 </ProtectedRoute>
               </Route>
               

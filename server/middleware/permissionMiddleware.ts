@@ -63,7 +63,10 @@ export function requirePermission(permission: PermissionKey) {
       }
 
       const userRole = authReq.user.role;
-      const hasPermission = ROLE_PERMISSIONS[userRole]?.[permission];
+      
+      // Buscar permissões do banco de dados
+      const userPermissions = await storage.getPermissionByRole(userRole);
+      const hasPermission = userPermissions?.[permission] || false;
 
       if (!hasPermission) {
         return res.status(403).json({ 
@@ -168,8 +171,8 @@ export async function mockAuth(req: Request, res: Response, next: NextFunction) 
     if (adminUser) {
       authReq.user = {
         id: adminUser.id,
-        role: adminUser.role,
-        departmentId: adminUser.departmentId
+        role: adminUser.role as UserRole,
+        departmentId: adminUser.departmentId || undefined
       };
     } else {
       // Fallback para primeiro usuário disponível
@@ -177,8 +180,8 @@ export async function mockAuth(req: Request, res: Response, next: NextFunction) 
       if (firstUser) {
         authReq.user = {
           id: firstUser.id,
-          role: firstUser.role,
-          departmentId: firstUser.departmentId
+          role: firstUser.role as UserRole,
+          departmentId: firstUser.departmentId || undefined
         };
       } else {
         // Último fallback para usuário mock

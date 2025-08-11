@@ -1,0 +1,157 @@
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+
+interface Permission {
+  id: string;
+  role: string;
+  canManageUsers: boolean;
+  canViewAllTickets: boolean;
+  canViewDepartmentTickets: boolean;
+  canManageTickets: boolean;
+  canViewReports: boolean;
+  canManageSystem: boolean;
+  canManageCategories: boolean;
+  canManageDepartments: boolean;
+}
+
+const PERMISSION_LABELS = {
+  canManageUsers: 'Gerenciar Usuários',
+  canViewAllTickets: 'Ver Todos os Tickets',
+  canViewDepartmentTickets: 'Ver Tickets do Departamento',
+  canManageTickets: 'Gerenciar Tickets',
+  canViewReports: 'Ver Relatórios',
+  canManageSystem: 'Administrar Sistema',
+  canManageCategories: 'Gerenciar Categorias',
+  canManageDepartments: 'Gerenciar Departamentos'
+};
+
+const ROLE_LABELS = {
+  colaborador: 'Colaborador',
+  supervisor: 'Supervisor',
+  administrador: 'Administrador'
+};
+
+export default function PermissionsConfig() {
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchPermissions = async () => {
+    try {
+      const response = await fetch('/api/permissions');
+      if (response.ok) {
+        const data = await response.json();
+        setPermissions(data);
+      }
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPermissions();
+  }, []);
+
+  const handlePermissionChange = async (role: string, permission: string, value: boolean) => {
+    try {
+      // Converter camelCase para snake_case para o backend
+      const snakeCasePermission = permission.replace(/([A-Z])/g, '_$1').toLowerCase();
+      
+      const response = await fetch(`/api/permissions/${role}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          [snakeCasePermission]: value
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setPermissions(prev => 
+          prev.map(p => 
+            p.role === role 
+              ? { ...p, [permission]: value }
+              : p
+          )
+        );
+
+        toast({
+          title: "Permissão atualizada",
+          description: `Configuração salva para ${ROLE_LABELS[role as keyof typeof ROLE_LABELS]}`,
+        });
+      } else {
+        throw new Error('Erro na requisição');
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configuração",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return <div>Carregando configurações de permissões...</div>;
+  }
+
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Configuração de Permissões</h1>
+        <p className="text-gray-600">Configure as permissões para cada nível hierárquico</p>
+      </div>
+
+      <div className="grid gap-6">
+        {['colaborador', 'supervisor', 'administrador'].map(role => {
+          const rolePermissions = permissions.find(p => p.role === role) || {
+            role,
+            canManageUsers: false,
+            canViewAllTickets: false,
+            canViewDepartmentTickets: false,
+            canManageTickets: false,
+            canViewReports: false,
+            canManageSystem: false,
+            canManageCategories: false,
+            canManageDepartments: false,
+          };
+
+          return (
+            <Card key={role} className="p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                {ROLE_LABELS[role as keyof typeof ROLE_LABELS]}
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
+                  <div key={key} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${role}-${key}`}
+                      checked={rolePermissions[key as keyof typeof rolePermissions]}
+                      onCheckedChange={(checked) => 
+                        handlePermissionChange(role, key, checked as boolean)
+                      }
+                    />
+                    <label 
+                      htmlFor={`${role}-${key}`}
+                      className="text-sm text-gray-700 cursor-pointer"
+                    >
+                      {label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
