@@ -625,45 +625,59 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTicket(ticket: InsertTicket): Promise<Ticket> {
-    // Gerar número sequencial do ticket
-    const ticketNumber = await this.generateNextTicketNumber();
-    const [newTicket] = await db.insert(tickets).values({
-      ...ticket,
-      ticketNumber,
-    }).returning();
-    return newTicket;
+    try {
+      console.log('Creating ticket with data:', ticket);
+      
+      // Gerar número sequencial do ticket
+      const ticketNumber = await this.generateNextTicketNumber();
+      console.log('Generated ticket number:', ticketNumber);
+      
+      const [newTicket] = await db.insert(tickets).values({
+        ...ticket,
+        ticketNumber,
+      }).returning();
+      
+      console.log('Created ticket:', newTicket);
+      return newTicket;
+    } catch (error) {
+      console.error('Error in createTicket:', error);
+      throw error;
+    }
   }
 
   private async generateNextTicketNumber(): Promise<string> {
     try {
-      // Buscar o último ticket criado para obter o próximo número
-      const [lastTicket] = await db
-        .select({ ticketNumber: tickets.ticketNumber })
-        .from(tickets)
-        .orderBy(desc(tickets.createdAt))
-        .limit(1);
-
-      if (!lastTicket || !lastTicket.ticketNumber) {
-        // Primeiro ticket do sistema
-        return 'TICK-001';
-      }
-
-      // Extrair número do último ticket (formato: TICK-XXX)
-      const match = lastTicket.ticketNumber.match(/TICK-(\d+)/);
-      if (!match) {
-        // Fallback se não conseguir extrair o número
-        return 'TICK-001';
-      }
-
-      const lastNumber = parseInt(match[1], 10);
-      const nextNumber = lastNumber + 1;
+      console.log('Generating next ticket number...');
       
-      // Formatar com zeros à esquerda (3 dígitos)
-      return `TICK-${nextNumber.toString().padStart(3, '0')}`;
+      // Buscar todos os tickets que começam com TICK- e extrair o maior número
+      const allTickets = await db
+        .select({ ticketNumber: tickets.ticketNumber })
+        .from(tickets);
+
+      let maxNumber = 0;
+      
+      // Iterar por todos os tickets para encontrar o maior número
+      for (const ticket of allTickets) {
+        const match = ticket.ticketNumber.match(/TICK-(\d+)/);
+        if (match) {
+          const ticketNum = parseInt(match[1], 10);
+          if (ticketNum > maxNumber) {
+            maxNumber = ticketNum;
+          }
+        }
+      }
+      
+      const nextNumber = maxNumber + 1;
+      const newTicketNumber = `TICK-${nextNumber.toString().padStart(3, '0')}`;
+      console.log(`Found max number: ${maxNumber}, next number: ${newTicketNumber}`);
+      return newTicketNumber;
+      
     } catch (error) {
       console.error('Erro ao gerar número do ticket:', error);
-      // Fallback para nanoid em caso de erro
-      return `TICK-${nanoid(6)}`;
+      // Fallback simples
+      const fallbackNumber = `TICK-001`;
+      console.log('Using fallback number:', fallbackNumber);
+      return fallbackNumber;
     }
   }
 

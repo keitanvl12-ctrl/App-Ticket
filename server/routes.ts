@@ -77,11 +77,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tickets", async (req, res) => {
     try {
+      console.log("Request body:", req.body);
       const validatedData = insertTicketSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
       const ticket = await storage.createTicket(validatedData);
       res.status(201).json(ticket);
     } catch (error) {
+      console.error("Error creating ticket:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         return res.status(400).json({ 
           message: "Validation error", 
           errors: error.errors 
