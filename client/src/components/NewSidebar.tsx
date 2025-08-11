@@ -149,8 +149,8 @@ const NewSidebar: React.FC<SidebarProps> = ({
               </div>
               {!isCollapsed && (
                 <div>
-                  <h1 className="text-lg font-semibold text-foreground">Menu</h1>
-                  <p className="text-xs text-muted-foreground">Navegação</p>
+                  <h1 className="text-lg font-semibold text-foreground">TicketFlow Pro</h1>
+                  <p className="text-xs text-muted-foreground">Enterprise Edition</p>
                 </div>
               )}
             </div>

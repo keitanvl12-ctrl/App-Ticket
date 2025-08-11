@@ -34,8 +34,7 @@ export default function Sidebar() {
             <Ticket className="text-white" size={16} />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-foreground">Menu</h1>
-            <p className="text-xs text-muted-foreground">Navegação</p>
+            <h1 className="text-sm font-semibold text-foreground">TicketFlow Pro</h1>
           </div>
         </div>
       </div>

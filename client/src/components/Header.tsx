@@ -56,17 +56,13 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
             <Icon name="Menu" size={20} />
           </Button>
           
-          {/* Logo do Grupo OPUS */}
-          <div className="flex items-center space-x-3">
+          {/* Logo do Grupo OPUS - apenas a logo */}
+          <div className="flex items-center">
             <img 
               src="/logo-opus.png" 
               alt="Grupo OPUS" 
-              className="w-10 h-auto object-contain"
+              className="w-12 h-auto object-contain"
             />
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-semibold text-foreground">TicketFlow Pro</h1>
-              <p className="text-xs text-muted-foreground">Grupo OPUS</p>
-            </div>
           </div>
         </div>
 

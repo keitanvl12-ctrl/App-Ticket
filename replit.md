@@ -74,6 +74,13 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 
 # Recent Changes (August 2025)
 
+## Identidade Visual Grupo OPUS (Janeiro 2025)
+- ✓ Logo do Grupo OPUS implementada na barra superior (header)
+- ✓ Identidade visual aplicada com cores azul escuro (#2c4257) e azul claro (#6b8fb0)
+- ✓ Paleta de cores CSS personalizada para refletir a marca OPUS
+- ✓ Sistema de cores primárias e secundárias alinhado à identidade da empresa
+- ✓ Logo posicionada sozinha no topo, sidebar mantém "TicketFlow Pro" original
+
 ## Migração do Replit Agent Concluída (Janeiro 2025)
 - ✓ Sistema migrado com sucesso do Replit Agent para ambiente Replit padrão
 - ✓ Banco PostgreSQL configurado e migrações executadas
