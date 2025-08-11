@@ -226,6 +226,8 @@ export default function UserManagement() {
 
   const handleUpdateUserSecurity = async (userId: string, securityData: any) => {
     try {
+      console.log('Calling security API for user:', userId, 'with data:', securityData);
+      
       const response = await fetch(`/api/users/${userId}/security`, {
         method: 'PATCH',
         headers: {
@@ -234,13 +236,20 @@ export default function UserManagement() {
         body: JSON.stringify(securityData),
       });
 
+      console.log('Security API response:', response.status, response.statusText);
+
       if (response.ok) {
+        const result = await response.json();
+        console.log('Security update successful:', result);
         // Refresh users data
         window.location.reload();
       } else {
-        throw new Error('Erro ao atualizar configurações de segurança');
+        const errorData = await response.json();
+        console.error('Security API error:', errorData);
+        throw new Error(errorData.message || 'Erro ao atualizar configurações de segurança');
       }
     } catch (error) {
+      console.error('Error in handleUpdateUserSecurity:', error);
       throw error;
     }
   };

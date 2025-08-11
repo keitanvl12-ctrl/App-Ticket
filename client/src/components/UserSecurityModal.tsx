@@ -65,6 +65,7 @@ const UserSecurityModal: React.FC<UserSecurityModalProps> = ({
         forcePasswordChange
       };
 
+      console.log('Sending security data:', securityData, 'for user:', user.id);
       await onUpdate(user.id, securityData);
       
       toast({
@@ -78,9 +79,10 @@ const UserSecurityModal: React.FC<UserSecurityModalProps> = ({
       onClose();
       
     } catch (error) {
+      console.error('Error updating user security:', error);
       toast({
         title: "Erro",
-        description: "Erro ao atualizar configurações de segurança",
+        description: error instanceof Error ? error.message : "Erro ao atualizar configurações de segurança",
         variant: "destructive",
       });
     } finally {
