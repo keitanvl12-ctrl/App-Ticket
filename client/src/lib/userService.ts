@@ -12,7 +12,7 @@ interface User {
 
 // Usuário simulado - em produção isso viria do contexto de autenticação
 const mockUser: User = {
-  id: '1',
+  id: '8cd6d843-31a9-48f1-a99c-a6789e592a9f',
   name: 'João Silva',
   email: 'joao.silva@empresa.com',
   role: 'administrador', // Para demonstração, vamos usar administrador

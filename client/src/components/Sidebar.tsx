@@ -79,12 +79,17 @@ export default function Sidebar() {
       {/* User Profile */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+          <div className="relative w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium" 
+               style={{ background: 'linear-gradient(135deg, #2c4257 0%, #6b8fb0 100%)' }}>
             <span>JS</span>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">João Silva</p>
-            <p className="text-xs text-muted-foreground truncate">Administrador</p>
+            <p className="text-sm font-medium text-foreground truncate">{currentUser.name}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {currentUser.role === 'administrador' ? 'Administrador' : 
+               currentUser.role === 'supervisor' ? 'Supervisor' : 'Colaborador'}
+            </p>
           </div>
           <div className="flex space-x-1">
             <button className="p-1 text-muted-foreground hover:text-primary transition-enterprise">

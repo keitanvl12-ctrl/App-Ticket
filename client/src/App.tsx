@@ -69,6 +69,9 @@ function Router() {
             <HierarchyManagement />
           </AdminOnly>
         </Route>
+        <Route path="/login">
+          <Login />
+        </Route>
         <Route path="/hierarchy-demo" component={() => <HierarchyDemo />} />
         <Route path="/categories">
           <SupervisorOnly>
