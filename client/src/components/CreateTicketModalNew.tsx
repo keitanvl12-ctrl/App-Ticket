@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -298,24 +297,34 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden m-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Novo Ticket</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+    <>
+      {/* Portal para garantir que o modal apareça por cima de tudo */}
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        {/* Backdrop escuro */}
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        />
         
-        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-          <div className="p-6">
+        {/* Container do Modal */}
+        <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col animate-in fade-in-0 zoom-in-95 duration-300">
+          {/* Header do Modal */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-t-2xl">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Novo Ticket</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Preencha os campos abaixo para criar seu ticket</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            </button>
+          </div>
+          
+          {/* Conteúdo do Modal com scroll */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-6">
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Assunto */}
@@ -576,19 +585,37 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
             )}
           </div>
 
-          {/* Botões */}
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={createTicketMutation.isPending}>
-              {createTicketMutation.isPending ? 'Criando...' : 'Criar Ticket'}
-            </Button>
+          {/* Botões - Fixo no bottom */}
+          <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4 rounded-b-2xl">
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={createTicketMutation.isPending}
+                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {createTicketMutation.isPending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Criando...</span>
+                  </>
+                ) : (
+                  <span>Criar Ticket</span>
+                )}
+              </button>
             </div>
+          </div>
           </form>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
