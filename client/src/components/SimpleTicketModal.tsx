@@ -51,6 +51,12 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
     enabled: isOpen
   });
 
+  // Buscar categorias filtradas por departamento responsável
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/categories/department', formData.responsibleDepartment],
+    enabled: isOpen && !!formData.responsibleDepartment
+  });
+
   // Buscar dados do usuário logado
   const { data: currentUser } = useQuery({
     queryKey: ['/api/auth/user'],
@@ -76,9 +82,6 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
   if (!isOpen) return null;
 
   const handleDepartmentChange = (departmentId: string) => {
-    const dept = departments.find(d => d.id === departmentId);
-    setSelectedDepartment(dept || null);
-    setSelectedCategory(null);
     setFormData(prev => ({ 
       ...prev, 
       responsibleDepartment: departmentId,
@@ -88,8 +91,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
   };
 
   const handleCategoryChange = (categoryId: string) => {
-    if (!selectedDepartment) return;
-    const category = selectedDepartment.categories?.find(c => c.id === categoryId);
+    const category = categories.find(c => c.id === categoryId);
     setSelectedCategory(category || null);
     setFormData(prev => ({ 
       ...prev, 
@@ -420,7 +422,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
               </div>
 
               {/* Categoria */}
-              {selectedDepartment && (
+              {formData.responsibleDepartment && (
                 <div>
                   <label style={{
                     display: 'block',
@@ -446,7 +448,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                     required
                   >
                     <option value="">Selecione a categoria</option>
-                    {selectedDepartment.categories?.map((category) => (
+                    {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
                       </option>

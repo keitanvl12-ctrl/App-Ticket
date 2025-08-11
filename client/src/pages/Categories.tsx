@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,436 +8,361 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Edit2, Trash2, Clock, Target, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Edit2, Trash2, Clock, Target, Users, Building2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Category {
   id: string;
   name: string;
-  response_time: string;
-  resolution_time: string;
-  status: 'Ativo' | 'Inativo';
-  priority: 'Baixa' | 'Média' | 'Alta' | 'Planejado' | 'Não Pausar';
-  department: string;
-  subcategories?: Category[];
+  description?: string;
+  departmentId: string;
+  slaHours: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Department {
+  id: string;
+  name: string;
 }
 
 function Categories() {
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: '1',
-      name: 'Custos',
-      response_time: '60:00',
-      resolution_time: '60:00',
-      status: 'Ativo',
-      priority: 'Média',
-      department: 'Custos'
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    departmentId: '',
+    slaHours: 24,
+    isActive: true
+  });
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Buscar categorias
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
+  });
+
+  // Buscar departamentos
+  const { data: departments = [], isLoading: departmentsLoading } = useQuery<Department[]>({
+    queryKey: ['/api/departments'],
+  });
+
+  // Mutations
+  const createCategoryMutation = useMutation({
+    mutationFn: async (categoryData: any) => {
+      return await apiRequest('/api/categories', {
+        method: 'POST',
+        body: JSON.stringify(categoryData),
+      });
     },
-    {
-      id: '2',
-      name: 'Contão Clara',
-      response_time: '60:00',
-      resolution_time: '60:00',
-      status: 'Ativo',
-      priority: 'Média',
-      department: 'Custos',
-      subcategories: [
-        {
-          id: '2-1',
-          name: 'Solicitar Saldo',
-          response_time: '60:00',
-          resolution_time: '60:00',
-          status: 'Ativo',
-          priority: 'Baixa',
-          department: 'Custos'
-        },
-        {
-          id: '2-2',
-          name: 'Solicitar Cartão',
-          response_time: '60:00',
-          resolution_time: '60:00',
-          status: 'Ativo',
-          priority: 'Planejado',
-          department: 'Custos'
-        }
-      ]
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      setIsModalOpen(false);
+      resetForm();
+      toast({
+        title: 'Categoria criada',
+        description: 'Nova categoria foi criada com sucesso.',
+      });
     },
-    {
-      id: '3',
-      name: 'Reembolso Protheus',
-      response_time: '60:00',
-      resolution_time: '60:00',
-      status: 'Ativo',
-      priority: 'Baixa',
-      department: 'Custos',
-      subcategories: [
-        {
-          id: '3-1',
-          name: 'Solicitar Aprovação',
-          response_time: '60:00',
-          resolution_time: '60:00',
-          status: 'Ativo',
-          priority: 'Baixa',
-          department: 'Custos'
-        }
-      ]
+    onError: (error: any) => {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao criar categoria.',
+        variant: 'destructive',
+      });
     },
-    {
-      id: '4',
-      name: 'Departamento Pessoal',
-      response_time: '02:00',
-      resolution_time: '09:00',
-      status: 'Ativo',
-      priority: 'Não Pausar',
-      department: 'Tecnologia'
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({ id, ...categoryData }: any) => {
+      return await apiRequest(`/api/categories/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(categoryData),
+      });
     },
-    {
-      id: '5',
-      name: 'Outras Solicitações',
-      response_time: '05:00',
-      resolution_time: '27:00',
-      status: 'Ativo',
-      priority: 'Não Pausar',
-      department: 'Tecnologia',
-      subcategories: [
-        {
-          id: '5-1',
-          name: 'Alteração cadastral',
-          response_time: '05:00',
-          resolution_time: '27:00',
-          status: 'Ativo',
-          priority: 'Não Pausar',
-          department: 'Tecnologia'
-        },
-        {
-          id: '5-2',
-          name: 'Relatórios diversos',
-          response_time: '02:00',
-          resolution_time: '09:00',
-          status: 'Ativo',
-          priority: 'Não Pausar',
-          department: 'Tecnologia'
-        }
-      ]
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      setIsModalOpen(false);
+      setEditingCategory(null);
+      resetForm();
+      toast({
+        title: 'Categoria atualizada',
+        description: 'Categoria foi atualizada com sucesso.',
+      });
     },
-    {
-      id: '6',
-      name: 'Ponto',
-      response_time: '05:00',
-      resolution_time: '18:00',
-      status: 'Ativo',
-      priority: 'Não Pausar',
-      department: 'Tecnologia'
+    onError: (error: any) => {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao atualizar categoria.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: string) => {
+      return await apiRequest(`/api/categories/${categoryId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({
+        title: 'Categoria excluída',
+        description: 'Categoria foi excluída com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao excluir categoria.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      departmentId: '',
+      slaHours: 24,
+      isActive: true
+    });
+  };
+
+  const handleEdit = (category: Category) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      description: category.description || '',
+      departmentId: category.departmentId,
+      slaHours: category.slaHours,
+      isActive: category.isActive
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Erro',
+        description: 'Nome da categoria é obrigatório.',
+        variant: 'destructive',
+      });
+      return;
     }
-  ]);
 
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [isCreateMode, setIsCreateMode] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+    if (!formData.departmentId) {
+      toast({
+        title: 'Erro',
+        description: 'Departamento é obrigatório.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-  const toggleExpanded = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
+    if (editingCategory) {
+      updateCategoryMutation.mutate({ id: editingCategory.id, ...formData });
     } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Baixa': return 'bg-green-100 text-green-800 border-green-200';
-      case 'Média': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Alta': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Planejado': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Não Pausar': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      createCategoryMutation.mutate(formData);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    return status === 'Ativo' 
-      ? 'bg-green-100 text-green-800 border-green-200'
-      : 'bg-red-100 text-red-800 border-red-200';
+  const getDepartmentName = (departmentId: string) => {
+    const department = departments.find(d => d.id === departmentId);
+    return department?.name || 'Departamento não encontrado';
   };
 
-  const renderCategoryRow = (category: Category, level = 0) => {
-    const hasSubcategories = category.subcategories && category.subcategories.length > 0;
-    const isExpanded = expandedCategories.has(category.id);
+  const handleDelete = (categoryId: string) => {
+    if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+      deleteCategoryMutation.mutate(categoryId);
+    }
+  };
 
+  if (categoriesLoading || departmentsLoading) {
     return (
-      <React.Fragment key={category.id}>
-        <tr className="border-b border-gray-200 hover:bg-gray-50">
-          <td className="px-4 py-3">
-            <div className="flex items-center space-x-2" style={{ paddingLeft: `${level * 20}px` }}>
-              {hasSubcategories && (
-                <button
-                  onClick={() => toggleExpanded(category.id)}
-                  className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600"
-                >
-                  {isExpanded ? '▼' : '▶'}
-                </button>
-              )}
-              <span className={`font-medium ${level > 0 ? 'text-sm' : ''}`}>
-                {category.name}
-              </span>
-            </div>
-          </td>
-          <td className="px-4 py-3 text-center">
-            <span className="font-mono text-sm">{category.response_time}</span>
-          </td>
-          <td className="px-4 py-3 text-center">
-            <span className="font-mono text-sm">{category.resolution_time}</span>
-          </td>
-          <td className="px-4 py-3 text-center">
-            <Badge className={getStatusColor(category.status)}>
-              {category.status}
-            </Badge>
-          </td>
-          <td className="px-4 py-3 text-center">
-            <Badge className={getPriorityColor(category.priority)}>
-              {category.priority}
-            </Badge>
-          </td>
-          <td className="px-4 py-3 text-center text-sm text-gray-600">
-            {category.department}
-          </td>
-          <td className="px-4 py-3">
-            <div className="flex items-center justify-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="w-8 h-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-              >
-                <Edit2 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-8 h-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-              >
-                <Users className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-8 h-8 p-0 text-green-600 hover:text-green-800 hover:bg-green-50"
-              >
-                <Target className="w-4 h-4" />
-              </Button>
-            </div>
-          </td>
-        </tr>
-        {hasSubcategories && isExpanded && 
-          category.subcategories!.map(subcat => renderCategoryRow(subcat, level + 1))
-        }
-      </React.Fragment>
+      <div className="p-6">
+        <div className="text-center">Carregando categorias...</div>
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Catálogo de Categorias</h1>
-          <p className="text-gray-600 mt-1">Gerencie categorias e subcategorias com SLA definido</p>
-        </div>
-        <Button 
-          onClick={() => setIsCreateMode(true)}
-          className="bg-green-600 hover:bg-green-700 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova categoria
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Label>Categoria</Label>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="custos">Custos</SelectItem>
-                  <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Label>Status</Label>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="ativo">Ativo</SelectItem>
-                  <SelectItem value="inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Label>Prioridade</Label>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button variant="outline">
-              Filtrar
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Categorias</h1>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => {
+              setEditingCategory(null);
+              resetForm();
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Categoria
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Categories Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Categoria</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-900">Resposta</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-900">Solução</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-900">Status</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-900">Prioridade</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-900">Mesa</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-900">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map(category => renderCategoryRow(category))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Category Edit Modal */}
-      {(selectedCategory || isCreateMode) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">
-                {isCreateMode ? 'Nova Categoria' : 'Editar Categoria'}
-              </h2>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setSelectedCategory(null);
-                  setIsCreateMode(false);
-                }}
-              >
-                ×
-              </Button>
-            </div>
-
-            <form className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Nome da Categoria</Label>
-                  <Input
-                    id="name"
-                    defaultValue={selectedCategory?.name || ''}
-                    placeholder="Nome da categoria"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="department">Departamento</Label>
-                  <Select defaultValue={selectedCategory?.department || ''}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar departamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="custos">Custos</SelectItem>
-                      <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                      <SelectItem value="rh">Recursos Humanos</SelectItem>
-                      <SelectItem value="financeiro">Financeiro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          </DialogTrigger>
+          
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome da Categoria *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Ex: Suporte Técnico"
+                  required
+                />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="response_time">Tempo de Resposta (hh:mm)</Label>
-                  <Input
-                    id="response_time"
-                    defaultValue={selectedCategory?.response_time || ''}
-                    placeholder="60:00"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="resolution_time">Tempo de Solução (hh:mm)</Label>
-                  <Input
-                    id="resolution_time"
-                    defaultValue={selectedCategory?.resolution_time || ''}
-                    placeholder="60:00"
-                  />
-                </div>
+              
+              <div>
+                <Label htmlFor="description">Descrição</Label>
+                <Input
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Descrição da categoria"
+                />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="priority">Prioridade</Label>
-                  <Select defaultValue={selectedCategory?.priority || ''}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar prioridade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Baixa">Baixa</SelectItem>
-                      <SelectItem value="Média">Média</SelectItem>
-                      <SelectItem value="Alta">Alta</SelectItem>
-                      <SelectItem value="Planejado">Planejado</SelectItem>
-                      <SelectItem value="Não Pausar">Não Pausar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-2 mt-6">
-                  <Switch
-                    id="status"
-                    defaultChecked={selectedCategory?.status === 'Ativo'}
-                  />
-                  <Label htmlFor="status">Categoria Ativa</Label>
-                </div>
+              
+              <div>
+                <Label htmlFor="department">Departamento *</Label>
+                <Select 
+                  value={formData.departmentId} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, departmentId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              <Separator />
-
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setIsCreateMode(false);
-                  }}
+              
+              <div>
+                <Label htmlFor="slaHours">SLA (horas) *</Label>
+                <Input
+                  id="slaHours"
+                  type="number"
+                  min="1"
+                  value={formData.slaHours}
+                  onChange={(e) => setFormData(prev => ({ ...prev, slaHours: parseInt(e.target.value) || 24 }))}
+                  placeholder="24"
+                  required
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                />
+                <Label htmlFor="isActive">Categoria ativa</Label>
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsModalOpen(false)}
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  {isCreateMode ? 'Criar' : 'Salvar'}
+                <Button 
+                  type="submit"
+                  disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+                >
+                  {editingCategory ? 'Atualizar' : 'Criar'}
                 </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Lista de Categorias */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Categorias Cadastradas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {categories.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nenhuma categoria cadastrada ainda.
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {categories.map((category) => (
+                  <div key={category.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <h3 className="font-medium text-gray-900">{category.name}</h3>
+                          {category.description && (
+                            <p className="text-sm text-gray-600">{category.description}</p>
+                          )}
+                          <div className="flex items-center space-x-4 mt-2">
+                            <div className="flex items-center text-sm text-gray-500">
+                              <Building2 className="w-4 h-4 mr-1" />
+                              {getDepartmentName(category.departmentId)}
+                            </div>
+                            <div className="flex items-center text-sm text-gray-500">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {category.slaHours}h SLA
+                            </div>
+                            <Badge variant={category.isActive ? "default" : "secondary"}>
+                              {category.isActive ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(category)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(category.id)}
+                          disabled={deleteCategoryMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -56,6 +56,8 @@ export interface IStorage {
   getAllCategories(): Promise<Category[]>;
   getCategoriesByDepartment(departmentId: string): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, updates: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: string): Promise<boolean>;
 
   // Departments
   getAllDepartments(): Promise<Department[]>;
@@ -723,6 +725,20 @@ export class DatabaseStorage implements IStorage {
   async createCategory(category: InsertCategory): Promise<Category> {
     const [newCategory] = await db.insert(categories).values(category).returning();
     return newCategory;
+  }
+
+  async updateCategory(id: string, updates: Partial<InsertCategory>): Promise<Category> {
+    const [result] = await db
+      .update(categories)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Configuration methods
