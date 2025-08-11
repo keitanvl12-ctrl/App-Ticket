@@ -173,6 +173,7 @@ export interface DashboardStats {
   totalTickets: number;
   openTickets: number;
   resolvedTickets: number;
+  resolvedToday: number;
   averageResolutionTime: number;
 }
 
@@ -197,6 +198,9 @@ export interface TicketWithDetails extends Ticket {
   responsibleDepartment?: Department;
   comments?: Array<Comment & { user: User }>;
   attachments?: Attachment[];
+  slaStatus?: 'met' | 'at_risk' | 'violated';
+  slaHoursRemaining?: number;
+  slaHoursTotal?: number;
 }
 
 // Export types
@@ -223,7 +227,9 @@ export type InsertSlaRule = z.infer<typeof insertSlaRuleSchema>;
 export type DashboardStats = {
   totalTickets: number;
   openTickets: number;
+  resolvedTickets: number;
   resolvedToday: number;
+  averageResolutionTime: number;
   avgResponseTime: string;
   totalTicketsChange: string;
   openTicketsChange: string;

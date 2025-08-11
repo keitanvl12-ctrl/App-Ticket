@@ -491,12 +491,15 @@ export class DatabaseStorage implements IStorage {
     // Get attachments
     const ticketAttachments = await db.select().from(attachments).where(eq(attachments.ticketId, id));
 
-    return {
+    const baseTicket = {
       ...ticket,
       assignedToUser,
       comments: ticketComments,
       attachments: ticketAttachments,
     } as TicketWithDetails;
+
+    // Calcular SLA para o ticket individual também
+    return await this.calculateTicketSLA(baseTicket);
   }
 
   async getTicketsByUser(userId: string): Promise<TicketWithDetails[]> {
@@ -519,7 +522,75 @@ export class DatabaseStorage implements IStorage {
       allTickets.map(ticket => this.getTicket(ticket.id))
     );
 
-    return detailedTickets.filter(ticket => ticket !== undefined) as TicketWithDetails[];
+    // Calcular SLA para cada ticket
+    const ticketsWithSLA = await Promise.all(
+      detailedTickets
+        .filter(ticket => ticket !== undefined)
+        .map(async ticket => await this.calculateTicketSLA(ticket as TicketWithDetails))
+    );
+
+    return ticketsWithSLA;
+  }
+
+  async calculateTicketSLA(ticket: TicketWithDetails): Promise<TicketWithDetails> {
+    try {
+      // Se o ticket já foi resolvido, não precisa calcular SLA
+      if (ticket.status === 'resolved' || ticket.status === 'closed') {
+        return { 
+          ...ticket, 
+          slaStatus: 'met' as const, 
+          slaHoursRemaining: 0,
+          slaHoursTotal: 0
+        };
+      }
+
+      // Buscar SLA da prioridade configurada
+      const [priorityConfigResult] = await db
+        .select()
+        .from(priorityConfig)
+        .where(eq(priorityConfig.value, ticket.priority));
+
+      let slaHours = 24; // padrão
+
+      if (priorityConfigResult?.slaHours) {
+        slaHours = priorityConfigResult.slaHours;
+      } else {
+        // Se não encontrar na prioridade, buscar na categoria
+        const [category] = await db
+          .select()
+          .from(categories)
+          .where(eq(categories.name, ticket.category || ''));
+        
+        if (category?.slaHours) {
+          slaHours = category.slaHours;
+        }
+      }
+
+      // Calcular tempo decorrido desde a criação
+      const now = new Date();
+      const createdAt = new Date(ticket.createdAt);
+      const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      const hoursRemaining = Math.max(0, slaHours - hoursElapsed);
+
+      // Determinar status do SLA
+      let slaStatus: 'met' | 'at_risk' | 'violated' = 'met';
+      
+      if (hoursElapsed > slaHours) {
+        slaStatus = 'violated';
+      } else if (hoursRemaining <= slaHours * 0.2) { // 20% do tempo restante = em risco
+        slaStatus = 'at_risk';
+      }
+
+      return {
+        ...ticket,
+        slaStatus,
+        slaHoursRemaining: Math.round(hoursRemaining * 100) / 100,
+        slaHoursTotal: slaHours
+      };
+    } catch (error) {
+      console.error('Erro ao calcular SLA:', error);
+      return ticket;
+    }
   }
 
   async createTicket(ticket: InsertTicket): Promise<Ticket> {
