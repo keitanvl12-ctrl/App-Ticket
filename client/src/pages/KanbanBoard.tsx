@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { TicketModal } from '@/components/TicketModal';
+import TicketFinalizationModal from '@/components/TicketFinalizationModal';
 import { useQuery } from '@tanstack/react-query';
 
 // Enhanced ticket data matching the reference image
@@ -272,6 +273,10 @@ const columns = [
 export default function KanbanBoard() {
   const [tickets, setTickets] = useState(mockTickets);
   const [draggedTicket, setDraggedTicket] = useState<any>(null);
+  const [finalizationModal, setFinalizationModal] = useState<{
+    isOpen: boolean;
+    ticket: any | null;
+  }>({ isOpen: false, ticket: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -327,6 +332,13 @@ export default function KanbanBoard() {
   const handleDrop = (e: any, status: string) => {
     e.preventDefault();
     if (draggedTicket && draggedTicket.status !== status) {
+      // Se estiver movendo para "Resolvido", mostrar modal de finalização
+      if (status === 'Resolvido') {
+        setFinalizationModal({ isOpen: true, ticket: draggedTicket });
+        setDraggedTicket(null);
+        return;
+      }
+      
       setTickets(prev => 
         prev.map(ticket => 
           ticket.id === draggedTicket.id 
@@ -414,6 +426,32 @@ export default function KanbanBoard() {
       } catch (error) {
         console.error('Erro na requisição:', error);
       }
+    }
+  };
+
+  const handleFinalizeTicket = (ticket: any) => {
+    setFinalizationModal({ isOpen: true, ticket });
+  };
+
+  const handleFinalizationConfirm = async (finalizationData: any) => {
+    if (!finalizationModal.ticket) return;
+
+    try {
+      // Aqui você pode fazer uma requisição para salvar os dados de finalização no backend
+      console.log('Dados de finalização:', finalizationData);
+
+      // Atualizar o status do ticket para "Resolvido"
+      setTickets(prev => 
+        prev.map(ticket => 
+          ticket.id === finalizationModal.ticket.id 
+            ? { ...ticket, status: 'Resolvido', progress: 100 }
+            : ticket
+        )
+      );
+
+      setFinalizationModal({ isOpen: false, ticket: null });
+    } catch (error) {
+      console.error('Erro ao finalizar ticket:', error);
     }
   };
 
@@ -608,9 +646,29 @@ export default function KanbanBoard() {
                           {/* Header */}
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-gray-600">{ticket.number}</span>
-                            <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
-                              <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                            </Button>
+                            <div className="flex items-center space-x-1">
+                              {/* Botão Finalizar (apenas para tickets não resolvidos) */}
+                              {ticket.status !== 'Resolvido' && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="w-6 h-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleFinalizeTicket(ticket);
+                                  }}
+                                  title="Finalizar Ticket"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                  </svg>
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
+                                <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                              </Button>
+                            </div>
                           </div>
 
                           {/* Title */}
@@ -765,6 +823,20 @@ export default function KanbanBoard() {
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TicketModal>
+                      {/* Botão Finalizar (apenas para tickets não resolvidos) */}
+                      {ticket.status !== 'Resolvido' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-8 h-8 text-green-600 hover:text-green-700"
+                          onClick={() => handleFinalizeTicket(ticket)}
+                          title="Finalizar Ticket"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        </Button>
+                      )}
                       {/* Botão de excluir apenas para administradores */}
                       {currentUser?.role === 'admin' && (
                         <Button 
@@ -783,6 +855,16 @@ export default function KanbanBoard() {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {/* Modal de Finalização */}
+      {finalizationModal.isOpen && finalizationModal.ticket && (
+        <TicketFinalizationModal
+          isOpen={finalizationModal.isOpen}
+          ticket={finalizationModal.ticket}
+          onClose={() => setFinalizationModal({ isOpen: false, ticket: null })}
+          onConfirm={handleFinalizationConfirm}
+        />
       )}
     </div>
   );
