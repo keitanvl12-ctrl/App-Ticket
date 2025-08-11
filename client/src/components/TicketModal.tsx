@@ -227,7 +227,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="flex items-center space-x-3">
-            <span className="text-xl font-bold">Ticket {ticket.ticketNumber}</span>
+            <span className="text-xl font-bold">Chamado {ticket.ticketNumber}</span>
             <Badge variant="outline" className={`${getStatusColor(editedTicket.status)}`}>
               {editedTicket.status}
             </Badge>
