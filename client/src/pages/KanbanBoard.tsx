@@ -274,6 +274,11 @@ export default function KanbanBoard() {
     queryKey: ['/api/config/priority'],
   });
 
+  // Buscar departamentos
+  const { data: departments } = useQuery<any[]>({
+    queryKey: ['/api/departments'],
+  });
+
   // Define columns with dynamic counts using database configurations
   const columns = statusConfigs?.map(status => ({
     id: status.value,
@@ -453,7 +458,7 @@ export default function KanbanBoard() {
   // Get unique values for filter options
   const uniqueStatuses = Array.from(new Set(tickets.map(t => t.status).filter(Boolean)));
   const uniquePriorities = Array.from(new Set(tickets.map(t => t.priority).filter(Boolean)));
-  const uniqueDepartments = Array.from(new Set(tickets.map(t => t.department?.name).filter(Boolean)));
+  const uniqueDepartments = departments ? departments.map(dept => dept.name) : [];
   const uniqueAssignees = Array.from(new Set(tickets.map(t => t.assignedToUser?.name).filter(Boolean)));
 
   const clearAllFilters = () => {
@@ -628,7 +633,7 @@ export default function KanbanBoard() {
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Departamento</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Dept. Responsável</Label>
                   <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todos os Departamentos" />
@@ -658,15 +663,16 @@ export default function KanbanBoard() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Filtros Rápidos</Label>
-                  <Select value={filterBy} onValueChange={setFilterBy}>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Dept. Solicitante</Label>
+                  <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Filtros Especiais" />
+                      <SelectValue placeholder="Todos os Solicitantes" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="alta">Alta Prioridade</SelectItem>
-                      <SelectItem value="atrasado">Atrasados</SelectItem>
+                      <SelectItem value="all">Todos os Solicitantes</SelectItem>
+                      {uniqueDepartments.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
