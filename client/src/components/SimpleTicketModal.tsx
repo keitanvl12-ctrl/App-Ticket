@@ -58,10 +58,24 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
     enabled: isOpen && !!formData.responsibleDepartment
   });
 
-  // Buscar campos customizados para categoria selecionada
+  // Buscar campos customizados para categoria selecionada E departamento
   const { data: customFields = [] } = useQuery<CustomField[]>({
-    queryKey: ["/api/custom-fields/category", selectedCategoryId],
-    enabled: isOpen && !!selectedCategoryId,
+    queryKey: ["/api/custom-fields/category", selectedCategoryId, formData.responsibleDepartment],
+    queryFn: async () => {
+      if (!selectedCategoryId || !formData.responsibleDepartment) return [];
+      
+      const response = await fetch(
+        `/api/custom-fields/category/${selectedCategoryId}?departmentId=${formData.responsibleDepartment}`
+      );
+      
+      if (!response.ok) {
+        console.error('Error fetching custom fields:', response.statusText);
+        return [];
+      }
+      
+      return response.json();
+    },
+    enabled: isOpen && !!selectedCategoryId && !!formData.responsibleDepartment,
   });
 
   // Buscar dados do usuário logado
@@ -104,7 +118,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
     setFormData(prev => ({ 
       ...prev, 
       category: categoryId,
-      customFields: {}
+      customFields: {} // Limpar campos customizados ao trocar categoria
     }));
   };
 

@@ -88,6 +88,7 @@ export interface IStorage {
   // Custom Fields
   getCustomFields(): Promise<CustomField[]>;
   getCustomFieldsByCategory(categoryId: string): Promise<CustomField[]>;
+  getCustomFieldsByCategoryAndDepartment(categoryId: string, departmentId: string): Promise<CustomField[]>;
   createCustomField(field: InsertCustomField): Promise<CustomField>;
   updateCustomField(id: string, updates: Partial<CustomField>): Promise<CustomField | undefined>;
   deleteCustomField(id: string): Promise<boolean>;
@@ -1311,11 +1312,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(customFields.order, customFields.name);
   }
 
-  async getCustomFieldsByCategory(categoryId: string): Promise<CustomField[]> {
+  async getCustomFieldsByCategoryAndDepartment(categoryId: string, departmentId: string): Promise<CustomField[]> {
     return await db
       .select()
       .from(customFields)
-      .where(and(eq(customFields.categoryId, categoryId), eq(customFields.isActive, true)))
+      .where(and(
+        eq(customFields.categoryId, categoryId), 
+        eq(customFields.departmentId, departmentId),
+        eq(customFields.isActive, true)
+      ))
       .orderBy(customFields.order, customFields.name);
   }
 

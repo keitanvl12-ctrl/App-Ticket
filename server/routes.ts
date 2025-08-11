@@ -602,9 +602,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/custom-fields/category/:categoryId", async (req, res) => {
     try {
-      const fields = await storage.getCustomFieldsByCategory(req.params.categoryId);
+      const { departmentId } = req.query;
+      
+      if (!departmentId) {
+        return res.status(400).json({ message: "departmentId query parameter is required" });
+      }
+      
+      const fields = await storage.getCustomFieldsByCategoryAndDepartment(
+        req.params.categoryId,
+        departmentId as string
+      );
       res.json(fields);
     } catch (error) {
+      console.error("Error fetching custom fields:", error);
       res.status(500).json({ message: "Failed to fetch custom fields for category" });
     }
   });

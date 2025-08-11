@@ -113,10 +113,11 @@ export const slaRules = pgTable("sla_rules", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Custom Fields table - fields specific to categories
+// Custom Fields table - fields specific to categories AND departments
 export const customFields = pgTable("custom_fields", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   categoryId: varchar("category_id").references(() => categories.id).notNull(),
+  departmentId: varchar("department_id").references(() => departments.id).notNull(), // Departamento que atende
   name: text("name").notNull(), // Nome do campo (ex: "Número do Patrimônio", "Setor do Equipamento")
   type: text("type").notNull().default("text"), // text, select, number, email, phone, date, checkbox
   required: boolean("required").default(false),
