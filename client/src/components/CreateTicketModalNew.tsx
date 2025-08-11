@@ -25,45 +25,85 @@ interface DynamicField {
   options?: string[];
 }
 
-// Configurações de campos dinâmicos por categoria
+// Configurações de campos dinâmicos por categoria (baseado nas categorias reais do banco)
 const DYNAMIC_FIELDS_CONFIG: Record<string, DynamicField[]> = {
   'Suporte Técnico': [
-    { id: 'tipo_ticket', label: 'Tipo de Ticket', type: 'select', required: true, 
-      options: ['Instalação de Software', 'Problemas de Hardware', 'Problemas de Rede', 'Outros'] },
-    { id: 'equipamento', label: 'Equipamento/Sistema', type: 'text', placeholder: 'Ex: Notebook Dell, Sistema XYZ', required: true },
-    { id: 'urgencia_negocio', label: 'Urgência do Negócio', type: 'select', required: true,
-      options: ['Baixa', 'Média', 'Alta', 'Crítica'] }
+    { id: 'tipo_problema', label: 'Tipo de Problema', type: 'select', required: true, 
+      options: ['Instalação de Software', 'Problemas de Hardware', 'Problemas de Rede', 'Acesso ao Sistema', 'Outros'] },
+    { id: 'equipamento', label: 'Equipamento/Sistema Afetado', type: 'text', placeholder: 'Ex: Notebook Dell, Sistema XYZ', required: true },
+    { id: 'urgencia_negocio', label: 'Impacto no Negócio', type: 'select', required: true,
+      options: ['Baixo - Não impacta operação', 'Médio - Impacta algumas funções', 'Alto - Impacta operação crítica', 'Crítico - Para toda operação'] }
   ],
-  'Recursos Humanos': [
-    { id: 'tipo_ticket', label: 'Tipo de Ticket', type: 'select', required: true,
-      options: ['Férias', 'Licença', 'Benefícios', 'Folha de Pagamento', 'Outros'] },
-    { id: 'cpf_solicitante', label: 'Qual CPF do solicitante?', type: 'text', placeholder: '000.000.000-00', required: true },
-    { id: 'email_solicitante', label: 'Qual e-mail?', type: 'email', placeholder: '(Email) Pressione Enter ou Tab', required: true },
-    { id: 'celular_solicitante', label: 'Número do Celular do solicitante', type: 'tel', required: true },
-    { id: 'centro_custo', label: 'Qual Centro de Custo do solicitante?', type: 'text', required: true },
-    { id: 'superior_direto', label: 'Superior Direto', type: 'text', required: true }
+  'Problemas de Hardware': [
+    { id: 'equipamento_problema', label: 'Equipamento com Problema', type: 'text', placeholder: 'Ex: Notebook HP, Impressora Xerox', required: true },
+    { id: 'numero_patrimonio', label: 'Número do Patrimônio', type: 'text', placeholder: 'Se disponível' },
+    { id: 'descricao_problema', label: 'Descrição Detalhada do Problema', type: 'textarea', required: true },
+    { id: 'local_equipamento', label: 'Localização do Equipamento', type: 'text', required: true }
   ],
-  'Financeiro': [
-    { id: 'tipo_ticket', label: 'Tipo de Ticket', type: 'select', required: true,
-      options: ['Contas a Pagar', 'Contas a Receber', 'Reembolso', 'Orçamento', 'Outros'] },
-    { id: 'valor_envolvido', label: 'Valor Envolvido', type: 'number', placeholder: 'R$ 0,00', required: true },
+  'Bug de Sistema': [
+    { id: 'sistema_afetado', label: 'Sistema Afetado', type: 'text', placeholder: 'Ex: Sistema ERP, Portal Web', required: true },
+    { id: 'funcionalidade', label: 'Funcionalidade com Problema', type: 'text', required: true },
+    { id: 'passos_reproduzir', label: 'Passos para Reproduzir o Bug', type: 'textarea', required: true },
+    { id: 'resultado_esperado', label: 'Resultado Esperado', type: 'textarea', required: true }
+  ],
+  'Nova Funcionalidade': [
+    { id: 'sistema_destino', label: 'Sistema de Destino', type: 'text', required: true },
+    { id: 'descricao_funcionalidade', label: 'Descrição da Nova Funcionalidade', type: 'textarea', required: true },
+    { id: 'justificativa_negocio', label: 'Justificativa de Negócio', type: 'textarea', required: true },
+    { id: 'prazo_desejado', label: 'Prazo Desejado', type: 'text', placeholder: 'Ex: 30 dias' }
+  ],
+  'Desenvolvimento de Software': [
+    { id: 'tipo_solicitacao', label: 'Tipo de Solicitação', type: 'select', required: true,
+      options: ['Nova Funcionalidade', 'Correção de Bug', 'Melhoria', 'Integração', 'Outros'] },
+    { id: 'sistema_envolvido', label: 'Sistema Envolvido', type: 'text', required: true },
+    { id: 'especificacao_tecnica', label: 'Especificação Técnica', type: 'textarea', required: true },
+    { id: 'prazo_estimado', label: 'Prazo Estimado Desejado', type: 'text', placeholder: 'Ex: 2 semanas' }
+  ],
+  'Folha de Pagamento': [
+    { id: 'cpf_funcionario', label: 'CPF do Funcionário', type: 'text', placeholder: '000.000.000-00', required: true },
+    { id: 'tipo_solicitacao', label: 'Tipo de Solicitação', type: 'select', required: true,
+      options: ['Correção de Dados', 'Inclusão de Benefício', 'Exclusão de Benefício', 'Férias', 'Licença', 'Outros'] },
+    { id: 'periodo_referencia', label: 'Período de Referência', type: 'text', placeholder: 'Ex: Janeiro/2025', required: true },
     { id: 'centro_custo', label: 'Centro de Custo', type: 'text', required: true },
-    { id: 'aprovador', label: 'Aprovador Responsável', type: 'text', required: true }
+    { id: 'aprovador_rh', label: 'Aprovador RH', type: 'text', required: true }
   ],
-  'Jurídico': [
-    { id: 'tipo_ticket', label: 'Tipo de Ticket', type: 'select', required: true,
-      options: ['Contrato', 'Assessoria Legal', 'Compliance', 'Outros'] },
-    { id: 'prazo_resposta', label: 'Prazo para Resposta', type: 'select', required: true,
-      options: ['24 horas', '48 horas', '1 semana', '2 semanas', 'Não urgente'] },
-    { id: 'area_direito', label: 'Área do Direito', type: 'select', required: true,
-      options: ['Trabalhista', 'Tributário', 'Civil', 'Empresarial', 'Outros'] }
+  'Benefícios': [
+    { id: 'cpf_beneficiario', label: 'CPF do Beneficiário', type: 'text', placeholder: '000.000.000-00', required: true },
+    { id: 'tipo_beneficio', label: 'Tipo de Benefício', type: 'select', required: true,
+      options: ['Plano de Saúde', 'Vale Transporte', 'Vale Alimentação', 'Vale Refeição', 'Seguro de Vida', 'Outros'] },
+    { id: 'acao_solicitada', label: 'Ação Solicitada', type: 'select', required: true,
+      options: ['Inclusão', 'Alteração', 'Exclusão', 'Consulta'] },
+    { id: 'data_inicio_vigencia', label: 'Data de Início da Vigência', type: 'text', placeholder: 'DD/MM/AAAA' }
   ],
-  'Marketing': [
-    { id: 'tipo_ticket', label: 'Tipo de Ticket', type: 'select', required: true,
-      options: ['Campanha', 'Material Gráfico', 'Evento', 'Mídias Sociais', 'Outros'] },
-    { id: 'prazo_entrega', label: 'Prazo de Entrega', type: 'text', placeholder: 'Ex: 15 dias', required: true },
-    { id: 'publico_alvo', label: 'Público Alvo', type: 'text', required: true },
-    { id: 'orcamento_estimado', label: 'Orçamento Estimado', type: 'number', placeholder: 'R$ 0,00' }
+  'Recrutamento': [
+    { id: 'cargo_vaga', label: 'Cargo da Vaga', type: 'text', required: true },
+    { id: 'departamento_solicitante', label: 'Departamento Solicitante', type: 'text', required: true },
+    { id: 'quantidade_vagas', label: 'Quantidade de Vagas', type: 'number', required: true },
+    { id: 'requisitos_vaga', label: 'Requisitos da Vaga', type: 'textarea', required: true },
+    { id: 'aprovador_gestor', label: 'Gestor Aprovador', type: 'text', required: true }
+  ],
+  'Contabilidade': [
+    { id: 'tipo_solicitacao_contabil', label: 'Tipo de Solicitação', type: 'select', required: true,
+      options: ['Lançamento Contábil', 'Conciliação', 'Relatório', 'Consulta Fiscal', 'Outros'] },
+    { id: 'periodo_competencia', label: 'Período de Competência', type: 'text', placeholder: 'Ex: Janeiro/2025', required: true },
+    { id: 'valor_envolvido', label: 'Valor Envolvido (R$)', type: 'number', placeholder: '0,00' },
+    { id: 'centro_custo_contabil', label: 'Centro de Custo', type: 'text', required: true }
+  ],
+  'Contas a Pagar': [
+    { id: 'fornecedor', label: 'Nome do Fornecedor', type: 'text', required: true },
+    { id: 'numero_nota_fiscal', label: 'Número da Nota Fiscal', type: 'text', required: true },
+    { id: 'valor_pagamento', label: 'Valor do Pagamento (R$)', type: 'number', required: true },
+    { id: 'data_vencimento', label: 'Data de Vencimento', type: 'text', placeholder: 'DD/MM/AAAA', required: true },
+    { id: 'centro_custo_pagamento', label: 'Centro de Custo', type: 'text', required: true },
+    { id: 'aprovador_financeiro', label: 'Aprovador Financeiro', type: 'text', required: true }
+  ],
+  'Orçamento': [
+    { id: 'periodo_orcamento', label: 'Período do Orçamento', type: 'text', placeholder: 'Ex: 2025', required: true },
+    { id: 'departamento_orcamento', label: 'Departamento', type: 'text', required: true },
+    { id: 'tipo_orcamento', label: 'Tipo de Solicitação', type: 'select', required: true,
+      options: ['Elaboração de Orçamento', 'Revisão de Orçamento', 'Análise de Desvios', 'Consulta', 'Outros'] },
+    { id: 'valor_orcamento', label: 'Valor Orçado (R$)', type: 'number', placeholder: '0,00' },
+    { id: 'justificativa_orcamento', label: 'Justificativa', type: 'textarea', required: true }
   ]
 };
 
@@ -85,7 +125,7 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
   });
   
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [subcategories, setSubcategories] = useState<string[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<any[]>([]);
 
   // Buscar dados necessários
   const { data: users } = useQuery<any[]>({
@@ -98,7 +138,7 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
     enabled: isOpen,
   });
 
-  const { data: categories } = useQuery<any[]>({
+  const { data: allCategories } = useQuery<any[]>({
     queryKey: ['/api/categories'],
     enabled: isOpen,
   });
@@ -106,27 +146,26 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
   // Usuário atual
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
-  // Atualizar subcategorias quando categoria primária muda
+  // Atualizar categorias disponíveis quando departamento primário muda
   useEffect(() => {
-    if (formData.primaryCategory) {
-      // Simular subcategorias baseadas na categoria primária
-      const mockSubcategories: Record<string, string[]> = {
-        'Tecnologia': ['Suporte Técnico', 'Desenvolvimento', 'Infraestrutura'],
-        'Custos': ['Cartão Clara', 'Reembolso Protheus'],
-        'Departamento Pessoal': ['Folha de Pagamento', 'Benefícios', 'Admissão/Demissão'],
-        'Jurídico': ['Contratos', 'Assessoria Legal', 'Compliance'],
-        'Marketing': ['Campanhas', 'Material Gráfico', 'Eventos'],
-        'Qualidade': ['Auditoria', 'Processos', 'Melhorias']
-      };
+    if (formData.primaryCategory && allCategories) {
+      // Buscar departamento selecionado
+      const selectedDept = departments?.find(d => d.name === formData.primaryCategory);
+      if (selectedDept) {
+        // Filtrar categorias por departamento
+        const deptCategories = allCategories.filter(cat => cat.departmentId === selectedDept.id);
+        setAvailableCategories(deptCategories);
+      } else {
+        setAvailableCategories([]);
+      }
       
-      setSubcategories(mockSubcategories[formData.primaryCategory] || []);
       setFormData(prev => ({ 
         ...prev, 
         secondaryCategory: '',
         dynamicFields: {} // Reset dynamic fields when category changes
       }));
     }
-  }, [formData.primaryCategory]);
+  }, [formData.primaryCategory, allCategories, departments]);
 
   // Obter campos dinâmicos baseados na categoria secundária
   const getDynamicFields = (): DynamicField[] => {
@@ -253,19 +292,30 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
     }));
   };
 
-  const primaryCategories = ['Custos', 'Departamento Pessoal', 'Jurídico', 'Marketing', 'Qualidade', 'Tecnologia'];
+  // Usar departamentos reais como categorias primárias
+  const primaryCategories = departments?.map(d => d.name) || [];
+
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Novo Ticket
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden m-4">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold text-gray-900">Novo Ticket</h2>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+          <div className="p-6">
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Assunto */}
@@ -354,22 +404,23 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
             <Select
               value={formData.secondaryCategory}
               onValueChange={(value) => setFormData(prev => ({ ...prev, secondaryCategory: value }))}
-              disabled={!formData.primaryCategory}
+              disabled={!formData.primaryCategory || availableCategories.length === 0}
             >
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder={
-                  formData.primaryCategory ? "Selecione..." : "Selecione uma categoria primária antes"
+                  !formData.primaryCategory ? "Selecione um departamento primeiro" :
+                  availableCategories.length === 0 ? "Nenhuma categoria disponível" : "Selecione..."
                 } />
               </SelectTrigger>
               <SelectContent>
                 <div className="p-2">
                   <Input placeholder="Pesquisar" className="mb-2" />
                 </div>
-                {subcategories.map((subcat) => (
-                  <SelectItem key={subcat} value={subcat}>
+                {availableCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.name}>
                     <div className="flex items-center">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      {subcat}
+                      {category.name}
                     </div>
                   </SelectItem>
                 ))}
@@ -533,9 +584,11 @@ export default function CreateTicketModalNew({ isOpen, onClose }: CreateTicketMo
             <Button type="submit" disabled={createTicketMutation.isPending}>
               {createTicketMutation.isPending ? 'Criando...' : 'Criar Ticket'}
             </Button>
+            </div>
+          </form>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 }
