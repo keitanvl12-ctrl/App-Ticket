@@ -10,13 +10,16 @@ interface Department {
   id: string;
   name: string;
   description?: string;
-  isActive: boolean;
+  isRequester: boolean;
+  isResponsible: boolean;
   createdAt: string;
 }
 
 interface DepartmentFormData {
   name: string;
   description: string;
+  isRequester: boolean;
+  isResponsible: boolean;
 }
 
 export default function DepartmentManager() {
@@ -24,7 +27,9 @@ export default function DepartmentManager() {
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [formData, setFormData] = useState<DepartmentFormData>({
     name: '',
-    description: ''
+    description: '',
+    isRequester: true,
+    isResponsible: true
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -66,7 +71,12 @@ export default function DepartmentManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', description: '' });
+    setFormData({ 
+      name: '', 
+      description: '', 
+      isRequester: true, 
+      isResponsible: true 
+    });
     setEditingDepartment(null);
   };
 
@@ -74,7 +84,9 @@ export default function DepartmentManager() {
     setEditingDepartment(department);
     setFormData({
       name: department.name,
-      description: department.description || ''
+      description: department.description || '',
+      isRequester: department.isRequester || true,
+      isResponsible: department.isResponsible || true
     });
     setIsModalOpen(true);
   };
@@ -144,7 +156,7 @@ export default function DepartmentManager() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Departamentos que <strong>atendem</strong> e resolvem chamados. Usuários escolhem qual departamento deve resolver o ticket.
+              Departamentos que <strong>atendem</strong> e resolvem chamados. Aparecem na lista "Departamento Responsável" ao criar ticket.
             </p>
           </CardContent>
         </Card>
@@ -157,7 +169,7 @@ export default function DepartmentManager() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Departamento do usuário que <strong>solicita</strong> o chamado. Preenchido automaticamente baseado no perfil do usuário.
+              Usuários destes departamentos podem <strong>criar</strong> chamados. Campo "Departamento Solicitante" é preenchido automaticamente.
             </p>
           </CardContent>
         </Card>
@@ -173,9 +185,18 @@ export default function DepartmentManager() {
                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                     {department.name}
                   </CardTitle>
-                  <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                    Ativo
-                  </Badge>
+                  <div className="flex gap-2 flex-wrap">
+                    {department.isRequester && (
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                        Solicitante
+                      </Badge>
+                    )}
+                    {department.isResponsible && (
+                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                        Responsável
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -276,6 +297,38 @@ export default function DepartmentManager() {
                   rows={3}
                   data-testid="input-department-description"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.isRequester}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isRequester: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Pode Solicitar
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">Usuários deste departamento podem criar chamados</p>
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.isResponsible}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isResponsible: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Pode Atender
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">Departamento pode receber e resolver chamados</p>
+                </div>
               </div>
               
               <div className="flex gap-3 pt-4">

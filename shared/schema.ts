@@ -8,6 +8,8 @@ export const departments = pgTable("departments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull().unique(),
   description: text("description"),
+  isRequester: boolean("is_requester").default(true).notNull(), // Pode solicitar tickets
+  isResponsible: boolean("is_responsible").default(true).notNull(), // Pode atender tickets
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
