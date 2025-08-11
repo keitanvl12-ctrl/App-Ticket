@@ -58,7 +58,7 @@ const useAuth = () => {
           
           // Verificar se o usuário ainda está ativo no sistema
           const response = await fetch(`/api/users/${parsedUser.id}`);
-          if (response.ok) {
+          if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
             const currentUserData = await response.json();
             
             // Se o usuário foi bloqueado, fazer logout
@@ -82,8 +82,9 @@ const useAuth = () => {
           }
         } catch (error) {
           console.error('Erro ao verificar status do usuário:', error);
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('currentUser');
+          // Não remover tokens em caso de erro de rede, apenas em caso de usuário bloqueado
+          setUser(parsedUser);
+          setIsAuthenticated(true);
         }
       }
       setIsLoading(false);

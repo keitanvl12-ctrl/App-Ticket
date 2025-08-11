@@ -82,7 +82,7 @@ const LoginPage: React.FC = () => {
   const demoAccounts = [
     {
       role: 'Administrador',
-      email: 'admin@opus.com.br',
+      email: 'admin@empresa.com',
       password: 'admin123',
       color: 'text-purple-600',
       icon: Shield,
@@ -90,16 +90,16 @@ const LoginPage: React.FC = () => {
     },
     {
       role: 'Supervisor',
-      email: 'supervisor@opus.com.br', 
-      password: 'super123',
+      email: 'maria.santos@empresa.com', 
+      password: 'maria123',
       color: 'text-blue-600',
       icon: Building2,
       description: 'Gerencia departamentos'
     },
     {
       role: 'Colaborador',
-      email: 'colaborador@opus.com.br',
-      password: 'colab123',
+      email: 'ana.costa@empresa.com',
+      password: 'ana123',
       color: 'text-green-600',
       icon: LogIn,
       description: 'Usuário padrão'

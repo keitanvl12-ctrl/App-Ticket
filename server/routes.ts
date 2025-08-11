@@ -262,10 +262,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: user.name, 
         email: user.email, 
         role: user.role,
-        departmentId: user.departmentId
+        hierarchy: user.hierarchy,
+        departmentId: user.departmentId,
+        isBlocked: user.isBlocked,
+        isActive: user.isActive
       })));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role,
+        hierarchy: user.hierarchy,
+        departmentId: user.departmentId,
+        isBlocked: user.isBlocked,
+        isActive: user.isActive
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
