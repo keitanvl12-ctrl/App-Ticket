@@ -377,16 +377,16 @@ export default function KanbanBoard() {
   };
 
   const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.assignee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (ticket.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (ticket.ticketNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (ticket.assignedToUser?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (ticket.createdByUser?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (ticket.department?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
-    const matchesDepartment = departmentFilter === 'all' || ticket.department === departmentFilter;
-    const matchesAssignee = assigneeFilter === 'all' || ticket.assignee.name === assigneeFilter;
+    const matchesDepartment = departmentFilter === 'all' || ticket.department?.name === departmentFilter;
+    const matchesAssignee = assigneeFilter === 'all' || ticket.assignedToUser?.name === assigneeFilter;
     
     // Legacy filter compatibility
     const matchesLegacyFilter = filterBy === 'all' || 
@@ -397,10 +397,10 @@ export default function KanbanBoard() {
   });
 
   // Get unique values for filter options
-  const uniqueStatuses = Array.from(new Set(tickets.map(t => t.status)));
-  const uniquePriorities = Array.from(new Set(tickets.map(t => t.priority)));
-  const uniqueDepartments = Array.from(new Set(tickets.map(t => t.department)));
-  const uniqueAssignees = Array.from(new Set(tickets.map(t => t.assignee.name)));
+  const uniqueStatuses = Array.from(new Set(tickets.map(t => t.status).filter(Boolean)));
+  const uniquePriorities = Array.from(new Set(tickets.map(t => t.priority).filter(Boolean)));
+  const uniqueDepartments = Array.from(new Set(tickets.map(t => t.department?.name).filter(Boolean)));
+  const uniqueAssignees = Array.from(new Set(tickets.map(t => t.assignedToUser?.name).filter(Boolean)));
 
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -665,10 +665,10 @@ export default function KanbanBoard() {
                         <div className="space-y-3">
                           {/* Header */}
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-gray-600">{ticket.number}</span>
+                            <span className="text-xs font-bold text-gray-600">{ticket.ticketNumber}</span>
                             <div className="flex items-center space-x-1">
                               {/* Botão Finalizar (apenas para tickets não resolvidos) */}
-                              {ticket.status !== 'Resolvido' && (
+                              {ticket.status !== 'resolved' && (
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
@@ -694,7 +694,7 @@ export default function KanbanBoard() {
                           {/* Title */}
                           <div>
                             <h3 className="font-bold text-sm text-gray-900 leading-tight mb-1">
-                              {ticket.title}
+                              {ticket.subject}
                             </h3>
                             <p className="text-xs text-gray-600 line-clamp-2">
                               {ticket.description}
@@ -706,13 +706,13 @@ export default function KanbanBoard() {
                             <div className="flex items-center space-x-2">
                               <Avatar className="w-6 h-6">
                                 <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                                  {ticket.assignee.initials}
+                                  {ticket.assignedToUser?.name?.charAt(0) || 'U'}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-xs text-gray-600">{ticket.assignee.name}</span>
+                              <span className="text-xs text-gray-600">{ticket.assignedToUser?.name || 'Não atribuído'}</span>
                             </div>
                             <div className="text-xs text-gray-500">
-                              {ticket.dueDate}
+                              {new Date(ticket.createdAt).toLocaleDateString('pt-BR')}
                             </div>
                           </div>
 
@@ -721,7 +721,7 @@ export default function KanbanBoard() {
                             <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
                               {ticket.priority}
                             </Badge>
-                            <span className="text-xs text-gray-500">{ticket.department}</span>
+                            <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
                           </div>
 
                           {/* Progress Bar */}
