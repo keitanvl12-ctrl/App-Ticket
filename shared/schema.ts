@@ -78,7 +78,7 @@ export const slaRules = pgTable("sla_rules", {
   name: text("name").notNull(),
   departmentId: varchar("department_id").references(() => departments.id), // Nullable - applies to all departments if null
   category: text("category"), // Nullable - applies to all categories if null
-  priority: text("priority").notNull(), // low, medium, high, critical
+  priority: text("priority"), // low, medium, high, critical - nullable for non-priority based SLAs
   timeHours: integer("time_hours").notNull().default(24),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
