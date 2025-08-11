@@ -121,13 +121,6 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
                   ))}
                   <div className="border-t border-border my-2"></div>
                   <button 
-                    onClick={() => handleNavigation('/settings')}
-                    className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-enterprise"
-                  >
-                    <Icon name="Settings" size={16} />
-                    <span>Configurações</span>
-                  </button>
-                  <button 
                     onClick={() => {
                       window.open('https://docs.ticketflow.com', '_blank');
                       setIsMoreMenuOpen(false);

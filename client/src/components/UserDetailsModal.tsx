@@ -120,6 +120,25 @@ export default function UserDetailsModal({ userId, isOpen, onClose }: UserDetail
   });
 
   const handleSave = () => {
+    // Validação obrigatória para função e departamento
+    if (!formData.role) {
+      toast({
+        title: "Erro de validação",
+        description: "Função é obrigatória.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.departmentId) {
+      toast({
+        title: "Erro de validação", 
+        description: "Departamento é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     updateUserMutation.mutate(formData);
   };
 
@@ -349,13 +368,15 @@ export default function UserDetailsModal({ userId, isOpen, onClose }: UserDetail
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="role">Função</Label>
+                    <Label htmlFor="role">
+                      Função <span className="text-red-500">*</span>
+                    </Label>
                     <Select
                       value={formData.role}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
                       disabled={!isEditing}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={!formData.role && isEditing ? "border-red-300" : ""}>
                         <SelectValue placeholder="Selecionar função" />
                       </SelectTrigger>
                       <SelectContent>
@@ -364,16 +385,21 @@ export default function UserDetailsModal({ userId, isOpen, onClose }: UserDetail
                         <SelectItem value="colaborador">Colaborador</SelectItem>
                       </SelectContent>
                     </Select>
+                    {!formData.role && isEditing && (
+                      <p className="text-sm text-red-500 mt-1">Este campo é obrigatório</p>
+                    )}
                   </div>
                   
                   <div>
-                    <Label htmlFor="department">Departamento</Label>
+                    <Label htmlFor="department">
+                      Departamento <span className="text-red-500">*</span>
+                    </Label>
                     <Select
                       value={formData.departmentId}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, departmentId: value }))}
                       disabled={!isEditing}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={!formData.departmentId && isEditing ? "border-red-300" : ""}>
                         <SelectValue placeholder="Selecionar departamento" />
                       </SelectTrigger>
                       <SelectContent>
@@ -384,6 +410,9 @@ export default function UserDetailsModal({ userId, isOpen, onClose }: UserDetail
                         ))}
                       </SelectContent>
                     </Select>
+                    {!formData.departmentId && isEditing && (
+                      <p className="text-sm text-red-500 mt-1">Este campo é obrigatório</p>
+                    )}
                   </div>
                 </div>
                 
