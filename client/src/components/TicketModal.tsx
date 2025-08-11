@@ -68,15 +68,42 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   // Usuário atual (assumindo que é o primeiro admin para demo)
   const currentUser = users?.find(u => u.role === 'admin') || users?.[0];
 
-  // Calcular SLA baseado na configuração de prioridade
+  // Buscar regras SLA configuradas
+  const { data: slaRules } = useQuery<any[]>({
+    queryKey: ['/api/sla/rules'],
+    enabled: isOpen,
+  });
+
+  // Calcular SLA baseado na hierarquia: Regras SLA → Configurações de Prioridade → Fallback
   const calculateSLA = () => {
-    const priorityConfig = priorityConfigs?.find(p => p.value === editedTicket.priority);
-    if (!priorityConfig) return { percentage: 0, timeRemaining: 0, isViolation: false };
+    let slaHours = 24; // Fallback padrão
+
+    // 1. Primeiro, tentar encontrar uma regra SLA específica
+    if (slaRules && slaRules.length > 0) {
+      const matchingRule = slaRules.find(rule => {
+        const matchesDepartment = !rule.departmentId || rule.departmentId === editedTicket.responsibleDepartmentId;
+        const matchesCategory = !rule.category || rule.category === editedTicket.category;
+        const matchesPriority = !rule.priority || rule.priority === editedTicket.priority;
+        return matchesDepartment && matchesCategory && matchesPriority && rule.isActive;
+      });
+
+      if (matchingRule) {
+        slaHours = matchingRule.timeHours;
+      }
+    }
+
+    // 2. Se não encontrou regra SLA, usar configuração de prioridade
+    if (slaHours === 24) {
+      const priorityConfig = priorityConfigs?.find(p => p.value === editedTicket.priority);
+      if (priorityConfig && priorityConfig.slaHours) {
+        slaHours = priorityConfig.slaHours;
+      }
+    }
 
     const createdAt = new Date(editedTicket.createdAt);
     const now = new Date();
     const elapsed = now.getTime() - createdAt.getTime();
-    const slaTarget = priorityConfig.slaHours * 60 * 60 * 1000; // Convert hours to milliseconds
+    const slaTarget = slaHours * 60 * 60 * 1000; // Convert hours to milliseconds
     
     const percentage = Math.min((elapsed / slaTarget) * 100, 100);
     const timeRemaining = slaTarget - elapsed;
@@ -86,7 +113,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
       percentage: Math.max(percentage, 0), 
       timeRemaining: Math.abs(timeRemaining), 
       isViolation,
-      slaHours: priorityConfig.slaHours
+      slaHours
     };
   };
 
@@ -446,7 +473,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-500">
-                          SLA: {slaData.slaHours || 24}h
+                          SLA: {slaData.slaHours}h {!slaRules || slaRules.length === 0 ? '(padrão)' : '(configurado)'}
                         </span>
                         <span className={slaData.isViolation ? 'text-red-600 font-medium' : 'text-gray-500'}>
                           {formatTimeRemaining(slaData.timeRemaining, slaData.isViolation)}

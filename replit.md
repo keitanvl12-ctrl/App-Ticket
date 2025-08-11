@@ -136,3 +136,5 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 - **Real-time SLA Tracking**: Progress bars now reflect actual time elapsed vs. SLA deadlines with proper color coding
 - **SLA Configuration Integration**: SLA calculations now pull from admin-configured priority settings instead of hardcoded values
 - **Badge Translation Fix**: Status and priority badges now display Portuguese names from configuration instead of English database values
+- **Dynamic Color System**: All status and priority colors now reflect admin configurations across Kanban, modals, and tables
+- **SLA Hierarchy Implementation**: SLA calculations follow proper hierarchy: SLA Rules → Priority Config → 24h fallback
