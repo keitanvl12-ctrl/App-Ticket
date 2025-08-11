@@ -109,6 +109,8 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
       category: '',
       customFields: {}
     }));
+    setSelectedCategory(null);
+    setSelectedCategoryId('');
   };
 
   const handleCategoryChange = (categoryId: string) => {
@@ -120,6 +122,17 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
       category: categoryId,
       customFields: {} // Limpar campos customizados ao trocar categoria
     }));
+  };
+
+  const handleResponsibleDepartmentChange = (departmentId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      responsibleDepartment: departmentId,
+      category: '', // Limpar categoria ao trocar departamento responsável
+      customFields: {} // Limpar campos customizados
+    }));
+    setSelectedCategory(null);
+    setSelectedCategoryId('');
   };
 
   const handleCustomFieldChange = (fieldId: string, value: string) => {
@@ -385,6 +398,14 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                   marginBottom: '6px'
                 }}>
                   Departamento Solicitante <span style={{ color: '#ef4444' }}>*</span>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: '#6b7280', 
+                    fontWeight: 'normal',
+                    display: 'block'
+                  }}>
+                    (Seu departamento)
+                  </span>
                 </label>
                 <select
                   value={formData.requesterDepartment}
@@ -419,6 +440,14 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                   marginBottom: '6px'
                 }}>
                   Departamento Responsável <span style={{ color: '#ef4444' }}>*</span>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: '#6b7280', 
+                    fontWeight: 'normal',
+                    display: 'block'
+                  }}>
+                    (Qual departamento deve atender este ticket)
+                  </span>
                 </label>
                 <select
                   value={formData.responsibleDepartment}
@@ -434,7 +463,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                   }}
                   required
                 >
-                  <option value="">Selecione o departamento</option>
+                  <option value="">Selecione o departamento que deve atender</option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.name}
