@@ -467,7 +467,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                   required
                 >
                   <option value="">Selecione o departamento que deve atender</option>
-                  {departments.map((dept) => (
+                  {departments.filter(dept => dept.isResponsible).map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.name}
                     </option>

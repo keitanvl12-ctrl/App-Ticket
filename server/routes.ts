@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/departments/:id", async (req, res) => {
+  app.put("/api/departments/:id", async (req, res) => {
     try {
       const validatedData = insertDepartmentSchema.partial().parse(req.body);
       const department = await departmentStorage.updateDepartment(req.params.id, validatedData);
