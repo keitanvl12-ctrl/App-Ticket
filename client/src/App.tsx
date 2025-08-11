@@ -34,7 +34,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/tickets" component={KanbanBoard} />
-        <Route path="/create" component={CreateTicket} />
+
         <Route path="/analytics" component={Analytics} />
         <Route path="/sla" component={SLA} />
         <Route path="/users" component={UserManagement} />

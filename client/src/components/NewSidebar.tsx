@@ -8,13 +8,15 @@ interface SidebarProps {
   onClose: () => void;
   isCollapsed?: boolean;
   onToggleCollapse: () => void;
+  onOpenTicketModal: () => void;
 }
 
 const NewSidebar: React.FC<SidebarProps> = ({ 
   isOpen = false, 
   onClose, 
   isCollapsed = false, 
-  onToggleCollapse 
+  onToggleCollapse,
+  onOpenTicketModal 
 }) => {
   const [location, setLocation] = useLocation();
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
@@ -36,7 +38,7 @@ const NewSidebar: React.FC<SidebarProps> = ({
       description: 'Gerenciar tickets',
       submenu: [
         { label: 'Kanban Board', path: '/tickets', icon: 'Kanban' },
-        { label: 'Criar Ticket', path: '/create', icon: 'Plus' }
+        { label: 'Criar Ticket', action: 'modal', icon: 'Plus' }
       ]
     },
     {
@@ -235,9 +237,15 @@ const NewSidebar: React.FC<SidebarProps> = ({
                         <div className="space-y-1 border-t border-gray-700 pt-2">
                           {item?.submenu?.map((subItem: any) => (
                             <div 
-                              key={subItem?.path} 
+                              key={subItem?.path || subItem?.action} 
                               className="text-xs opacity-80 cursor-pointer hover:opacity-100 p-1 rounded hover:bg-gray-800"
-                              onClick={() => handleNavigation(subItem?.path)}
+                              onClick={() => {
+                                if (subItem?.action === 'modal') {
+                                  onOpenTicketModal();
+                                } else {
+                                  handleNavigation(subItem?.path);
+                                }
+                              }}
                             >
                               {subItem?.label}
                             </div>
@@ -253,7 +261,7 @@ const NewSidebar: React.FC<SidebarProps> = ({
                   <div className="ml-6 mt-2 space-y-1 border-l-2 border-border pl-4">
                     {item?.submenu?.map((subItem: any) => (
                       <div
-                        key={subItem?.path}
+                        key={subItem?.path || subItem?.action}
                         className={`
                           flex items-center p-2 rounded-md text-sm transition-enterprise cursor-pointer
                           ${isActivePath(subItem?.path)
@@ -261,7 +269,13 @@ const NewSidebar: React.FC<SidebarProps> = ({
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                           }
                         `}
-                        onClick={() => handleNavigation(subItem?.path)}
+                        onClick={() => {
+                          if (subItem?.action === 'modal') {
+                            onOpenTicketModal();
+                          } else {
+                            handleNavigation(subItem?.path);
+                          }
+                        }}
                       >
                         <Icon name={subItem?.icon} size={16} className="mr-3" />
                         {subItem?.label}
