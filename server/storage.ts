@@ -645,14 +645,30 @@ export class DatabaseStorage implements IStorage {
     // Count users for each role
     const userCounts = await Promise.all(
       roles.map(async (role) => {
+        // Map role IDs to database role values
+        let dbRole;
+        switch (role.id) {
+          case 'administrador':
+            dbRole = 'admin';
+            break;
+          case 'supervisor':
+            dbRole = 'supervisor';
+            break;
+          case 'colaborador':
+            dbRole = 'colaborador';
+            break;
+          default:
+            dbRole = role.id;
+        }
+
         const [result] = await db
           .select({ count: count() })
           .from(users)
-          .where(eq(users.role, role.id === 'administrador' ? 'admin' : role.id));
+          .where(eq(users.role, dbRole));
         
         return {
           ...role,
-          userCount: result?.count || 0
+          userCount: Number(result?.count) || 0
         };
       })
     );

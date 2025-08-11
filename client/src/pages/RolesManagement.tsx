@@ -111,15 +111,38 @@ export default function RolesManagement() {
   // Update roles when data is fetched
   useEffect(() => {
     if (rolesData) {
-      setRoles(rolesData.map((role: any) => ({
-        id: role.id,
-        name: role.name,
-        description: role.description,
-        color: role.color,
-        permissions: [], // Will be populated from API later
-        userCount: role.userCount,
-        isSystem: role.isSystem
-      })));
+      const mappedRoles = rolesData.map((role: any) => {
+        // Map permissions based on role type
+        let rolePermissions = [];
+        switch (role.id) {
+          case 'administrador':
+            rolePermissions = AVAILABLE_PERMISSIONS.map(p => p.id);
+            break;
+          case 'supervisor':
+            rolePermissions = [
+              'tickets.create', 'tickets.view_all', 'tickets.edit', 'tickets.assign',
+              'users.view', 'users.edit', 'departments.view', 'reports.view', 'reports.advanced'
+            ];
+            break;
+          case 'colaborador':
+            rolePermissions = [
+              'tickets.create', 'tickets.view_own', 'tickets.edit'
+            ];
+            break;
+        }
+        
+        return {
+          id: role.id,
+          name: role.name,
+          description: role.description,
+          color: role.color,
+          permissions: rolePermissions,
+          userCount: role.userCount,
+          isSystem: role.isSystem
+        };
+      });
+      
+      setRoles(mappedRoles);
     }
   }, [rolesData]);
 
