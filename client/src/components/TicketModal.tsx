@@ -32,6 +32,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTicket, setEditedTicket] = useState(ticket);
   const [newComment, setNewComment] = useState('');
+  const [newTag, setNewTag] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -83,13 +84,36 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     { id: 2, name: 'log_error.txt', type: 'text', size: '156 KB', uploadedAt: new Date(), uploadedBy: 'Ana Santos' }
   ]);
 
+  // Mutation para salvar ticket
+  const saveTicketMutation = useMutation({
+    mutationFn: async (ticketData: any) => {
+      return apiRequest(`/api/tickets/${ticket.id}`, 'PATCH', ticketData);
+    },
+    onSuccess: (updatedTicket) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      onUpdate?.(updatedTicket);
+      setIsEditing(false);
+      toast({
+        title: 'Ticket atualizado',
+        description: 'As alterações foram salvas com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao salvar',
+        description: error.message || 'Erro ao salvar as alterações',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleSave = () => {
-    onUpdate?.(editedTicket);
-    setIsEditing(false);
+    saveTicketMutation.mutate(editedTicket);
   };
 
   const handleCancel = () => {
     setEditedTicket(ticket);
+    setNewTag(''); // Limpar tag input
     setIsEditing(false);
   };
 
@@ -141,6 +165,54 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     }
   };
 
+  // Função para adicionar nova tag
+  const handleAddTag = () => {
+    if (!newTag.trim()) return;
+    
+    const currentTags = editedTicket.tags || [];
+    
+    // Verificar se a tag já existe (não case-sensitive)
+    if (currentTags.some((tag: string) => tag.toLowerCase() === newTag.toLowerCase())) {
+      toast({
+        title: 'Tag já existe',
+        description: 'Esta tag já foi adicionada ao ticket.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Adicionar nova tag
+    setEditedTicket({
+      ...editedTicket,
+      tags: [...currentTags, newTag.trim()]
+    });
+    
+    setNewTag('');
+    
+    toast({
+      title: 'Tag adicionada',
+      description: `A tag "${newTag.trim()}" foi adicionada com sucesso.`,
+    });
+  };
+
+  // Função para remover tag
+  const handleRemoveTag = (indexToRemove: number) => {
+    const currentTags = editedTicket.tags || [];
+    const tagToRemove = currentTags[indexToRemove];
+    
+    const updatedTags = currentTags.filter((_: string, index: number) => index !== indexToRemove);
+    
+    setEditedTicket({
+      ...editedTicket,
+      tags: updatedTags
+    });
+    
+    toast({
+      title: 'Tag removida',
+      description: `A tag "${tagToRemove}" foi removida com sucesso.`,
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -160,9 +232,9 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
           <div className="flex items-center space-x-2">
             {isEditing ? (
               <>
-                <Button size="sm" onClick={handleSave}>
+                <Button size="sm" onClick={handleSave} disabled={saveTicketMutation.isPending}>
                   <Save className="w-4 h-4 mr-2" />
-                  Salvar
+                  {saveTicketMutation.isPending ? 'Salvando...' : 'Salvar'}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleCancel}>
                   <X className="w-4 h-4 mr-2" />
@@ -327,18 +399,68 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     </div>
                   </div>
 
-                  {editedTicket.tags && editedTicket.tags.length > 0 && (
-                    <div>
-                      <Label className="text-sm font-medium">Tags</Label>
+                  <div>
+                    <Label className="text-sm font-medium">Tags</Label>
+                    {isEditing ? (
+                      <div className="mt-2 space-y-2">
+                        {/* Tags existentes - editáveis */}
+                        <div className="flex flex-wrap gap-1">
+                          {editedTicket.tags?.map((tag: string, index: number) => (
+                            <Badge 
+                              key={index} 
+                              variant="secondary" 
+                              className="text-xs flex items-center gap-1 pr-1"
+                            >
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTag(index)}
+                                className="ml-1 text-gray-500 hover:text-red-500 transition-colors"
+                                title="Remover tag"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          )) || []}
+                        </div>
+                        
+                        {/* Input para adicionar nova tag */}
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="text"
+                            placeholder="Adicionar nova tag..."
+                            value={newTag}
+                            onChange={(e) => setNewTag(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddTag();
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleAddTag}
+                            disabled={!newTag.trim()}
+                            className="px-3"
+                          >
+                            Adicionar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Modo visualização - somente leitura */
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {editedTicket.tags.map((tag: string, index: number) => (
+                        {editedTicket.tags?.map((tag: string, index: number) => (
                           <Badge key={index} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
-                        ))}
+                        )) || <span className="text-sm text-gray-500">Nenhuma tag</span>}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -387,7 +509,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                       <div className="flex items-start space-x-3">
                         <Avatar className="w-8 h-8">
                           <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                            {comment.user?.name?.split(' ').map((n) => n[0]).join('').toUpperCase() || 'U'}
+                            {comment.user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
