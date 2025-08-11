@@ -212,10 +212,9 @@ export default function UserDetailsPanel({
 
   const getRoleName = (roleId: string) => {
     switch (roleId) {
-      case 'admin': return 'Administrador';
-      case 'manager': return 'Gerente';
-      case 'operator': return 'Operador';
-      case 'user': return 'Usuário';
+      case 'administrador': return 'Administrador';
+      case 'supervisor': return 'Supervisor';
+      case 'colaborador': return 'Colaborador';
       default: return roleId;
     }
   };
@@ -240,10 +239,9 @@ export default function UserDetailsPanel({
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
-      case 'manager': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      case 'operator': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'user': return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
+      case 'administrador': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
+      case 'supervisor': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'colaborador': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
       default: return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
     }
   };

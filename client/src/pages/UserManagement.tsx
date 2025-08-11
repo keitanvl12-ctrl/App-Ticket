@@ -44,7 +44,7 @@ export default function UserManagement() {
       id: '1',
       name: 'João Silva Santos',
       email: 'joao.silva@empresa.com',
-      role: 'admin',
+      role: 'administrador',
       status: 'active',
       department: 'Tecnologia da Informação',
       lastLogin: '2024-01-15T10:30:00Z',
@@ -64,7 +64,7 @@ export default function UserManagement() {
       id: '2',
       name: 'Maria Santos Oliveira',
       email: 'maria.santos@empresa.com',
-      role: 'operator',
+      role: 'colaborador',
       status: 'active',
       department: 'Suporte ao Cliente',
       lastLogin: '2024-01-15T14:22:00Z',
@@ -84,7 +84,7 @@ export default function UserManagement() {
       id: '3',
       name: 'Carlos Eduardo Lima',
       email: 'carlos.lima@empresa.com',
-      role: 'user',
+      role: 'colaborador',
       status: 'inactive',
       department: 'Recursos Humanos',
       lastLogin: '2024-01-10T16:45:00Z',
@@ -104,7 +104,7 @@ export default function UserManagement() {
       id: '4',
       name: 'Ana Costa Ferreira',
       email: 'ana.costa@empresa.com',
-      role: 'manager',
+      role: 'supervisor',
       status: 'active',
       department: 'Recursos Humanos',
       lastLogin: '2024-01-15T09:15:00Z',
@@ -131,10 +131,9 @@ export default function UserManagement() {
   ];
 
   const roles = [
-    { id: 'admin', name: 'Administrador', description: 'Acesso completo ao sistema' },
-    { id: 'manager', name: 'Gerente', description: 'Gerenciamento de equipe e relatórios' },
-    { id: 'operator', name: 'Operador', description: 'Atendimento e resolução de chamados' },
-    { id: 'user', name: 'Usuário', description: 'Criação de chamados apenas' }
+    { id: 'administrador', name: 'Administrador', description: 'Acesso completo ao sistema' },
+    { id: 'supervisor', name: 'Supervisor', description: 'Gerenciamento de equipe e relatórios departamentais' },
+    { id: 'colaborador', name: 'Colaborador', description: 'Criação e atendimento de chamados' }
   ];
 
   const handleUserSelect = (userId: string) => {

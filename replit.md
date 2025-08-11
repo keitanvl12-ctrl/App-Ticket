@@ -98,6 +98,17 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 
 # Recent Changes (August 2025)
 
+## Identidade Visual OPUS e Sistema de Hierarquias Corrigido (11/08/2025)
+- ✓ Avatar com gradiente OPUS aplicado em todos os cartões de usuário (from-[#2c4257] to-[#6b8fb0])
+- ✓ Sistema de hierarquias corrigido para usar valores corretos: 'administrador', 'supervisor', 'colaborador'
+- ✓ Mapeamento de cores e nomes das hierarquias atualizado em todos os componentes
+- ✓ Interface de usuários simplificada: removidos botões "Ligar" e "Email", mantidos apenas visualizar (olho) e menu (três pontos)  
+- ✓ Menu dropdown implementado com opções "Editar usuário" e "Deletar usuário" com confirmação
+- ✓ Dados de exemplo atualizados para refletir as hierarquias corretas do sistema
+- ✓ Acesso à página de configuração de hierarquias disponível em /hierarchy (apenas administradores)
+
+# Recent Changes (August 2025)
+
 ## Identidade Visual Grupo OPUS (Janeiro 2025)
 - ✓ Logo do Grupo OPUS implementada na barra superior (header)
 - ✓ Identidade visual aplicada com cores azul escuro (#2c4257) e azul claro (#6b8fb0)
