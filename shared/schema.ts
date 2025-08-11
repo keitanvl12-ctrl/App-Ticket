@@ -1,7 +1,26 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Definir hierarquia de roles - ordem importa para prioridade
+export const roleEnum = pgEnum('user_role', ['colaborador', 'supervisor', 'administrador']);
+
+// Sistema de permissões
+export const permissions = pgTable("permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  role: text("role").notNull(), // colaborador, supervisor, administrador
+  canManageUsers: boolean("can_manage_users").default(false),
+  canViewAllTickets: boolean("can_view_all_tickets").default(false),
+  canViewDepartmentTickets: boolean("can_view_department_tickets").default(false),
+  canManageTickets: boolean("can_manage_tickets").default(false),
+  canViewReports: boolean("can_view_reports").default(false),
+  canManageSystem: boolean("can_manage_system").default(false),
+  canManageCategories: boolean("can_manage_categories").default(false),
+  canManageDepartments: boolean("can_manage_departments").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
 // Departments/Workgroups table
 export const departments = pgTable("departments", {
@@ -20,7 +39,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  role: text("role").notNull().default("colaborador"), // admin, supervisor, colaborador
+  role: text("role").notNull().default("colaborador"), // colaborador, supervisor, administrador
   departmentId: varchar("department_id").references(() => departments.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -234,6 +253,8 @@ export type PriorityConfig = typeof priorityConfig.$inferSelect;
 export type SlaRule = typeof slaRules.$inferSelect;
 export type CustomField = typeof customFields.$inferSelect;
 export type CustomFieldValue = typeof customFieldValues.$inferSelect;
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = typeof permissions.$inferInsert;
 
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;

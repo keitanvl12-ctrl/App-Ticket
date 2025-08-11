@@ -532,8 +532,29 @@ export class DatabaseStorage implements IStorage {
     return detailedTickets.filter(ticket => ticket !== undefined) as TicketWithDetails[];
   }
 
-  async getAllTickets(): Promise<TicketWithDetails[]> {
-    const allTickets = await db.select().from(tickets).orderBy(desc(tickets.createdAt));
+  async getAllTickets(filters?: { createdBy?: string, departmentId?: string }): Promise<TicketWithDetails[]> {
+    // Aplicar filtros baseados na hierarquia
+    let query = db.select().from(tickets);
+    
+    const conditions = [];
+    if (filters?.createdBy) {
+      conditions.push(eq(tickets.createdBy, filters.createdBy));
+    }
+    if (filters?.departmentId) {
+      conditions.push(
+        or(
+          eq(tickets.departmentId, filters.departmentId),
+          eq(tickets.requesterDepartmentId, filters.departmentId),
+          eq(tickets.responsibleDepartmentId, filters.departmentId)
+        )
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const allTickets = await query.orderBy(desc(tickets.createdAt));
 
     const detailedTickets = await Promise.all(
       allTickets.map(ticket => this.getTicket(ticket.id))

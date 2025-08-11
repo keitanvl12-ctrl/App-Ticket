@@ -72,6 +72,30 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 - **Theming**: CSS custom properties for consistent color schemes
 - **Typography**: Inter font family from Google Fonts
 
+# Recent Changes (Janeiro 2025)
+
+## Sistema de Hierarquia e Permissões Implementado (11/01/2025)
+- ✓ Sistema completo de 3 hierarquias: Colaborador → Supervisor → Administrador
+- ✓ Controle granular de permissões baseado em roles e departamentos
+- ✓ Middleware de proteção de rotas no backend com filtragem automática de tickets
+- ✓ Componentes de proteção no frontend (PermissionGuard, AdminOnly, SupervisorOnly)
+- ✓ Interface de configuração de permissões para administradores
+- ✓ Sistema de filtragem de tickets baseado na hierarquia do usuário
+- ✓ Demonstração funcional das hierarquias em /hierarchy-demo
+- ✓ Proteção de rotas administrativas (departamentos, usuários, configurações)
+
+### Regras de Hierarquia Implementadas:
+- **Colaborador**: Vê apenas seus próprios tickets, pode criar tickets
+- **Supervisor**: Gerencia usuários e tickets do próprio departamento, acesso a relatórios departamentais
+- **Administrador**: Acesso total ao sistema, gerencia todos os departamentos e usuários
+
+### Proteções de Rota:
+- `/departments` - Apenas administradores
+- `/permissions` - Apenas administradores  
+- `/users` - Supervisores e administradores
+- `/analytics`, `/reports` - Supervisores e administradores
+- `/categories`, `/forms`, `/fields` - Supervisores e administradores
+
 # Recent Changes (August 2025)
 
 ## Identidade Visual Grupo OPUS (Janeiro 2025)

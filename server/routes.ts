@@ -1,6 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { 
+  requireRole, 
+  requirePermission, 
+  filterTicketsByHierarchy, 
+  mockAuth,
+  AuthenticatedRequest 
+} from "./middleware/permissionMiddleware";
+import permissionsRoutes from "./routes/permissions";
 import { departmentStorage } from "./departmentStorage";
 import { insertDepartmentSchema, insertCategorySchema, insertCustomFieldSchema } from "@shared/schema";
 import { insertTicketSchema, insertCommentSchema } from "@shared/schema";
@@ -9,6 +17,11 @@ import { z } from "zod";
 const updateTicketSchema = insertTicketSchema.partial();
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Aplicar middleware de autenticação simulada em todas as rotas (temporário)
+  app.use(mockAuth);
+  
+  // Registrar rotas de permissões
+  app.use(permissionsRoutes);
   // Dashboard stats with filters
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
@@ -53,10 +66,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Tickets
-  app.get("/api/tickets", async (req, res) => {
+  // Tickets with hierarchy filtering
+  app.get("/api/tickets", 
+    filterTicketsByHierarchy,
+    async (req, res) => {
     try {
-      const tickets = await storage.getAllTickets();
+      const authReq = req as AuthenticatedRequest;
+      const filters = {
+        createdBy: req.query.createdBy as string,
+        departmentId: req.query.departmentId as string
+      };
+      
+      const tickets = await storage.getAllTickets(filters);
       res.json(tickets);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tickets" });
@@ -265,7 +286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Department routes
-  app.get("/api/departments", async (req, res) => {
+  app.get("/api/departments", 
+    requireRole("administrador"),
+    async (req, res) => {
     try {
       const departments = await departmentStorage.getAllDepartments();
       res.json(departments);
@@ -288,7 +311,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/departments", async (req, res) => {
+  app.post("/api/departments", 
+    requireRole("administrador"),
+    async (req, res) => {
     try {
       const validatedData = insertDepartmentSchema.parse(req.body);
       const department = await departmentStorage.createDepartment(validatedData);
@@ -299,7 +324,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/departments/:id", async (req, res) => {
+  app.put("/api/departments/:id", 
+    requireRole("administrador"),
+    async (req, res) => {
     try {
       const validatedData = insertDepartmentSchema.partial().parse(req.body);
       const department = await departmentStorage.updateDepartment(req.params.id, validatedData);
@@ -313,7 +340,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/departments/:id", async (req, res) => {
+  app.delete("/api/departments/:id", 
+    requireRole("administrador"),
+    async (req, res) => {
     try {
       const success = await departmentStorage.deleteDepartment(req.params.id);
       if (!success) {

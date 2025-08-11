@@ -31,6 +31,9 @@ import NotFound from "@/pages/NotFound";
 import UserProfiles from "@/pages/UserProfiles";
 import SLAConfiguration from "@/pages/SLAConfiguration";
 import ConfigurationPage from "@/pages/ConfigurationPage";
+import PermissionSettings from "@/pages/PermissionSettings";
+import HierarchyDemo from "@/components/HierarchyDemo";
+import { PermissionGuard, AdminOnly, SupervisorOnly } from "@/components/PermissionGuard";
 
 function Router() {
   return (
@@ -39,16 +42,50 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/tickets" component={KanbanBoard} />
 
-        <Route path="/analytics" component={Analytics} />
+        <Route path="/analytics">
+          <SupervisorOnly>
+            <Analytics />
+          </SupervisorOnly>
+        </Route>
         <Route path="/sla" component={SLA} />
-        <Route path="/users" component={UserManagement} />
-        <Route path="/departments" component={DepartmentManager} />
-        <Route path="/categories" component={Categories} />
-        <Route path="/forms" component={TicketForms} />
-        <Route path="/fields" component={CustomFieldsManager} />
+        <Route path="/users">
+          <SupervisorOnly>
+            <UserManagement />
+          </SupervisorOnly>
+        </Route>
+        <Route path="/departments">
+          <AdminOnly>
+            <DepartmentManager />
+          </AdminOnly>
+        </Route>
+        <Route path="/permissions">
+          <AdminOnly>
+            <PermissionSettings />
+          </AdminOnly>
+        </Route>
+        <Route path="/hierarchy-demo" component={() => <HierarchyDemo />} />
+        <Route path="/categories">
+          <SupervisorOnly>
+            <Categories />
+          </SupervisorOnly>
+        </Route>
+        <Route path="/forms">
+          <SupervisorOnly>
+            <TicketForms />
+          </SupervisorOnly>
+        </Route>
+        <Route path="/fields">
+          <SupervisorOnly>
+            <CustomFieldsManager />
+          </SupervisorOnly>
+        </Route>
         <Route path="/approvals" component={Approvals} />
         <Route path="/workflow-approvals" component={WorkflowApprovals} />
-        <Route path="/reports" component={ReportsNew} />
+        <Route path="/reports">
+          <SupervisorOnly>
+            <ReportsNew />
+          </SupervisorOnly>
+        </Route>
         <Route path="/user-profiles" component={UserProfiles} />
         <Route path="/sla-config" component={SLAConfiguration} />
         <Route path="/config" component={ConfigurationPage} />
