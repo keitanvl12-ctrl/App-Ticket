@@ -43,6 +43,7 @@ interface UserDataGridProps {
   onUserSelect: (userId: string) => void;
   onUserMultiSelect: (userIds: string[]) => void;
   onUserEdit: (userId: string) => void;
+  onUserDelete: (userId: string) => void;
   viewMode: 'grid' | 'list';
   departments: Department[];
   roles: Role[];
@@ -54,6 +55,7 @@ export default function UserDataGrid({
   onUserSelect,
   onUserMultiSelect,
   onUserEdit,
+  onUserDelete,
   viewMode,
   departments,
   roles
@@ -162,6 +164,8 @@ export default function UserDataGrid({
               isSelected={selectedUsers.includes(user.id)}
               onSelect={() => onUserSelect(user.id)}
               onCheck={() => handleUserCheck(user.id)}
+              onEdit={() => onUserEdit(user.id)}
+              onDelete={() => onUserDelete(user.id)}
               departments={departments}
               roles={roles}
             />

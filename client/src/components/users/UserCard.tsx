@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Button from '@/components/Button';
 import Icon from '@/components/AppIcon';
+import { Edit, Trash2, MoreHorizontal, Eye } from 'lucide-react';
 
 interface User {
   id: string;
@@ -41,6 +49,8 @@ interface UserCardProps {
   isSelected: boolean;
   onSelect: () => void;
   onCheck: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   departments: Department[];
   roles: Role[];
 }
@@ -50,6 +60,8 @@ export default function UserCard({
   isSelected,
   onSelect,
   onCheck,
+  onEdit,
+  onDelete,
   departments,
   roles
 }: UserCardProps) {
@@ -138,18 +150,36 @@ export default function UserCard({
               size="sm"
               variant="ghost"
               onClick={onSelect}
-              iconName="Eye"
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              iconName="Edit"
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              iconName="MoreHorizontal"
-            />
+              className="p-2"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="p-2"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={onEdit}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar usuário
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={onDelete}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Deletar usuário
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -232,29 +262,7 @@ export default function UserCard({
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="px-4 pb-4">
-        <div className="flex items-center space-x-2">
-          {user.phone && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1"
-              iconName="Phone"
-            >
-              Ligar
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1"
-            iconName="Mail"
-          >
-            Email
-          </Button>
-        </div>
-      </div>
+
     </div>
   );
 }

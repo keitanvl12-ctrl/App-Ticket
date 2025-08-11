@@ -147,6 +147,34 @@ export default function UserManagement() {
     setSelectedUser(userId);
   };
 
+  const handleUserDelete = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    const confirmDelete = window.confirm(
+      `Tem certeza que deseja deletar o usuário "${user.name}"? Esta ação não pode ser desfeita.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        alert('Usuário deletado com sucesso!');
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao deletar usuário: ${errorData.message || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      alert('Erro ao deletar usuário. Verifique sua conexão.');
+    }
+  };
+
   const handleUserMultiSelect = (userIds: string[]) => {
     setSelectedUsers(userIds);
     setShowBulkActions(userIds.length > 0);
@@ -487,6 +515,7 @@ export default function UserManagement() {
             onUserSelect={handleUserSelect}
             onUserMultiSelect={handleUserMultiSelect}
             onUserEdit={handleUserEdit}
+            onUserDelete={handleUserDelete}
             viewMode={viewMode}
             departments={departments}
             roles={roles}
