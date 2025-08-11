@@ -322,6 +322,16 @@ export default function KanbanBoard() {
   const handleDragStart = (e: any, ticket: any) => {
     setDraggedTicket(ticket);
     e.dataTransfer.effectAllowed = 'move';
+    // Adicionar efeito visual ao elemento arrastado
+    e.target.style.opacity = '0.5';
+    e.target.style.transform = 'rotate(5deg)';
+  };
+
+  const handleDragEnd = (e: any) => {
+    // Remover efeitos visuais
+    e.target.style.opacity = '1';
+    e.target.style.transform = 'none';
+    setDraggedTicket(null);
   };
 
   const handleDragOver = (e: any) => {
@@ -376,55 +386,48 @@ export default function KanbanBoard() {
     return 'bg-blue-500';
   };
 
-  // Funções SLA
-  const getSLAStatusColor = (ticket: any) => {
-    const slaTime = getSLATimeInHours(ticket);
-    const timeElapsed = getTimeElapsedInHours(ticket.createdAt);
-    const percentageUsed = (timeElapsed / slaTime) * 100;
-    
-    if (percentageUsed >= 100) return 'bg-red-500'; // Vencido
-    if (percentageUsed >= 80) return 'bg-orange-500'; // Crítico
-    if (percentageUsed >= 60) return 'bg-yellow-500'; // Atenção
-    return 'bg-green-500'; // Ok
+  // Função para traduzir status do banco para português
+  const getStatusLabel = (status: string) => {
+    const config = statusConfigs?.find(s => s.value === status);
+    return config?.name || status;
   };
 
-  const getSLATimeInHours = (ticket: any) => {
-    // SLA baseado na prioridade
-    switch (ticket.priority?.toLowerCase()) {
-      case 'crítica': return 4; // 4 horas
-      case 'alta': return 24; // 1 dia
-      case 'média': return 72; // 3 dias
-      case 'baixa': return 168; // 7 dias
-      default: return 24;
+  // Função para traduzir prioridade do banco para português
+  const getPriorityLabel = (priority: string) => {
+    const config = priorityConfigs?.find(p => p.value === priority);
+    return config?.name || priority;
+  };
+
+  // Funções SLA conectadas ao banco de dados
+  const getSLAStatusColor = (ticket: any) => {
+    if (!ticket.slaStatus) return 'bg-gray-500';
+    
+    switch (ticket.slaStatus) {
+      case 'violated': return 'bg-red-500';
+      case 'at_risk': return 'bg-orange-500'; 
+      case 'met': return 'bg-green-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  const getTimeElapsedInHours = (createdAt: string) => {
-    const now = new Date();
-    const created = new Date(createdAt);
-    return Math.abs(now.getTime() - created.getTime()) / (1000 * 60 * 60);
-  };
-
   const getSLATimeRemaining = (ticket: any) => {
-    const slaTime = getSLATimeInHours(ticket);
-    const timeElapsed = getTimeElapsedInHours(ticket.createdAt);
-    const remaining = slaTime - timeElapsed;
+    if (!ticket.slaHoursRemaining && ticket.slaHoursRemaining !== 0) return '-';
     
-    if (remaining <= 0) return 'Vencido';
-    if (remaining < 1) return `${Math.ceil(remaining * 60)}min`;
-    if (remaining < 24) return `${Math.ceil(remaining)}h`;
-    return `${Math.ceil(remaining / 24)}d`;
+    if (ticket.slaHoursRemaining <= 0) return 'Vencido';
+    if (ticket.slaHoursRemaining < 1) return `${Math.ceil(ticket.slaHoursRemaining * 60)}min`;
+    if (ticket.slaHoursRemaining < 24) return `${Math.ceil(ticket.slaHoursRemaining)}h`;
+    return `${Math.ceil(ticket.slaHoursRemaining / 24)}d`;
   };
 
   const getSLAStatus = (ticket: any) => {
-    const slaTime = getSLATimeInHours(ticket);
-    const timeElapsed = getTimeElapsedInHours(ticket.createdAt);
-    const percentageUsed = (timeElapsed / slaTime) * 100;
+    if (!ticket.slaStatus) return 'N/A';
     
-    if (percentageUsed >= 100) return 'Vencido';
-    if (percentageUsed >= 80) return 'Crítico';
-    if (percentageUsed >= 60) return 'Atenção';
-    return 'Ok';
+    switch (ticket.slaStatus) {
+      case 'violated': return 'Vencido';
+      case 'at_risk': return 'Em Risco';
+      case 'met': return 'No Prazo';
+      default: return 'N/A';
+    }
   };
 
   const filteredTickets = tickets.filter(ticket => {
@@ -697,9 +700,23 @@ export default function KanbanBoard() {
               
               {/* Drop Zone */}
               <div 
-                className="space-y-3 min-h-[600px] p-2 rounded-lg"
+                className={`space-y-3 min-h-[600px] p-2 rounded-lg border-2 border-dashed transition-all duration-300 ${
+                  draggedTicket ? 'border-blue-300 bg-blue-50/50' : 'border-transparent'
+                }`}
                 onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, column.id)}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.add('bg-blue-100/30', 'border-blue-400');
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('bg-blue-100/30', 'border-blue-400');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('bg-blue-100/30', 'border-blue-400');
+                  handleDrop(e, column.id);
+                }}
               >
                 {filteredTickets
                   .filter(ticket => ticket.status === column.id)
@@ -708,9 +725,14 @@ export default function KanbanBoard() {
                       // Atualizar lista será feita pela revalidação de query
                     }}>
                       <Card 
-                        className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-sm bg-white"
+                        className="cursor-move hover:shadow-xl transition-all duration-300 border-0 shadow-sm bg-white transform hover:scale-105 active:scale-95"
                         draggable
                         onDragStart={(e) => handleDragStart(e, ticket)}
+                        onDragEnd={handleDragEnd}
+                        style={{
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          willChange: 'transform, box-shadow, opacity'
+                        }}
                       >
                       <CardContent className="p-4">
                         <div className="space-y-3">
@@ -770,7 +792,7 @@ export default function KanbanBoard() {
                           {/* Priority Badge and SLA */}
                           <div className="flex items-center justify-between">
                             <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
-                              {ticket.priority}
+                              {getPriorityLabel(ticket.priority)}
                             </Badge>
                             <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
                           </div>
@@ -853,13 +875,14 @@ export default function KanbanBoard() {
                     <Badge 
                       variant="outline" 
                       className={`text-xs ${
-                        ticket.status === 'Atrasado' ? 'border-red-200 text-red-800 bg-red-50' :
-                        ticket.status === 'Atendendo' ? 'border-green-200 text-green-800 bg-green-50' :
-                        ticket.status === 'Pausado' ? 'border-yellow-200 text-yellow-800 bg-yellow-50' :
+                        ticket.status === 'open' ? 'border-blue-200 text-blue-800 bg-blue-50' :
+                        ticket.status === 'in_progress' ? 'border-green-200 text-green-800 bg-green-50' :
+                        ticket.status === 'on_hold' ? 'border-yellow-200 text-yellow-800 bg-yellow-50' :
+                        ticket.status === 'resolved' ? 'border-gray-200 text-gray-800 bg-gray-50' :
                         'border-gray-200 text-gray-800 bg-gray-50'
                       }`}
                     >
-                      {ticket.status}
+                      {getStatusLabel(ticket.status)}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -867,7 +890,7 @@ export default function KanbanBoard() {
                       variant="outline" 
                       className={`text-xs ${getPriorityColor(ticket.priority)}`}
                     >
-                      {ticket.priority}
+                      {getPriorityLabel(ticket.priority)}
                     </Badge>
                   </TableCell>
                   <TableCell>
