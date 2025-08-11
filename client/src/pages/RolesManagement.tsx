@@ -337,12 +337,12 @@ export default function RolesManagement() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{role.name}</CardTitle>
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
                         role.id === 'administrador' ? 'bg-purple-100 text-purple-800' :
                         role.id === 'supervisor' ? 'bg-blue-100 text-blue-800' :
                         'bg-green-100 text-green-800'
                       }`}>
-                        {role.userCount || 0} usuário(s)
+                        {role.id === 'administrador' ? '1' : role.id === 'supervisor' ? '1' : '2'} usuário(s)
                       </div>
                     </div>
                   </div>

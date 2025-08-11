@@ -179,4 +179,24 @@
   .border-opus-blue-dark { border-color: var(--opus-blue-dark); }
   .hover\:bg-opus-blue-dark:hover { background-color: var(--opus-blue-dark); }
   .hover\:bg-opus-blue-light:hover { background-color: var(--opus-blue-light); }
+
+  /* Role badge colors - Force display */
+  .bg-purple-100 {
+    background-color: #f3e8ff !important;
+  }
+  .text-purple-800 {
+    color: #6b21a8 !important;
+  }
+  .bg-blue-100 {
+    background-color: #dbeafe !important;
+  }
+  .text-blue-800 {
+    color: #1e40af !important;
+  }
+  .bg-green-100 {
+    background-color: #dcfce7 !important;
+  }
+  .text-green-800 {
+    color: #166534 !important;
+  }
 }
