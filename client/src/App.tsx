@@ -36,6 +36,7 @@ import ConfigurationPage from "@/pages/ConfigurationPage";
 import PermissionSettings from "@/pages/PermissionSettings";
 import HierarchyManagement from "@/pages/HierarchyManagement";
 import RolesManagement from "@/pages/RolesManagement";
+
 import HierarchyDemo from "@/components/HierarchyDemo";
 import { PermissionGuard, AdminOnly, SupervisorOnly } from "@/components/PermissionGuard";
 import { useEffect, useState } from "react";

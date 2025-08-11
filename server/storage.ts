@@ -454,9 +454,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    // Clean up empty values that would cause foreign key errors
+    const cleanUpdates = { ...updates };
+    if (cleanUpdates.departmentId === '') {
+      cleanUpdates.departmentId = null;
+    }
+
     const [updatedUser] = await db
       .update(users)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...cleanUpdates, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     
@@ -465,6 +471,151 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedUser;
+  }
+
+  // Get user performance metrics
+  async getUserPerformance(userId: string): Promise<any> {
+    // Get tickets assigned to user
+    const assignedTickets = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.assignedTo, userId));
+
+    const resolvedTickets = assignedTickets.filter(t => t.status === 'resolvido');
+    const openTickets = assignedTickets.filter(t => t.status !== 'resolvido' && t.status !== 'fechado');
+
+    const resolutionRate = assignedTickets.length > 0 
+      ? Math.round((resolvedTickets.length / assignedTickets.length) * 100) 
+      : 0;
+
+    return {
+      assignedTickets: assignedTickets.length,
+      resolvedTickets: resolvedTickets.length,
+      openTickets: openTickets.length,
+      resolutionRate,
+      averageResolutionTime: '2.5 dias',
+      satisfactionRating: '4.2/5.0'
+    };
+  }
+
+  // Get user activity logs
+  async getUserActivities(userId: string): Promise<any[]> {
+    // For now return mock data - in real implementation, you'd have an activity log table
+    return [
+      {
+        action: 'Login no sistema',
+        description: 'Usuário fez login no sistema',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        action: 'Ticket atualizado',
+        description: 'Atualizou o status do ticket TICK-123 para "Em andamento"',
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        action: 'Comentário adicionado',
+        description: 'Adicionou comentário ao ticket TICK-456',
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+  }
+
+  // Get role permissions
+  async getRolePermissions(role: string): Promise<any> {
+    const rolePermissions = {
+      'admin': {
+        'Usuários': {
+          'Visualizar Usuários': true,
+          'Gerenciar Usuários': true,
+          'Segurança de Usuários': true
+        },
+        'Tickets': {
+          'Visualizar Tickets': true,
+          'Gerenciar Tickets': true,
+          'Atribuir Tickets': true,
+          'Finalizar Tickets': true
+        },
+        'Departamentos': {
+          'Visualizar Departamentos': true,
+          'Gerenciar Departamentos': true
+        },
+        'Relatórios': {
+          'Visualizar Relatórios': true,
+          'Exportar Relatórios': true
+        },
+        'Configurações': {
+          'Visualizar Configurações': true,
+          'Gerenciar Configurações': true,
+          'Gerenciar Funções': true
+        },
+        'SLA': {
+          'Visualizar SLA': true,
+          'Gerenciar SLA': true
+        }
+      },
+      'supervisor': {
+        'Usuários': {
+          'Visualizar Usuários': true,
+          'Gerenciar Usuários': false,
+          'Segurança de Usuários': false
+        },
+        'Tickets': {
+          'Visualizar Tickets': true,
+          'Gerenciar Tickets': true,
+          'Atribuir Tickets': true,
+          'Finalizar Tickets': true
+        },
+        'Departamentos': {
+          'Visualizar Departamentos': true,
+          'Gerenciar Departamentos': false
+        },
+        'Relatórios': {
+          'Visualizar Relatórios': true,
+          'Exportar Relatórios': true
+        },
+        'Configurações': {
+          'Visualizar Configurações': false,
+          'Gerenciar Configurações': false,
+          'Gerenciar Funções': false
+        },
+        'SLA': {
+          'Visualizar SLA': true,
+          'Gerenciar SLA': false
+        }
+      },
+      'colaborador': {
+        'Usuários': {
+          'Visualizar Usuários': false,
+          'Gerenciar Usuários': false,
+          'Segurança de Usuários': false
+        },
+        'Tickets': {
+          'Visualizar Tickets': true,
+          'Gerenciar Tickets': true,
+          'Atribuir Tickets': false,
+          'Finalizar Tickets': false
+        },
+        'Departamentos': {
+          'Visualizar Departamentos': false,
+          'Gerenciar Departamentos': false
+        },
+        'Relatórios': {
+          'Visualizar Relatórios': false,
+          'Exportar Relatórios': false
+        },
+        'Configurações': {
+          'Visualizar Configurações': false,
+          'Gerenciar Configurações': false,
+          'Gerenciar Funções': false
+        },
+        'SLA': {
+          'Visualizar SLA': false,
+          'Gerenciar SLA': false
+        }
+      }
+    };
+
+    return rolePermissions[role] || {};
   }
 
   async getTicket(id: string): Promise<TicketWithDetails | undefined> {

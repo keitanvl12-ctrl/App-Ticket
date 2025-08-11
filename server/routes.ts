@@ -396,6 +396,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user performance data
+  app.get("/api/users/:id/performance", async (req, res) => {
+    try {
+      const performance = await storage.getUserPerformance(req.params.id);
+      res.json(performance);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user performance" });
+    }
+  });
+
+  // Get user activity logs
+  app.get("/api/users/:id/activities", async (req, res) => {
+    try {
+      const activities = await storage.getUserActivities(req.params.id);
+      res.json(activities);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user activities" });
+    }
+  });
+
+  // Get user permissions based on role
+  app.get("/api/users/:id/permissions", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const permissions = await storage.getRolePermissions(user.role);
+      res.json(permissions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user permissions" });
+    }
+  });
+
   // PATCH user security - permitir acesso temporário
   app.patch("/api/users/:id/security", async (req, res) => {
     try {

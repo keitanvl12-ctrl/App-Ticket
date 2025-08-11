@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import UserDetailsModal from '@/components/UserDetailsModal';
 import { 
   Users, 
   Plus, 
@@ -171,6 +172,8 @@ export default function UserManagement() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<User | null>(null);
+  const [userDetailsModalOpen, setUserDetailsModalOpen] = useState(false);
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState<string | null>(null);
 
   // Fetch users
   const { data: users = [], isLoading } = useQuery<User[]>({
@@ -283,6 +286,11 @@ export default function UserManagement() {
 
   const handleDeleteUser = (userId: string) => {
     deleteUserMutation.mutate(userId);
+  };
+
+  const handleViewUser = (userId: string) => {
+    setSelectedUserForDetails(userId);
+    setUserDetailsModalOpen(true);
   };
 
   if (isLoading) {
@@ -475,6 +483,11 @@ export default function UserManagement() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewUser(user.id)}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Visualizar
+                        </DropdownMenuItem>
+                        
                         <DropdownMenuItem onClick={() => handlePasswordChange(user)}>
                           <Key className="w-4 h-4 mr-2" />
                           Alterar Senha
@@ -550,6 +563,16 @@ export default function UserManagement() {
         }}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+        }}
+      />
+
+      {/* User Details Modal */}
+      <UserDetailsModal
+        userId={selectedUserForDetails}
+        isOpen={userDetailsModalOpen}
+        onClose={() => {
+          setUserDetailsModalOpen(false);
+          setSelectedUserForDetails(null);
         }}
       />
     </div>
