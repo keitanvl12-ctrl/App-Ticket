@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Paperclip, Upload } from 'lucide-react';
 
 interface SimpleTicketModalProps {
   isOpen: boolean;
@@ -38,6 +38,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
     category: '',
     priority: 'Média',
     description: '',
+    attachments: [] as File[],
     customFields: {} as Record<string, string>
   });
   
@@ -49,6 +50,26 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
     queryKey: ['/api/departments'],
     enabled: isOpen
   });
+
+  // Buscar dados do usuário logado
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/auth/user'],
+    enabled: isOpen
+  });
+
+  // Auto-preencher dados do usuário quando o modal abrir
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        requesterName: currentUser.firstName && currentUser.lastName 
+          ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
+          : prev.requesterName,
+        requesterEmail: currentUser.email || prev.requesterEmail,
+        requesterDepartment: currentUser.departmentId || prev.requesterDepartment
+      }));
+    }
+  }, [isOpen, currentUser]);
   
   if (!isOpen) return null;
 
@@ -85,6 +106,21 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
     }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setFormData(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, ...files]
+    }));
+  };
+
+  const removeFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -109,6 +145,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
           category: '',
           priority: 'Média',
           description: '',
+          attachments: [],
           customFields: {}
         });
       } else {
@@ -304,6 +341,40 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                     outline: 'none'
                   }}
                 />
+              </div>
+
+              {/* Departamento Solicitante */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '6px'
+                }}>
+                  Departamento Solicitante <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <select
+                  value={formData.requesterDepartment}
+                  onChange={(e) => setFormData(prev => ({ ...prev, requesterDepartment: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    backgroundColor: 'white'
+                  }}
+                  required
+                >
+                  <option value="">Selecione seu departamento</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Departamento Responsável */}
@@ -525,6 +596,107 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                 placeholder="Descreva detalhadamente o problema ou solicitação..."
                 required
               />
+            </div>
+
+            {/* Anexos */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '6px'
+              }}>
+                Anexos
+              </label>
+              
+              {/* Área de upload */}
+              <div style={{
+                border: '2px dashed #d1d5db',
+                borderRadius: '8px',
+                padding: '20px',
+                textAlign: 'center',
+                backgroundColor: '#f9fafb',
+                marginBottom: '12px'
+              }}>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                  id="file-upload"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.xlsx,.xls"
+                />
+                <label
+                  htmlFor="file-upload"
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Upload style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                    Clique para selecionar arquivos ou arraste aqui
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                    PDF, DOC, DOCX, JPG, PNG, TXT, XLS, XLSX (máx. 10MB cada)
+                  </span>
+                </label>
+              </div>
+
+              {/* Lista de arquivos selecionados */}
+              {formData.attachments.length > 0 && (
+                <div style={{ marginTop: '12px' }}>
+                  <p style={{ 
+                    fontSize: '12px', 
+                    color: '#6b7280', 
+                    marginBottom: '8px' 
+                  }}>
+                    Arquivos selecionados:
+                  </p>
+                  {formData.attachments.map((file, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        backgroundColor: '#f3f4f6',
+                        borderRadius: '6px',
+                        marginBottom: '6px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Paperclip style={{ width: '14px', height: '14px', color: '#6b7280' }} />
+                        <span style={{ fontSize: '14px', color: '#374151' }}>
+                          {file.name}
+                        </span>
+                        <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                          ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        style={{
+                          padding: '4px',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderRadius: '4px',
+                          color: '#ef4444'
+                        }}
+                      >
+                        <X style={{ width: '14px', height: '14px' }} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Botões */}
