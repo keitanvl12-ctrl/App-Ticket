@@ -56,22 +56,25 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
     },
   });
 
+  // Track selected category with local state
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  
   // Fetch custom fields for selected category
-  const selectedCategory = form.watch("category");
   const { data: customFields = [] } = useQuery({
-    queryKey: ["/api/custom-fields/category", selectedCategory],
-    enabled: isOpen && !!selectedCategory,
+    queryKey: ["/api/custom-fields/category", selectedCategoryId],
+    enabled: isOpen && !!selectedCategoryId,
   });
 
-  // Add debug logging
-  console.log("Debug - Selected category:", selectedCategory);
+  // Debug logging
+  console.log("Debug - Selected category ID:", selectedCategoryId);
   console.log("Debug - Custom fields:", customFields);
-  console.log("Debug - Query enabled:", isOpen && !!selectedCategory);
+  console.log("Debug - Query enabled:", isOpen && !!selectedCategoryId);
 
   // Reset category when department changes
   useEffect(() => {
     if (selectedDepartment) {
       form.setValue("category", "");
+      setSelectedCategoryId("");
     }
   }, [selectedDepartment, form]);
 
@@ -285,7 +288,10 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                       <FormItem>
                         <FormLabel>Categoria *</FormLabel>
                         <Select 
-                          onValueChange={field.onChange} 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedCategoryId(value);
+                          }} 
                           value={field.value || ""}
                           disabled={!selectedDepartment}
                         >
@@ -319,7 +325,7 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
                   />
 
                   {/* Campos Customizados - Aparece quando categoria é selecionada */}
-                  {selectedCategory && customFields && customFields.length > 0 && (
+                  {selectedCategoryId && customFields && customFields.length > 0 && (
                     <div className="mt-4 space-y-4 border-t pt-4">
                       <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Informações Específicas da Categoria
