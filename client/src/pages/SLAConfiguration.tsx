@@ -40,9 +40,7 @@ export default function SLAConfiguration() {
     departmentId: 'all',
     category: '',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
-    responseTimeHours: 2,
-    resolutionTimeHours: 24,
-    escalationTimeHours: 48,
+    timeHours: 24,
     isActive: true
   });
 
@@ -64,9 +62,8 @@ export default function SLAConfiguration() {
           departmentName: 'Tecnologia da Informação',
           category: 'Infraestrutura',
           priority: 'high',
-          responseTimeHours: 1,
+          responseTimeHours: 4,
           resolutionTimeHours: 4,
-          escalationTimeHours: 2,
           isActive: true,
           createdAt: '2025-01-08'
         },
@@ -76,9 +73,8 @@ export default function SLAConfiguration() {
           departmentId: '1d97ffe4-ac1f-4a53-a029-e1b464775c33',
           departmentName: 'Recursos Humanos',
           priority: 'medium',
-          responseTimeHours: 4,
+          responseTimeHours: 24,
           resolutionTimeHours: 24,
-          escalationTimeHours: 12,
           isActive: true,
           createdAt: '2025-01-08'
         },
@@ -86,9 +82,8 @@ export default function SLAConfiguration() {
           id: '3',
           name: 'SLA Crítico - Sistema',
           priority: 'critical',
-          responseTimeHours: 0.5,
+          responseTimeHours: 2,
           resolutionTimeHours: 2,
-          escalationTimeHours: 1,
           isActive: true,
           createdAt: '2025-01-08'
         }
@@ -147,9 +142,7 @@ export default function SLAConfiguration() {
       departmentId: 'all',
       category: '',
       priority: 'medium',
-      responseTimeHours: 2,
-      resolutionTimeHours: 24,
-      escalationTimeHours: 48,
+      timeHours: 24,
       isActive: true
     });
     setEditingSLA(null);
@@ -163,9 +156,7 @@ export default function SLAConfiguration() {
       departmentId: sla.departmentId || 'all',
       category: sla.category || '',
       priority: sla.priority,
-      responseTimeHours: sla.responseTimeHours,
-      resolutionTimeHours: sla.resolutionTimeHours,
-      escalationTimeHours: sla.escalationTimeHours || 48,
+      timeHours: sla.resolutionTimeHours || 24,
       isActive: sla.isActive
     });
     setIsCreateModalOpen(true);
@@ -294,42 +285,16 @@ export default function SLAConfiguration() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="responseTime">Tempo Resposta (horas)</Label>
-                  <Input
-                    id="responseTime"
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    value={formData.responseTimeHours}
-                    onChange={(e) => setFormData({...formData, responseTimeHours: parseFloat(e.target.value)})}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="resolutionTime">Tempo Resolução (horas)</Label>
-                  <Input
-                    id="resolutionTime"
-                    type="number"
-                    step="0.5"
-                    min="1"
-                    value={formData.resolutionTimeHours}
-                    onChange={(e) => setFormData({...formData, resolutionTimeHours: parseFloat(e.target.value)})}
-                    required
-                  />
-                </div>
-              </div>
-
               <div>
-                <Label htmlFor="escalationTime">Tempo Escalonamento (horas)</Label>
+                <Label htmlFor="timeHours">Tempo SLA (horas)</Label>
                 <Input
-                  id="escalationTime"
+                  id="timeHours"
                   type="number"
                   step="0.5"
                   min="1"
-                  value={formData.escalationTimeHours}
-                  onChange={(e) => setFormData({...formData, escalationTimeHours: parseFloat(e.target.value)})}
+                  value={formData.timeHours}
+                  onChange={(e) => setFormData({...formData, timeHours: parseFloat(e.target.value)})}
+                  required
                 />
               </div>
 
@@ -379,9 +344,7 @@ export default function SLAConfiguration() {
                       {selectedTab === 'department' && <TableHead>Departamento</TableHead>}
                       {selectedTab === 'category' && <TableHead>Categoria</TableHead>}
                       <TableHead>Prioridade</TableHead>
-                      <TableHead>Resposta</TableHead>
-                      <TableHead>Resolução</TableHead>
-                      <TableHead>Escalonamento</TableHead>
+                      <TableHead>Tempo SLA</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-[100px]">Ações</TableHead>
                     </TableRow>
@@ -399,23 +362,9 @@ export default function SLAConfiguration() {
                         <TableCell>{getPriorityBadge(sla.priority)}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-1">
-                            <Clock className="w-4 h-4 text-blue-500" />
-                            <span>{formatTime(sla.responseTimeHours)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
                             <Target className="w-4 h-4 text-green-500" />
                             <span>{formatTime(sla.resolutionTimeHours)}</span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {sla.escalationTimeHours && (
-                            <div className="flex items-center space-x-1">
-                              <AlertTriangle className="w-4 h-4 text-orange-500" />
-                              <span>{formatTime(sla.escalationTimeHours)}</span>
-                            </div>
-                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={sla.isActive ? 'default' : 'secondary'}>

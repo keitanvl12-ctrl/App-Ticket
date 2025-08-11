@@ -296,12 +296,15 @@ export default function KanbanBoard() {
       switch (filter) {
         case 'open':
           setStatusFilter('Aberto');
+          setShowAdvancedFilters(true);
           break;
         case 'resolved':
           setStatusFilter('Resolvido');
+          setShowAdvancedFilters(true);
           break;
         case 'critical':
           setPriorityFilter('Alta');
+          setShowAdvancedFilters(true);
           break;
         case 'all':
         default:
