@@ -118,10 +118,8 @@ export default function RolesManagement() {
 
   // Update roles when data is fetched
   useEffect(() => {
-    console.log('Roles data received:', rolesData);
     if (rolesData) {
       const mappedRoles = rolesData.map((role: any) => {
-        console.log('Processing role:', role);
         // Map permissions based on role type
         let rolePermissions = [];
         switch (role.id) {
@@ -141,7 +139,7 @@ export default function RolesManagement() {
             break;
         }
         
-        const mappedRole = {
+        return {
           id: role.id,
           name: role.name,
           description: role.description,
@@ -150,12 +148,8 @@ export default function RolesManagement() {
           userCount: role.userCount,
           isSystem: role.isSystem
         };
-        
-        console.log('Mapped role:', mappedRole);
-        return mappedRole;
       });
       
-      console.log('Setting roles:', mappedRoles);
       setRoles(mappedRoles);
     }
   }, [rolesData]);
@@ -343,9 +337,13 @@ export default function RolesManagement() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{role.name}</CardTitle>
-                      <Badge className={`${role.color} font-semibold`}>
-                        {role.userCount !== undefined ? role.userCount : 0} usuário(s)
-                      </Badge>
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        role.id === 'administrador' ? 'bg-purple-100 text-purple-800' :
+                        role.id === 'supervisor' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {role.userCount || 0} usuário(s)
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -378,10 +376,10 @@ export default function RolesManagement() {
                 </CardDescription>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Permissões: {role.permissions.length}
+                    Permissões: {role.permissions?.length || 0}
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {role.permissions.slice(0, 3).map(permissionId => {
+                    {role.permissions?.slice(0, 3).map(permissionId => {
                       const permission = AVAILABLE_PERMISSIONS.find(p => p.id === permissionId);
                       return permission ? (
                         <Badge key={permissionId} variant="secondary" className="text-xs">
@@ -389,9 +387,9 @@ export default function RolesManagement() {
                         </Badge>
                       ) : null;
                     })}
-                    {role.permissions.length > 3 && (
+                    {(role.permissions?.length || 0) > 3 && (
                       <Badge variant="secondary" className="text-xs">
-                        +{role.permissions.length - 3} mais
+                        +{(role.permissions?.length || 0) - 3} mais
                       </Badge>
                     )}
                   </div>

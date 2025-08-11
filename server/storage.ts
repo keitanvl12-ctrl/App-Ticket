@@ -666,9 +666,11 @@ export class DatabaseStorage implements IStorage {
           .from(users)
           .where(eq(users.role, dbRole));
         
+        const userCount = Number(result?.count) || 0;
+        
         return {
           ...role,
-          userCount: Number(result?.count) || 0
+          userCount: userCount
         };
       })
     );
