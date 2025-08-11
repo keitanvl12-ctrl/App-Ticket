@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig, customFields, permissions } from "@shared/schema";
-import { eq, desc, count, sql, and, gte, lte } from "drizzle-orm";
+import { eq, desc, count, sql, and, gte, lte, or } from "drizzle-orm";
 import {
   type User,
   type InsertUser,
@@ -476,11 +476,20 @@ export class DatabaseStorage implements IStorage {
   // Get user performance metrics
   async getUserPerformance(userId: string): Promise<any> {
     try {
-      // Get tickets assigned to user
-      const assignedTickets = await db
+      // Get ALL tickets where user is involved (created by OR assigned to)
+      const userTickets = await db
         .select()
         .from(tickets)
-        .where(eq(tickets.assignedTo, userId));
+        .where(or(
+          eq(tickets.createdBy, userId),
+          eq(tickets.assignedTo, userId)
+        ));
+
+      // Get tickets specifically assigned to user
+      const assignedTickets = userTickets.filter(t => t.assignedTo === userId);
+      
+      // Get tickets created by user
+      const createdTickets = userTickets.filter(t => t.createdBy === userId);
 
       const resolvedTickets = assignedTickets.filter(t => t.status === 'resolvido');
       const openTickets = assignedTickets.filter(t => t.status !== 'resolvido' && t.status !== 'fechado');
@@ -510,24 +519,41 @@ export class DatabaseStorage implements IStorage {
                createdDate < new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
       }).length;
 
-      // Priority distribution
-      const priorityCounts = assignedTickets.reduce((acc, ticket) => {
-        acc[ticket.priority || 'baixa'] = (acc[ticket.priority || 'baixa'] || 0) + 1;
+      // Priority distribution (based on all user tickets)
+      const priorityCounts = userTickets.reduce((acc, ticket) => {
+        const priority = ticket.priority || 'baixa';
+        acc[priority] = (acc[priority] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
-      // Status distribution
-      const statusCounts = assignedTickets.reduce((acc, ticket) => {
-        acc[ticket.status || 'aberto'] = (acc[ticket.status || 'aberto'] || 0) + 1;
+      // Status distribution (based on all user tickets)
+      const statusCounts = userTickets.reduce((acc, ticket) => {
+        const status = ticket.status || 'aberto';
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
+
+      // Calculate average resolution time
+      const resolvedTicketsWithTime = resolvedTickets.filter(t => t.resolvedAt);
+      let avgResolutionDays = 0;
+      if (resolvedTicketsWithTime.length > 0) {
+        const totalDays = resolvedTicketsWithTime.reduce((sum, ticket) => {
+          const created = new Date(ticket.createdAt!);
+          const resolved = new Date(ticket.resolvedAt!);
+          const days = Math.ceil((resolved.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+          return sum + days;
+        }, 0);
+        avgResolutionDays = Math.round(totalDays / resolvedTicketsWithTime.length * 10) / 10;
+      }
 
       return {
         assignedTickets: assignedTickets.length,
+        createdTickets: createdTickets.length,
+        totalTickets: userTickets.length,
         resolvedTickets: resolvedTickets.length,
         openTickets: openTickets.length,
         resolutionRate,
-        averageResolutionTime: '2.5 dias',
+        averageResolutionTime: avgResolutionDays > 0 ? `${avgResolutionDays} dias` : 'N/A',
         satisfactionRating: 4.2,
         monthlyTrend: [
           { month: 'Há 2 meses', tickets: twoMonthsAgoTickets },

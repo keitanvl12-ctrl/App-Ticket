@@ -291,24 +291,28 @@ export default function RolesManagement() {
                       </Badge>
                     </div>
                   </div>
-                  {!role.isSystem && (
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEditRole(role)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleEditRole(role)}
+                      className="text-opus-blue-dark hover:bg-opus-blue-light/10"
+                      title="Editar função"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    {!role.isSystem && (
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteRole(role.id)}
+                        className="text-red-600 hover:bg-red-50"
+                        title="Deletar função"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
