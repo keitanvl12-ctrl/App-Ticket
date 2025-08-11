@@ -321,7 +321,13 @@ export default function CreateTicketModal({ isOpen, onClose }: CreateTicketModal
               </div>
             </div>
 
-            {/* Custom Fields Section */}
+            {/* Custom Fields Section - DEBUGGING */}
+            <div className="border rounded-lg p-4 bg-yellow-50 dark:bg-yellow-900/20 mb-4">
+              <p className="text-sm">DEBUG: selectedCategory = {selectedCategory || 'null'}</p>
+              <p className="text-sm">DEBUG: customFields.length = {customFields?.length || 0}</p>
+              <p className="text-sm">DEBUG: Query enabled = {String(isOpen && !!selectedCategory)}</p>
+            </div>
+
             {customFields && customFields.length > 0 && (
               <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                 <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
