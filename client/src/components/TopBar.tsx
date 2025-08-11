@@ -50,7 +50,12 @@ export default function TopBar({ title, description }: TopBarProps) {
 
             {/* Create Ticket Button */}
             <Button 
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('TopBar button clicked, opening modal');
+                setIsCreateModalOpen(true);
+              }}
               className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium transition-enterprise"
             >
               <Plus size={16} className="mr-2" />
