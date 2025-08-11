@@ -1,26 +1,70 @@
-import { User } from '@shared/schema';
+// Serviço para gerenciar informações do usuário atual
+// Em um sistema real, isso viria de um contexto de autenticação
 
-// Simulação de usuário atual para desenvolvimento - será substituído pela autenticação real
-const MOCK_CURRENT_USER: User = {
-  id: 'user-admin-1',
-  username: 'admin',
-  password: '', // Não deve ser exposto
-  name: 'Administrador Sistema',
-  email: 'admin@opus.com.br',
-  role: 'administrador', // Altere aqui para testar diferentes hierarquias
-  departmentId: 'dept-ti-1',
-  createdAt: new Date(),
-  updatedAt: new Date(),
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'colaborador' | 'supervisor' | 'administrador';
+  department: string;
+  avatar?: string;
+}
+
+// Usuário simulado - em produção isso viria do contexto de autenticação
+const mockUser: User = {
+  id: '1',
+  name: 'João Silva',
+  email: 'joao.silva@empresa.com',
+  role: 'administrador', // Para demonstração, vamos usar administrador
+  department: 'Tecnologia da Informação',
+  avatar: null
 };
 
 export function getCurrentUser(): User {
-  return MOCK_CURRENT_USER;
+  // Em um sistema real, isso obteria dados do contexto de autenticação
+  // ou de um cookie/token JWT
+  return mockUser;
 }
 
-export function setUserRole(role: 'colaborador' | 'supervisor' | 'administrador') {
-  MOCK_CURRENT_USER.role = role;
+export function isAdmin(): boolean {
+  return getCurrentUser().role === 'administrador';
 }
 
-export function setUserDepartment(departmentId: string) {
-  MOCK_CURRENT_USER.departmentId = departmentId;
+export function isSupervisor(): boolean {
+  const role = getCurrentUser().role;
+  return role === 'supervisor' || role === 'administrador';
+}
+
+export function hasPermission(permission: string): boolean {
+  const user = getCurrentUser();
+  
+  // Administradores têm todas as permissões
+  if (user.role === 'administrador') {
+    return true;
+  }
+  
+  // Supervisores têm permissões limitadas
+  if (user.role === 'supervisor') {
+    const supervisorPermissions = [
+      'canViewOwnTickets', 
+      'canCreateTickets', 
+      'canEditTickets', 
+      'canAssignTickets',
+      'canViewUsers', 
+      'canManageUsers', 
+      'canViewDepartments', 
+      'canViewReports', 
+      'canViewDeptReports', 
+      'canManageCategories'
+    ];
+    return supervisorPermissions.includes(permission);
+  }
+  
+  // Colaboradores têm permissões básicas
+  if (user.role === 'colaborador') {
+    const colaboradorPermissions = ['canViewOwnTickets', 'canCreateTickets'];
+    return colaboradorPermissions.includes(permission);
+  }
+  
+  return false;
 }

@@ -73,6 +73,11 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        // Cores OPUS
+        'opus-blue-dark': 'var(--opus-blue-dark)',
+        'opus-blue-light': 'var(--opus-blue-light)',
+        'opus-blue-accent': 'var(--opus-blue-accent)',
+        'opus-gray-light': 'var(--opus-gray-light)',
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

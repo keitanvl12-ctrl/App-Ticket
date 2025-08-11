@@ -9,21 +9,35 @@ import {
   Ticket,
   LogOut,
   User,
-  Bell
+  Bell,
+  Shield
 } from "lucide-react";
+import { getCurrentUser } from '@/lib/userService';
 
-const navigationItems = [
-  { path: "/", icon: LayoutDashboard, label: "Painel" },
-  { path: "/tickets", icon: List, label: "Todos os Tickets" },
-  { path: "/kanban", icon: Columns, label: "Quadro Kanban" },
-  { path: "/analytics", icon: BarChart3, label: "Análises" },
-  { path: "/team", icon: Users, label: "Equipe" },
-  { path: "/config", icon: Settings, label: "Status e Prioridades" },
-  { path: "/settings", icon: Settings, label: "Configurações" },
-];
+const getNavigationItems = (userRole: string) => {
+  const baseItems = [
+    { path: "/", icon: LayoutDashboard, label: "Painel" },
+    { path: "/tickets", icon: List, label: "Todos os Tickets" },
+    { path: "/kanban", icon: Columns, label: "Quadro Kanban" },
+    { path: "/analytics", icon: BarChart3, label: "Análises" },
+    { path: "/team", icon: Users, label: "Equipe" },
+    { path: "/config", icon: Settings, label: "Status e Prioridades" },
+  ];
+
+  // Adicionar item de hierarquia apenas para administradores
+  if (userRole === 'administrador') {
+    baseItems.push({ path: "/hierarchy", icon: Shield, label: "Configurar Hierarquias" });
+  }
+
+  baseItems.push({ path: "/settings", icon: Settings, label: "Configurações" });
+
+  return baseItems;
+};
 
 export default function Sidebar() {
   const [location] = useLocation();
+  const currentUser = getCurrentUser();
+  const navigationItems = getNavigationItems(currentUser.role);
 
   return (
     <aside className="w-64 bg-white border-r border-border flex-shrink-0 flex flex-col shadow-enterprise">
