@@ -130,10 +130,10 @@ export default function SLAConfiguration() {
     });
     
     // Determinar o tipo baseado nos campos preenchidos
-    if (sla.category && !sla.departmentId) {
-      setSlaType('category');
-    } else if (sla.departmentId && !sla.category) {
+    if (sla.departmentId && !sla.category) {
       setSlaType('department');
+    } else if (sla.category && !sla.departmentId) {
+      setSlaType('category');
     } else {
       setSlaType('priority');
     }
@@ -163,14 +163,23 @@ export default function SLAConfiguration() {
       return;
     }
     
+    if (slaType === 'priority' && !formData.priority) {
+      toast({
+        title: "Erro de validação", 
+        description: "Prioridade é obrigatória para SLA por prioridade",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Preparar dados baseado no tipo de SLA
     const submitData = {
       name: formData.name,
-      priority: formData.priority,
       timeHours: formData.timeHours,
       isActive: formData.isActive,
       departmentId: slaType === 'department' ? formData.departmentId : null,
-      category: slaType === 'category' ? formData.category : null
+      category: slaType === 'category' ? formData.category : null,
+      priority: slaType === 'priority' ? formData.priority : null
     };
     
     saveSLAMutation.mutate(submitData);
@@ -203,8 +212,8 @@ export default function SLAConfiguration() {
   };
 
   const filteredSLAs = slaRules?.filter(sla => {
-    if (selectedTab === 'department') return !!sla.departmentId;
-    if (selectedTab === 'category') return !!sla.category && !sla.departmentId;
+    if (selectedTab === 'department') return !!sla.departmentId && !sla.category;
+    if (selectedTab === 'category') return !!sla.category && !sla.departmentId;  
     if (selectedTab === 'priority') return !sla.departmentId && !sla.category;
     return true;
   }) || [];
@@ -302,23 +311,25 @@ export default function SLAConfiguration() {
                 </div>
               )}
 
-              <div>
-                <Label htmlFor="priority">Prioridade</Label>
-                <Select
-                  value={formData.priority}
-                  onValueChange={(value: any) => setFormData({...formData, priority: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="critical">Crítica</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {slaType === 'priority' && (
+                <div>
+                  <Label htmlFor="priority">Prioridade *</Label>
+                  <Select
+                    value={formData.priority}
+                    onValueChange={(value: any) => setFormData({...formData, priority: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar prioridade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baixa</SelectItem>
+                      <SelectItem value="medium">Média</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                      <SelectItem value="critical">Crítica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="timeHours">Tempo SLA (horas)</Label>

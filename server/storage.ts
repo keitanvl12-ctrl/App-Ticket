@@ -525,6 +525,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSLARule(data: InsertSLARule): Promise<SLARule> {
+    // Validação: apenas um tipo de SLA por regra
+    const typeCount = [data.departmentId, data.category, data.priority].filter(Boolean).length;
+    if (typeCount !== 1) {
+      throw new Error('SLA rule must have exactly one defining field: departmentId, category, or priority');
+    }
+
     const [slaRule] = await db.insert(slaRules).values(data).returning();
     return slaRule;
   }
