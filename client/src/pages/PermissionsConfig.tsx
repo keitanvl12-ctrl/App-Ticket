@@ -115,6 +115,8 @@ export default function PermissionsConfig() {
     return <div>Carregando configurações de permissões...</div>;
   }
 
+  console.log('Rendering PermissionsConfig, permissions:', permissions, 'editing:', editingRole);
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -124,6 +126,9 @@ export default function PermissionsConfig() {
           <p className="text-sm text-blue-800">
             <strong>Importante:</strong> As alterações são salvas automaticamente quando você marca/desmarca as opções.
           </p>
+        </div>
+        <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+          Debug: {permissions.length} permissões carregadas, editando: {editingRole || 'nenhuma'}
         </div>
       </div>
 
@@ -159,8 +164,11 @@ export default function PermissionsConfig() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditingRole(role)}
-                      className="flex items-center gap-2"
+                      onClick={() => {
+                        console.log('Edit button clicked for role:', role);
+                        setEditingRole(role);
+                      }}
+                      className="flex items-center gap-2 bg-blue-500 text-white hover:bg-blue-600"
                       data-testid={`button-edit-${role}`}
                     >
                       <Edit className="h-4 w-4" />
