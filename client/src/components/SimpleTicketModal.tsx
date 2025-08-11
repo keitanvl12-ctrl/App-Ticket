@@ -95,7 +95,7 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
         ...prev,
         requesterName: fullName,
         requesterEmail: currentUser.email || '',
-        requesterDepartment: currentUser.departmentId || ''
+        requesterDepartment: currentUser.departmentId || '' // Auto-preenchido e travado
       }));
     }
   }, [isOpen, currentUser]);
@@ -409,7 +409,8 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                 </label>
                 <select
                   value={formData.requesterDepartment}
-                  onChange={(e) => setFormData(prev => ({ ...prev, requesterDepartment: e.target.value }))}
+                  readOnly
+                  disabled
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -417,11 +418,13 @@ export default function SimpleTicketModal({ isOpen, onClose }: SimpleTicketModal
                     borderRadius: '8px',
                     fontSize: '14px',
                     outline: 'none',
-                    backgroundColor: 'white'
+                    backgroundColor: '#f9fafb',
+                    color: '#6b7280',
+                    cursor: 'not-allowed'
                   }}
                   required
                 >
-                  <option value="">Selecione seu departamento</option>
+                  <option value="">Carregando...</option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.name}

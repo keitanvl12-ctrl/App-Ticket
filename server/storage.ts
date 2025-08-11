@@ -64,6 +64,8 @@ export interface IStorage {
   // Departments
   getAllDepartments(): Promise<Department[]>;
   createDepartment(department: InsertDepartment): Promise<Department>;
+  updateDepartment(id: string, updates: Partial<InsertDepartment>): Promise<Department>;
+  deleteDepartment(id: string): Promise<boolean>;
 
   // Configuration
   getAllStatusConfigs(): Promise<StatusConfig[]>;
@@ -912,6 +914,20 @@ export class DatabaseStorage implements IStorage {
   async createDepartment(department: InsertDepartment): Promise<Department> {
     const [newDepartment] = await db.insert(departments).values(department).returning();
     return newDepartment;
+  }
+
+  async updateDepartment(id: string, updates: Partial<InsertDepartment>): Promise<Department> {
+    const [updatedDepartment] = await db
+      .update(departments)
+      .set({ ...updates, updatedAt: sql`NOW()` })
+      .where(eq(departments.id, id))
+      .returning();
+    return updatedDepartment;
+  }
+
+  async deleteDepartment(id: string): Promise<boolean> {
+    const result = await db.delete(departments).where(eq(departments.id, id));
+    return result.rowCount > 0;
   }
 
   async getDashboardStats(filters?: any): Promise<DashboardStats> {

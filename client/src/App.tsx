@@ -22,6 +22,7 @@ import Categories from "@/pages/Categories";
 import TicketForms from "@/pages/TicketForms";
 import CustomFields from "@/pages/CustomFields";
 import CustomFieldsManager from "@/pages/CustomFieldsManager";
+import DepartmentManager from "@/pages/DepartmentManager";
 import WorkflowApprovals from "@/pages/WorkflowApprovals";
 import Approvals from "@/pages/Approvals";
 import ReportsNew from "@/pages/ReportsNew";
@@ -41,7 +42,7 @@ function Router() {
         <Route path="/analytics" component={Analytics} />
         <Route path="/sla" component={SLA} />
         <Route path="/users" component={UserManagement} />
-        <Route path="/departments" component={Departments} />
+        <Route path="/departments" component={DepartmentManager} />
         <Route path="/categories" component={Categories} />
         <Route path="/forms" component={TicketForms} />
         <Route path="/fields" component={CustomFieldsManager} />
