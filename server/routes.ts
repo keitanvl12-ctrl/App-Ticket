@@ -272,6 +272,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Change user password endpoint (Admin only)
+  app.put("/api/users/:id/change-password", requireRole('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+      
+      if (!password || password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+      
+      const success = await storage.changeUserPassword(id, password);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // Block/Unblock user endpoint (Admin only)
+  app.put("/api/users/:id/block", requireRole('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { block } = req.body;
+      
+      const success = await storage.blockUser(id, block);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const action = block ? "blocked" : "unblocked";
+      res.json({ message: `User ${action} successfully` });
+    } catch (error) {
+      console.error("Error blocking/unblocking user:", error);
+      res.status(500).json({ message: "Failed to update user status" });
+    }
+  });
+
+  // Delete user endpoint (Admin only)
+  app.delete("/api/users/:id", requireRole('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const success = await storage.deleteUser(id);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   app.get("/api/users/:id", async (req, res) => {
     try {
       const user = await storage.getUser(req.params.id);

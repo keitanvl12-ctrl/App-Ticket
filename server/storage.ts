@@ -1416,6 +1416,62 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(customFields).where(eq(customFields.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   }
+  // Security functions for user management
+  async changeUserPassword(id: string, newPassword: string): Promise<boolean> {
+    try {
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      const [user] = await db
+        .update(users)
+        .set({ 
+          password: hashedPassword,
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, id))
+        .returning();
+      
+      return !!user;
+    } catch (error) {
+      console.error('Error changing user password:', error);
+      return false;
+    }
+  }
+
+  async blockUser(id: string, block: boolean): Promise<boolean> {
+    try {
+      const [user] = await db
+        .update(users)
+        .set({ 
+          isBlocked: block,
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, id))
+        .returning();
+      
+      return !!user;
+    } catch (error) {
+      console.error('Error blocking/unblocking user:', error);
+      return false;
+    }
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    try {
+      // First, delete related records (tickets, comments, etc.)
+      await db.delete(tickets).where(eq(tickets.assignedTo, id));
+      await db.delete(tickets).where(eq(tickets.requesterId, id));
+      await db.delete(comments).where(eq(comments.authorId, id));
+      
+      // Then delete the user
+      await db.delete(users).where(eq(users.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
