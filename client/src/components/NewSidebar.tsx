@@ -124,25 +124,17 @@ const NewSidebar: React.FC<SidebarProps> = ({
         />
       )}
       
-      {/* Collapse Toggle Button - External */}
-      <button
-        onClick={onToggleCollapse}
-        className="fixed bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 z-50 hover:bg-gray-50"
-        title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-        style={{ 
-          top: '5rem',
-          left: isCollapsed ? '4.5rem' : '15.5rem',
-          transform: 'translateX(-50%)'
-        }}
-      >
-        <Icon name={isCollapsed ? "ChevronRight" : "ChevronLeft"} size={16} />
-      </button>
+
       
       {/* Sidebar */}
       <aside className={sidebarClasses}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className={`flex items-center border-b border-border ${isCollapsed ? 'justify-center p-2' : 'justify-between p-4'}`}>
+          <div 
+            className={`flex items-center border-b border-border cursor-pointer ${isCollapsed ? 'justify-center p-2' : 'justify-between p-4'}`}
+            onDoubleClick={onToggleCollapse}
+            title="Duplo clique para expandir/recolher sidebar"
+          >
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center w-8 h-8 bg-opus-blue-dark rounded-lg">
                 <Icon name="Ticket" size={20} color="white" />

@@ -96,10 +96,33 @@ export default function DepartmentManager() {
     setIsSubmitting(true);
     
     try {
-      await createDepartmentMutation.mutateAsync(formData);
+      if (editingDepartment) {
+        // Editando departamento existente
+        const response = await fetch(`/api/departments/${editingDepartment.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) throw new Error('Erro ao atualizar departamento');
+      } else {
+        // Criando novo departamento
+        const response = await fetch('/api/departments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) throw new Error('Erro ao criar departamento');
+      }
+      
+      // Recarregar dados e fechar modal
+      queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
+      setIsModalOpen(false);
+      resetForm();
     } catch (error) {
       console.error('Erro ao salvar departamento:', error);
-      alert('Erro ao salvar departamento');
+      alert('Erro ao salvar departamento. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
