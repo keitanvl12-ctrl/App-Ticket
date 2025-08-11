@@ -130,11 +130,7 @@ const NewSidebar: React.FC<SidebarProps> = ({
       <aside className={sidebarClasses}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div 
-            className={`flex items-center border-b border-border cursor-pointer ${isCollapsed ? 'justify-center p-2' : 'justify-between p-4'}`}
-            onDoubleClick={onToggleCollapse}
-            title="Duplo clique para expandir/recolher sidebar"
-          >
+          <div className={`flex items-center border-b border-border ${isCollapsed ? 'justify-center p-2' : 'justify-between p-4'}`}>
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center w-8 h-8 bg-opus-blue-dark rounded-lg">
                 <Icon name="Ticket" size={20} color="white" />
@@ -147,17 +143,32 @@ const NewSidebar: React.FC<SidebarProps> = ({
               )}
             </div>
 
-            {/* Close Button (Mobile only when not collapsed) */}
-            {!isCollapsed && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="lg:hidden transition-enterprise"
+            <div className="flex items-center space-x-2">
+              {/* Expand/Collapse Button */}
+              <button
+                onClick={onToggleCollapse}
+                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+                title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
               >
-                <Icon name="X" size={16} />
-              </Button>
-            )}
+                <Icon 
+                  name={isCollapsed ? "PanelLeftOpen" : "PanelLeftClose"} 
+                  size={16} 
+                  className="text-muted-foreground hover:text-foreground" 
+                />
+              </button>
+              
+              {/* Close Button (Mobile only when not collapsed) */}
+              {!isCollapsed && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="lg:hidden transition-enterprise"
+                >
+                  <Icon name="X" size={16} />
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Navigation */}
