@@ -5,12 +5,14 @@ import UserDetailsPanel from '@/components/users/UserDetailsPanel';
 import FilterPanel from '@/components/users/FilterPanel';
 import BulkActionsPanel from '@/components/users/BulkActionsPanel';
 import ActivityMonitor from '@/components/users/ActivityMonitor';
+import UserSecurityModal from '@/components/UserSecurityModal';
 import Button from '@/components/Button';
 import Icon from '@/components/AppIcon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { usePermissions } from '@/components/PermissionGuard';
 
 export default function UserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -28,6 +30,8 @@ export default function UserManagement() {
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showActivityMonitor, setShowActivityMonitor] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [securityUser, setSecurityUser] = useState<any>(null);
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -38,6 +42,8 @@ export default function UserManagement() {
     location: '',
     manager: ''
   });
+
+  const { isAdmin } = usePermissions();
 
   // Mock data
   // Buscar usuários reais do banco de dados
@@ -207,6 +213,35 @@ export default function UserManagement() {
     } catch (error) {
       console.error('Erro ao deletar usuário:', error);
       alert('Erro ao deletar usuário. Verifique sua conexão.');
+    }
+  };
+
+  const handleUserSecurity = (userId: string) => {
+    const user = mockUsers.find((u: any) => u.id === userId);
+    if (user) {
+      setSecurityUser(user);
+      setShowSecurityModal(true);
+    }
+  };
+
+  const handleUpdateUserSecurity = async (userId: string, securityData: any) => {
+    try {
+      const response = await fetch(`/api/users/${userId}/security`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(securityData),
+      });
+
+      if (response.ok) {
+        // Refresh users data
+        window.location.reload();
+      } else {
+        throw new Error('Erro ao atualizar configurações de segurança');
+      }
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -540,6 +575,7 @@ export default function UserManagement() {
             onUserMultiSelect={handleUserMultiSelect}
             onUserEdit={handleUserEdit}
             onUserDelete={handleUserDelete}
+            onUserSecurity={isAdmin() ? handleUserSecurity : undefined}
             viewMode={viewMode}
             departments={departments}
             roles={roles}
@@ -686,6 +722,17 @@ export default function UserManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* User Security Modal */}
+      <UserSecurityModal
+        isOpen={showSecurityModal}
+        onClose={() => {
+          setShowSecurityModal(false);
+          setSecurityUser(null);
+        }}
+        user={securityUser}
+        onUpdate={handleUpdateUserSecurity}
+      />
     </div>
   );
 }

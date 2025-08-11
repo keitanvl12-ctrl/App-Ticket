@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Button from '@/components/Button';
 import Icon from '@/components/AppIcon';
-import { Edit, Trash2, MoreHorizontal, Eye } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Eye, Shield } from 'lucide-react';
 
 interface User {
   id: string;
@@ -51,6 +51,7 @@ interface UserCardProps {
   onCheck: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onSecurity?: () => void;
   departments: Department[];
   roles: Role[];
 }
@@ -62,6 +63,7 @@ export default function UserCard({
   onCheck,
   onEdit,
   onDelete,
+  onSecurity,
   departments,
   roles
 }: UserCardProps) {
@@ -169,6 +171,12 @@ export default function UserCard({
                   <Edit className="w-4 h-4 mr-2" />
                   Editar usuário
                 </DropdownMenuItem>
+                {onSecurity && (
+                  <DropdownMenuItem onClick={onSecurity}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Configurações de Segurança
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={onDelete}

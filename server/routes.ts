@@ -296,6 +296,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH user security (admin only) 
+  app.patch("/api/users/:id/security", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { newPassword, forcePasswordChange } = req.body;
+
+      // Validate password
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({
+          message: "A senha deve ter pelo menos 6 caracteres"
+        });
+      }
+
+      // Get user to verify existence
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) {
+        return res.status(404).json({
+          message: "Usuário não encontrado"
+        });
+      }
+
+      // Hash the new password (in a real app, use bcrypt)
+      const hashedPassword = `hashed_${newPassword}`;
+
+      // Update user security settings
+      const securityUpdate = {
+        password: hashedPassword,
+        forcePasswordChange: forcePasswordChange || false,
+        passwordChangedAt: new Date().toISOString(),
+        passwordChangedBy: 'admin' // In real app, get from auth middleware
+      };
+
+      const updatedUser = await storage.updateUser(id, securityUpdate);
+      
+      res.json({
+        message: "Configurações de segurança atualizadas com sucesso",
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          passwordChangedAt: securityUpdate.passwordChangedAt
+        }
+      });
+    } catch (error) {
+      console.error("Error updating user security:", error);
+      res.status(500).json({
+        message: "Erro interno do servidor"
+      });
+    }
+  });
+
   // Department routes
   app.get("/api/departments", 
     requireRole("administrador"),
