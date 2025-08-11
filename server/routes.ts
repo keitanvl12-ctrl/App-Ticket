@@ -383,6 +383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const blockUpdate = {
         isBlocked: isBlocked,
         isActive: !isBlocked, // Se bloqueado, não está ativo
+        blockedAt: isBlocked ? new Date().toISOString() : null,
+        blockedBy: isBlocked ? 'admin' : null, // In real app, get from auth middleware
         updatedAt: new Date().toISOString()
       };
 

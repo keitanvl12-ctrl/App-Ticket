@@ -22,6 +22,7 @@ import UserManagement from "@/pages/UserManagement";
 import Categories from "@/pages/Categories";
 import CustomFields from "@/pages/CustomFields";
 import PermissionsConfig from "@/pages/PermissionsConfig";
+import FunctionConfig from "@/pages/FunctionConfig";
 import CustomFieldsManager from "@/pages/CustomFieldsManager";
 import DepartmentManager from "@/pages/DepartmentManager";
 import WorkflowApprovals from "@/pages/WorkflowApprovals";
@@ -47,21 +48,49 @@ const useAuth = () => {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('currentUser');
-    
-    if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
+    const checkUserStatus = async () => {
+      const token = localStorage.getItem('authToken');
+      const userData = localStorage.getItem('currentUser');
+      
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          
+          // Verificar se o usuário ainda está ativo no sistema
+          const response = await fetch(`/api/users/${parsedUser.id}`);
+          if (response.ok) {
+            const currentUserData = await response.json();
+            
+            // Se o usuário foi bloqueado, fazer logout
+            if (currentUserData.isBlocked) {
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('currentUser');
+              setLocation('/login');
+              return;
+            }
+            
+            // Atualizar dados do usuário se necessário
+            localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+            setUser(currentUserData);
+            setIsAuthenticated(true);
+          } else {
+            // Se o usuário não existe mais, fazer logout
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            setLocation('/login');
+            return;
+          }
+        } catch (error) {
+          console.error('Erro ao verificar status do usuário:', error);
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('currentUser');
+        }
       }
-    }
-    setIsLoading(false);
-  }, []);
+      setIsLoading(false);
+    };
+
+    checkUserStatus();
+  }, [setLocation]);
 
   const checkPermission = (requiredRole?: string) => {
     if (!user) return false;
@@ -200,6 +229,12 @@ function AppRouter() {
               </Route>
               
               <Route path="/permissions">
+                <ProtectedRoute requiredRole="administrador">
+                  <FunctionConfig />
+                </ProtectedRoute>
+              </Route>
+              
+              <Route path="/permissions-old">
                 <ProtectedRoute requiredRole="administrador">
                   <PermissionsConfig />
                 </ProtectedRoute>

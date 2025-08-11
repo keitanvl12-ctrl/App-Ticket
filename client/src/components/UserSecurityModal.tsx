@@ -312,11 +312,12 @@ const UserSecurityModal: React.FC<UserSecurityModalProps> = ({
                       if (response.ok) {
                         toast({
                           title: newStatus ? "Conta Bloqueada" : "Conta Desbloqueada",
-                          description: `A conta do usuário foi ${newStatus ? 'bloqueada' : 'desbloqueada'} com sucesso`,
+                          description: `A conta do usuário foi ${newStatus ? 'bloqueada. O usuário será desconectado imediatamente' : 'desbloqueada'} com sucesso`,
+                          variant: newStatus ? "destructive" : "default",
                         });
                         setTimeout(() => {
                           window.location.reload();
-                        }, 1000);
+                        }, 1500);
                       } else {
                         throw new Error('Erro na requisição');
                       }
