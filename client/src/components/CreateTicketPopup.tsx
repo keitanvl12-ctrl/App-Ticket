@@ -190,41 +190,104 @@ export default function CreateTicketPopup({ isOpen, onClose }: CreateTicketPopup
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-      style={{ zIndex: 99999 }}
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        zIndex: 999999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px'
+      }}
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          width: '100%',
+          maxWidth: '900px',
+          maxHeight: '90vh',
+          overflow: 'hidden'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '24px',
+          borderBottom: '1px solid #e5e7eb',
+          background: 'linear-gradient(to right, #eff6ff, #eef2ff)'
+        }}>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Novo Ticket</h2>
-            <p className="text-sm text-gray-600 mt-1">Preencha os campos abaixo para criar seu ticket</p>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#111827',
+              margin: 0
+            }}>Novo Ticket</h2>
+            <p style={{
+              fontSize: '14px',
+              color: '#6b7280',
+              margin: '4px 0 0 0'
+            }}>Preencha os campos abaixo para criar seu ticket</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+            style={{
+              padding: '8px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: 'transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X style={{ width: '20px', height: '20px', color: '#6b7280' }} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div style={{
+          overflowY: 'auto',
+          maxHeight: 'calc(90vh - 120px)'
+        }}>
+          <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
             {/* Assunto */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Assunto <span className="text-red-500">*</span>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '4px'
+              }}>
+                Assunto <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
                 type="text"
                 value={formData.subject}
                 onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'all 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                 required
               />
             </div>
