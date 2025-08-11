@@ -89,8 +89,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userId = user.userId || user.id;
         
         if (userHierarchy === 'colaborador') {
-          // Colaboradores só veem seus próprios tickets
-          filters.createdBy = userId;
+          // Colaboradores veem seus próprios tickets + tickets não atribuídos do departamento
+          const userRecord = await storage.getUser(userId);
+          if (userRecord?.departmentId) {
+            filters.colaboradorFilter = {
+              userId: userId,
+              departmentId: userRecord.departmentId
+            };
+          } else {
+            // Se não tem departamento, só vê próprios tickets
+            filters.createdBy = userId;
+          }
         } else if (userHierarchy === 'supervisor') {
           // Supervisores veem tickets do seu departamento inteiro
           const userRecord = await storage.getUser(userId);

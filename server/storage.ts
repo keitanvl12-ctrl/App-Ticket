@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig, customFields, permissions } from "@shared/schema";
-import { eq, desc, count, sql, and, gte, lte, or } from "drizzle-orm";
+import { eq, desc, count, sql, and, gte, lte, or, isNull } from "drizzle-orm";
 import {
   type User,
   type InsertUser,
@@ -875,25 +875,47 @@ export class DatabaseStorage implements IStorage {
     return detailedTickets.filter(ticket => ticket !== undefined) as TicketWithDetails[];
   }
 
-  async getAllTickets(filters?: { createdBy?: string, departmentId?: string, assignedTo?: string }): Promise<TicketWithDetails[]> {
+  async getAllTickets(filters?: { createdBy?: string, departmentId?: string, assignedTo?: string, colaboradorFilter?: { userId: string, departmentId: string } }): Promise<TicketWithDetails[]> {
     // Aplicar filtros baseados na hierarquia
     let query = db.select().from(tickets);
     
     const conditions = [];
-    if (filters?.createdBy) {
-      conditions.push(eq(tickets.createdBy, filters.createdBy));
-    }
-    if (filters?.assignedTo) {
-      conditions.push(eq(tickets.assignedTo, filters.assignedTo));
-    }
-    if (filters?.departmentId) {
+    
+    // Filtro especial para colaboradores
+    if (filters?.colaboradorFilter) {
+      const { userId, departmentId } = filters.colaboradorFilter;
       conditions.push(
         or(
-          eq(tickets.departmentId, filters.departmentId),
-          eq(tickets.requesterDepartmentId, filters.departmentId),
-          eq(tickets.responsibleDepartmentId, filters.departmentId)
+          // Tickets criados pelo próprio usuário
+          eq(tickets.createdBy, userId),
+          // Tickets não atribuídos do seu departamento
+          and(
+            isNull(tickets.assignedTo),
+            or(
+              eq(tickets.departmentId, departmentId),
+              eq(tickets.requesterDepartmentId, departmentId),
+              eq(tickets.responsibleDepartmentId, departmentId)
+            )
+          )
         )
       );
+    } else {
+      // Filtros normais para admin/supervisor
+      if (filters?.createdBy) {
+        conditions.push(eq(tickets.createdBy, filters.createdBy));
+      }
+      if (filters?.assignedTo) {
+        conditions.push(eq(tickets.assignedTo, filters.assignedTo));
+      }
+      if (filters?.departmentId) {
+        conditions.push(
+          or(
+            eq(tickets.departmentId, filters.departmentId),
+            eq(tickets.requesterDepartmentId, filters.departmentId),
+            eq(tickets.responsibleDepartmentId, filters.departmentId)
+          )
+        );
+      }
     }
 
     if (conditions.length > 0) {
