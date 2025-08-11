@@ -71,8 +71,19 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Find user by email
-    const user = DEMO_USERS.find(u => u.email === email);
+    // Import storage to get real users from database
+    const { storage } = await import('../storage');
+    
+    // Find user by email in database
+    let user = await storage.getUserByEmail(email);
+    
+    // If not found in database, check demo users as fallback
+    if (!user) {
+      const demoUser = DEMO_USERS.find(u => u.email === email);
+      if (demoUser) {
+        user = demoUser;
+      }
+    }
     
     if (!user) {
       return res.status(401).json({

@@ -296,14 +296,38 @@ const UserSecurityModal: React.FC<UserSecurityModalProps> = ({
                 <Button
                   variant="outline"
                   className="justify-start"
-                  onClick={() => {
-                    toast({
-                      title: "Conta Desbloqueada",
-                      description: "A conta do usuário foi desbloqueada com sucesso",
-                    });
+                  onClick={async () => {
+                    try {
+                      const newStatus = !user?.isBlocked;
+                      const response = await fetch(`/api/users/${user.id}/block`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ isBlocked: newStatus }),
+                      });
+
+                      if (response.ok) {
+                        toast({
+                          title: newStatus ? "Conta Bloqueada" : "Conta Desbloqueada",
+                          description: `A conta do usuário foi ${newStatus ? 'bloqueada' : 'desbloqueada'} com sucesso`,
+                        });
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 1000);
+                      } else {
+                        throw new Error('Erro na requisição');
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "Erro",
+                        description: "Erro ao alterar status da conta",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                 >
-                  Desbloquear Conta
+                  {user?.isBlocked ? 'Desbloquear Conta' : 'Bloquear Conta'}
                 </Button>
               </div>
             </CardContent>

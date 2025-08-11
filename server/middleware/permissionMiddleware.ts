@@ -155,16 +155,53 @@ export async function filterTicketsByHierarchy(req: Request, res: Response, next
 }
 
 // Middleware para autenticação simulada (será substituído pelo sistema real de auth)
-export function mockAuth(req: Request, res: Response, next: NextFunction) {
-  // Simulação temporária - em produção será substituído pelo sistema de autenticação real
-  const authReq = req as AuthenticatedRequest;
-  authReq.user = {
-    id: 'user-1',
-    role: 'administrador', // Mudar para testar diferentes roles
-    departmentId: 'dept-1'
-  };
-  
-  next();
+export async function mockAuth(req: Request, res: Response, next: NextFunction) {
+  // Simulação temporária - usa usuários reais do banco de dados
+  try {
+    const { storage } = await import('../storage');
+    const authReq = req as AuthenticatedRequest;
+    
+    // Buscar usuário administrador real do banco
+    const allUsers = await storage.getAllUsers();
+    const adminUser = allUsers.find(user => user.role === 'administrador');
+    
+    if (adminUser) {
+      authReq.user = {
+        id: adminUser.id,
+        role: adminUser.role,
+        departmentId: adminUser.departmentId
+      };
+    } else {
+      // Fallback para primeiro usuário disponível
+      const firstUser = allUsers[0];
+      if (firstUser) {
+        authReq.user = {
+          id: firstUser.id,
+          role: firstUser.role,
+          departmentId: firstUser.departmentId
+        };
+      } else {
+        // Último fallback para usuário mock
+        authReq.user = {
+          id: 'user-1',
+          role: 'administrador',
+          departmentId: 'dept-1'
+        };
+      }
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error in mockAuth:', error);
+    // Fallback em caso de erro
+    const authReq = req as AuthenticatedRequest;
+    authReq.user = {
+      id: 'user-1',
+      role: 'administrador',
+      departmentId: 'dept-1'
+    };
+    next();
+  }
 }
 
 export { AuthenticatedRequest };

@@ -73,19 +73,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tickets with hierarchy filtering
-  app.get("/api/tickets", 
-    filterTicketsByHierarchy,
-    async (req, res) => {
+  app.get("/api/tickets", async (req, res) => {
     try {
       const authReq = req as AuthenticatedRequest;
-      const filters = {
+      const user = authReq.user;
+      
+      let filters: any = {
         createdBy: req.query.createdBy as string,
         departmentId: req.query.departmentId as string
       };
+
+      // Apply hierarchy-based filtering
+      if (user) {
+        const userHierarchy = user.hierarchy || user.role;
+        
+        if (userHierarchy === 'colaborador') {
+          // Colaboradores só veem seus próprios tickets
+          filters.createdBy = user.userId;
+        } else if (userHierarchy === 'supervisor') {
+          // Supervisores veem tickets do seu departamento
+          const userRecord = await storage.getUser(user.userId);
+          if (userRecord?.departmentId) {
+            filters.departmentId = userRecord.departmentId;
+          }
+        }
+        // Administradores veem todos os tickets (sem filtros adicionais)
+      }
       
       const tickets = await storage.getAllTickets(filters);
       res.json(tickets);
     } catch (error) {
+      console.error("Error fetching tickets:", error);
       res.status(500).json({ message: "Failed to fetch tickets" });
     }
   });
@@ -341,6 +359,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error updating user security:", error);
+      res.status(500).json({
+        message: "Erro interno do servidor"
+      });
+    }
+  });
+
+  // PATCH user block/unblock status (admin only)
+  app.patch("/api/users/:id/block", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { isBlocked } = req.body;
+
+      // Get user to verify existence
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) {
+        return res.status(404).json({
+          message: "Usuário não encontrado"
+        });
+      }
+
+      // Update user block status
+      const blockUpdate = {
+        isBlocked: isBlocked,
+        isActive: !isBlocked, // Se bloqueado, não está ativo
+        updatedAt: new Date().toISOString()
+      };
+
+      const updatedUser = await storage.updateUser(id, blockUpdate);
+      
+      res.json({
+        message: `Usuário ${isBlocked ? 'bloqueado' : 'desbloqueado'} com sucesso`,
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          isBlocked: updatedUser.isBlocked,
+          isActive: updatedUser.isActive
+        }
+      });
+    } catch (error) {
+      console.error("Error updating user block status:", error);
       res.status(500).json({
         message: "Erro interno do servidor"
       });

@@ -41,6 +41,9 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   role: text("role").notNull().default("colaborador"), // colaborador, supervisor, administrador
   departmentId: varchar("department_id").references(() => departments.id),
+  isActive: boolean("is_active").default(true).notNull(), // Para bloquear/desbloquear usuários
+  isBlocked: boolean("is_blocked").default(false).notNull(), // Status de bloqueio
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
