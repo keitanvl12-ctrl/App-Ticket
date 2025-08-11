@@ -30,6 +30,7 @@ const getNavigationItems = (userRole: string) => {
     baseItems.push({ path: "/departments", icon: Building2, label: "Departamentos" });
     baseItems.push({ path: "/users", icon: Users, label: "Usuários" });
     baseItems.push({ path: "/roles", icon: Shield, label: "Funções" });
+    baseItems.push({ path: "/permissions", icon: Settings, label: "Função" });
     baseItems.push({ path: "/hierarchy", icon: Shield, label: "Hierarquias" });
   }
 

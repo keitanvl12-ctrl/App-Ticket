@@ -41,10 +41,17 @@ export default function PermissionsConfig() {
 
   const fetchPermissions = async () => {
     try {
+      console.log('Fetching permissions from API...');
       const response = await fetch('/api/permissions');
+      
+      console.log('Permissions response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Permissions data:', data);
         setPermissions(data);
+      } else {
+        console.error('Failed to fetch permissions:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error fetching permissions:', error);
@@ -59,8 +66,12 @@ export default function PermissionsConfig() {
 
   const handlePermissionChange = async (role: string, permission: string, value: boolean) => {
     try {
+      console.log('Updating permission:', role, permission, value);
+      
       // Converter camelCase para snake_case para o backend
       const snakeCasePermission = permission.replace(/([A-Z])/g, '_$1').toLowerCase();
+      
+      console.log('Snake case permission:', snakeCasePermission);
       
       const response = await fetch(`/api/permissions/${role}`, {
         method: 'PUT',
@@ -107,6 +118,11 @@ export default function PermissionsConfig() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Configuração de Permissões</h1>
         <p className="text-gray-600">Configure as permissões para cada nível hierárquico</p>
+        <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Importante:</strong> As alterações são salvas automaticamente quando você marca/desmarca as opções.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-6">
@@ -124,24 +140,32 @@ export default function PermissionsConfig() {
           };
 
           return (
-            <Card key={role} className="p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                {ROLE_LABELS[role as keyof typeof ROLE_LABELS]}
-              </h3>
+            <Card key={role} className="p-6 border-l-4 border-l-blue-500">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {ROLE_LABELS[role as keyof typeof ROLE_LABELS]}
+                </h3>
+                <div className="px-3 py-1 bg-gray-100 rounded-full">
+                  <span className="text-xs font-medium text-gray-600">
+                    {Object.values(rolePermissions).filter(v => v === true).length} permissões ativas
+                  </span>
+                </div>
+              </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
-                  <div key={key} className="flex items-center space-x-2">
+                  <div key={key} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
                     <Checkbox
                       id={`${role}-${key}`}
                       checked={rolePermissions[key as keyof typeof rolePermissions]}
                       onCheckedChange={(checked) => 
                         handlePermissionChange(role, key, checked as boolean)
                       }
+                      className="data-[state=checked]:bg-blue-600"
                     />
                     <label 
                       htmlFor={`${role}-${key}`}
-                      className="text-sm text-gray-700 cursor-pointer"
+                      className="text-sm text-gray-700 cursor-pointer flex-1"
                     >
                       {label}
                     </label>
