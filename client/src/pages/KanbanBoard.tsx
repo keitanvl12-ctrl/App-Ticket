@@ -384,11 +384,21 @@ export default function KanbanBoard() {
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  const getProgressColor = (progress: number, status: string) => {
-    if (status === 'Resolvido') return 'bg-green-500';
-    if (status === 'Atrasado') return 'bg-red-500';
-    if (status === 'Pausado') return 'bg-yellow-500';
+  const getProgressColor = (ticket: any) => {
+    if (ticket.status === 'resolved') return 'bg-green-500';
+    if (ticket.slaStatus === 'violated') return 'bg-red-500';
+    if (ticket.slaStatus === 'at_risk') return 'bg-orange-500';
     return 'bg-blue-500';
+  };
+
+  // Função para calcular progresso baseado no SLA
+  const calculateSLAProgress = (ticket: any) => {
+    if (!ticket.slaHoursTotal || ticket.slaHoursTotal <= 0) return 0;
+    if (ticket.status === 'resolved') return 100;
+    
+    const hoursElapsed = ticket.slaHoursTotal - (ticket.slaHoursRemaining || 0);
+    const progressPercentage = Math.min((hoursElapsed / ticket.slaHoursTotal) * 100, 100);
+    return Math.max(progressPercentage, 0);
   };
 
   // Função para traduzir status do banco para português
@@ -816,13 +826,13 @@ export default function KanbanBoard() {
                           <div className="space-y-1">
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
                               <div 
-                                className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(ticket.progress, ticket.status)}`}
-                                style={{ width: `${ticket.progress}%` }}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(ticket)}`}
+                                style={{ width: `${calculateSLAProgress(ticket)}%` }}
                               />
                             </div>
                             <div className="flex justify-between text-xs text-gray-500">
-                              <span>Progresso</span>
-                              <span>{ticket.progress}%</span>
+                              <span>Progresso SLA</span>
+                              <span>{Math.round(calculateSLAProgress(ticket))}%</span>
                             </div>
                           </div>
                         </div>
@@ -915,11 +925,11 @@ export default function KanbanBoard() {
                     <div className="flex items-center space-x-2">
                       <div className="w-16 bg-gray-200 rounded-full h-2">
                         <div 
-                          className={`h-2 rounded-full ${getProgressColor(ticket.progress, ticket.status)}`}
-                          style={{ width: `${ticket.progress}%` }}
+                          className={`h-2 rounded-full ${getProgressColor(ticket)}`}
+                          style={{ width: `${calculateSLAProgress(ticket)}%` }}
                         />
                       </div>
-                      <span className="text-xs text-gray-500 w-8">{ticket.progress}%</span>
+                      <span className="text-xs text-gray-500 w-8">{Math.round(calculateSLAProgress(ticket))}%</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">{new Date(ticket.createdAt).toLocaleDateString('pt-BR')}</TableCell>

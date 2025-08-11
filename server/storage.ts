@@ -761,9 +761,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateStatusConfig(id: string, updates: Partial<StatusConfig>): Promise<StatusConfig | undefined> {
+    // Remove campos de timestamp para evitar conflitos
+    const { createdAt, updatedAt, ...updateData } = updates;
+    
     const [result] = await db
       .update(statusConfig)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: sql`NOW()` })
       .where(eq(statusConfig.id, id))
       .returning();
     return result;
