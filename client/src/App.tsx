@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { store } from "./store";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import AllTickets from "@/pages/AllTickets";
@@ -62,10 +63,12 @@ function App() {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </Provider>
   );

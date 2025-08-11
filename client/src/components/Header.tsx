@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import Icon from './AppIcon';
 import Button from './Button';
 import SimpleTicketModal from './SimpleTicketModal';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   onSidebarToggle: () => void;
@@ -140,6 +141,9 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isSidebarCollapsed = f
           >
             Perfil
           </Button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Notifications */}
           <Button

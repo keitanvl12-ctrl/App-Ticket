@@ -589,7 +589,7 @@ export default function KanbanBoard() {
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
                 {uniqueStatuses.map(status => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                  <SelectItem key={status} value={status}>{getStatusLabel(status)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -601,7 +601,7 @@ export default function KanbanBoard() {
               <SelectContent>
                 <SelectItem value="all">Todas as Prioridades</SelectItem>
                 {uniquePriorities.map(priority => (
-                  <SelectItem key={priority} value={priority}>{priority}</SelectItem>
+                  <SelectItem key={priority} value={priority}>{getPriorityLabel(priority)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
