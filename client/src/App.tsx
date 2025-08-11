@@ -105,11 +105,14 @@ const useAuth = () => {
     
     const userRole = user.role || user.hierarchy || 'colaborador';
     
+    // Para usuários com role 'admin', tratar como 'administrador'
+    const normalizedRole = userRole === 'admin' ? 'administrador' : userRole;
+    
     if (requiredRole === 'administrador') {
-      return userRole === 'administrador';
+      return normalizedRole === 'administrador';
     }
     if (requiredRole === 'supervisor') {
-      return ['supervisor', 'administrador'].includes(userRole);
+      return ['supervisor', 'administrador'].includes(normalizedRole);
     }
     return true;
   };

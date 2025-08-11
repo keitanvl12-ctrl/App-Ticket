@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,14 +28,34 @@ import {
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState({
-    name: 'João Silva',
-    email: 'joao.silva@empresa.com',
+    name: '',
+    email: '',
     phone: '(11) 99999-9999',
     department: 'Tecnologia da Informação',
-    role: 'Administrador',
+    role: '',
     joinDate: '15/03/2023',
     extension: '1234'
   });
+
+  // Load current user data
+  useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+      try {
+        const user = JSON.parse(currentUser);
+        setUserData(prev => ({
+          ...prev,
+          name: user.name || 'Usuário',
+          email: user.email || '',
+          role: user.role === 'admin' ? 'Administrador' : 
+                user.role === 'supervisor' ? 'Supervisor' : 
+                'Colaborador'
+        }));
+      } catch (error) {
+        console.error('Error parsing current user:', error);
+      }
+    }
+  }, []);
 
   const handleSave = () => {
     setIsEditing(false);
