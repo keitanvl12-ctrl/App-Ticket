@@ -20,9 +20,7 @@ interface SLARule {
   departmentName?: string;
   category?: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
-  responseTimeHours: number;
-  resolutionTimeHours: number;
-  escalationTimeHours?: number;
+  timeHours: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -49,46 +47,14 @@ export default function SLAConfiguration() {
     queryKey: ['/api/departments'],
   });
 
-  // Buscar regras SLA (mock data por enquanto)
-  const { data: slaRules, isLoading } = useQuery<SLARule[]>({
+  // Buscar categorias
+  const { data: categories } = useQuery<any[]>({
+    queryKey: ['/api/categories'],
+  });
+
+  // Buscar regras SLA do banco de dados
+  const { data: slaRules, isLoading } = useQuery<any[]>({
     queryKey: ['/api/sla/rules'],
-    queryFn: async () => {
-      // Mock data - substituir pela API real
-      return [
-        {
-          id: '1',
-          name: 'SLA TI - Alta Prioridade',
-          departmentId: 'e9802450-3847-494a-a5fb-0c86a97ac8b7',
-          departmentName: 'Tecnologia da Informação',
-          category: 'Infraestrutura',
-          priority: 'high',
-          responseTimeHours: 4,
-          resolutionTimeHours: 4,
-          isActive: true,
-          createdAt: '2025-01-08'
-        },
-        {
-          id: '2',
-          name: 'SLA RH - Geral',
-          departmentId: '1d97ffe4-ac1f-4a53-a029-e1b464775c33',
-          departmentName: 'Recursos Humanos',
-          priority: 'medium',
-          responseTimeHours: 24,
-          resolutionTimeHours: 24,
-          isActive: true,
-          createdAt: '2025-01-08'
-        },
-        {
-          id: '3',
-          name: 'SLA Crítico - Sistema',
-          priority: 'critical',
-          responseTimeHours: 2,
-          resolutionTimeHours: 2,
-          isActive: true,
-          createdAt: '2025-01-08'
-        }
-      ] as SLARule[];
-    }
   });
 
   // Mutation para criar/atualizar SLA
@@ -156,7 +122,7 @@ export default function SLAConfiguration() {
       departmentId: sla.departmentId || 'all',
       category: sla.category || '',
       priority: sla.priority,
-      timeHours: sla.resolutionTimeHours || 24,
+      timeHours: sla.timeHours || 24,
       isActive: sla.isActive
     });
     setIsCreateModalOpen(true);
@@ -259,12 +225,22 @@ export default function SLAConfiguration() {
 
               <div>
                 <Label htmlFor="category">Categoria (Opcional)</Label>
-                <Input
-                  id="category"
+                <Select
                   value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  placeholder="Ex: Infraestrutura, Software"
-                />
+                  onValueChange={(value) => setFormData({...formData, category: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as categorias</SelectItem>
+                    {categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -363,7 +339,7 @@ export default function SLAConfiguration() {
                         <TableCell>
                           <div className="flex items-center space-x-1">
                             <Target className="w-4 h-4 text-green-500" />
-                            <span>{formatTime(sla.resolutionTimeHours)}</span>
+                            <span>{formatTime(sla.timeHours)}</span>
                           </div>
                         </TableCell>
                         <TableCell>

@@ -269,6 +269,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SLA endpoints
+  app.get("/api/sla/rules", async (req, res) => {
+    try {
+      const slaRules = await storage.getSLARules();
+      res.json(slaRules);
+    } catch (error) {
+      console.error("Error fetching SLA rules:", error);
+      res.status(500).json({ message: "Failed to fetch SLA rules" });
+    }
+  });
+
+  app.post("/api/sla/rules", async (req, res) => {
+    try {
+      const slaRule = await storage.createSLARule(req.body);
+      res.json(slaRule);
+    } catch (error) {
+      console.error("Error creating SLA rule:", error);
+      res.status(500).json({ message: "Failed to create SLA rule" });
+    }
+  });
+
+  app.put("/api/sla/rules/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const slaRule = await storage.updateSLARule(id, req.body);
+      res.json(slaRule);
+    } catch (error) {
+      console.error("Error updating SLA rule:", error);
+      res.status(500).json({ message: "Failed to update SLA rule" });
+    }
+  });
+
+  app.delete("/api/sla/rules/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteSLARule(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting SLA rule:", error);
+      res.status(500).json({ message: "Failed to delete SLA rule" });
+    }
+  });
+
   // Advanced Reports API
   app.get("/api/reports/filtered-tickets", async (req, res) => {
     try {

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, tickets, comments, attachments, departments, categories } from "@shared/schema";
+import { users, tickets, comments, attachments, departments, categories, slaRules } from "@shared/schema";
 import { eq, desc, count, sql, and, gte, lte } from "drizzle-orm";
 import {
   type User,
@@ -13,6 +13,8 @@ import {
   type InsertAttachment,
   type Category,
   type InsertCategory,
+  type SLARule,
+  type InsertSLARule,
   type Department,
   type InsertDepartment,
   type DashboardStats,
@@ -517,6 +519,29 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(categories.departmentId, departmentId), eq(categories.isActive, true)));
   }
 
+  // SLA Rules methods
+  async getSLARules(): Promise<SLARule[]> {
+    return await db.select().from(slaRules).where(eq(slaRules.isActive, true));
+  }
+
+  async createSLARule(data: InsertSLARule): Promise<SLARule> {
+    const [slaRule] = await db.insert(slaRules).values(data).returning();
+    return slaRule;
+  }
+
+  async updateSLARule(id: string, data: Partial<InsertSLARule>): Promise<SLARule | null> {
+    const [slaRule] = await db.update(slaRules)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(slaRules.id, id))
+      .returning();
+    return slaRule || null;
+  }
+
+  async deleteSLARule(id: string): Promise<boolean> {
+    const result = await db.delete(slaRules).where(eq(slaRules.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
   async createCategory(category: InsertCategory): Promise<Category> {
     const [newCategory] = await db.insert(categories).values(category).returning();
     return newCategory;
@@ -562,7 +587,7 @@ export class DatabaseStorage implements IStorage {
     // Get total tickets with filters
     let totalTicketsQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
-      totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+      totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
     }
     if (whereClause) {
       totalTicketsQuery = totalTicketsQuery.where(whereClause);
@@ -574,7 +599,7 @@ export class DatabaseStorage implements IStorage {
     const openConditions = [...conditions, eq(tickets.status, 'open')];
     let openTicketsQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
-      openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+      openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
     }
     openTicketsQuery = openTicketsQuery.where(and(...openConditions));
     const openTicketsResult = await openTicketsQuery;
@@ -589,7 +614,7 @@ export class DatabaseStorage implements IStorage {
     ];
     let resolvedTodayQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
-      resolvedTodayQuery = resolvedTodayQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+      resolvedTodayQuery = resolvedTodayQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
     }
     resolvedTodayQuery = resolvedTodayQuery.where(and(...resolvedConditions));
     const resolvedTodayResult = await resolvedTodayQuery;

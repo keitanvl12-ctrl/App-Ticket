@@ -72,6 +72,19 @@ export const categories = pgTable("categories", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// SLA Rules table
+export const slaRules = pgTable("sla_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  departmentId: varchar("department_id").references(() => departments.id), // Nullable - applies to all departments if null
+  category: text("category"), // Nullable - applies to all categories if null
+  priority: text("priority").notNull(), // low, medium, high, critical
+  timeHours: integer("time_hours").notNull().default(24),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertDepartmentSchema = createInsertSchema(departments).omit({
   id: true,
@@ -109,6 +122,12 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   updatedAt: true,
 });
 
+export const insertSLARuleSchema = createInsertSchema(slaRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Department = typeof departments.$inferSelect;
 export type InsertDepartment = typeof departments.$inferInsert;
@@ -126,6 +145,9 @@ export type InsertAttachment = z.infer<typeof insertAttachmentSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type SLARule = typeof slaRules.$inferSelect;
+export type InsertSLARule = z.infer<typeof insertSLARuleSchema>;
 
 // Extended types for API responses
 export type TicketWithDetails = Ticket & {
