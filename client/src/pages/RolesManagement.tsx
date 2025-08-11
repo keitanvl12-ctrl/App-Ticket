@@ -92,7 +92,7 @@ const DEFAULT_ROLES: Role[] = [
 ];
 
 export default function RolesManagement() {
-  const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -102,6 +102,26 @@ export default function RolesManagement() {
     color: 'bg-slate-100 text-slate-800',
     permissions: []
   });
+
+  // Fetch roles from API
+  const { data: rolesData, isLoading } = useQuery({
+    queryKey: ['/api/roles'],
+  });
+
+  // Update roles when data is fetched
+  useEffect(() => {
+    if (rolesData) {
+      setRoles(rolesData.map((role: any) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        color: role.color,
+        permissions: [], // Will be populated from API later
+        userCount: role.userCount,
+        isSystem: role.isSystem
+      })));
+    }
+  }, [rolesData]);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();

@@ -613,6 +613,53 @@ export class DatabaseStorage implements IStorage {
     ];
   }
 
+  // Get roles with user counts
+  async getRoles(): Promise<any[]> {
+    const roles = [
+      {
+        id: 'administrador',
+        name: 'Administrador', 
+        description: 'Acesso completo ao sistema com todas as permissões',
+        color: 'bg-purple-100 text-purple-800',
+        permissions: 16,
+        isSystem: true
+      },
+      {
+        id: 'supervisor',
+        name: 'Supervisor',
+        description: 'Gerencia equipes e tem acesso a relatórios departamentais', 
+        color: 'bg-blue-100 text-blue-800',
+        permissions: 9,
+        isSystem: true
+      },
+      {
+        id: 'colaborador',
+        name: 'Colaborador',
+        description: 'Acesso básico para criação e atendimento de tickets',
+        color: 'bg-green-100 text-green-800', 
+        permissions: 3,
+        isSystem: true
+      }
+    ];
+
+    // Count users for each role
+    const userCounts = await Promise.all(
+      roles.map(async (role) => {
+        const [result] = await db
+          .select({ count: count() })
+          .from(users)
+          .where(eq(users.role, role.id === 'administrador' ? 'admin' : role.id));
+        
+        return {
+          ...role,
+          userCount: result?.count || 0
+        };
+      })
+    );
+
+    return userCounts;
+  }
+
   // Get role permissions
   async getRolePermissions(role: string): Promise<any> {
     const rolePermissions = {

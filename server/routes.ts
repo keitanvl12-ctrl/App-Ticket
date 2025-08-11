@@ -272,6 +272,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all roles with user counts
+  app.get('/api/roles', async (req, res) => {
+    try {
+      const roles = await storage.getRoles();
+      res.json(roles);
+    } catch (error) {
+      console.error('Error getting roles:', error);
+      res.status(500).json({ message: 'Failed to get roles' });
+    }
+  });
+
   // Change user password endpoint (Admin only)
   app.put("/api/users/:id/change-password", requireRole('admin'), async (req, res) => {
     try {
