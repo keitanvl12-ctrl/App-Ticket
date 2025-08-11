@@ -437,17 +437,35 @@ export default function KanbanBoard() {
     if (!finalizationModal.ticket) return;
 
     try {
-      // Aqui você pode fazer uma requisição para salvar os dados de finalização no backend
-      console.log('Dados de finalização:', finalizationData);
+      // Fazer chamada à API para finalizar o ticket
+      const response = await fetch(`/api/tickets/${finalizationModal.ticket.id}/finalize`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'Resolvido',
+          finalizationData: finalizationData,
+          progress: 100
+        }),
+      });
 
-      // Atualizar o status do ticket para "Resolvido"
-      setTickets(prev => 
-        prev.map(ticket => 
-          ticket.id === finalizationModal.ticket.id 
-            ? { ...ticket, status: 'Resolvido', progress: 100 }
-            : ticket
-        )
-      );
+      if (response.ok) {
+        // Atualizar o status do ticket para "Resolvido"
+        setTickets(prev => 
+          prev.map(ticket => 
+            ticket.id === finalizationModal.ticket.id 
+              ? { ...ticket, status: 'Resolvido', progress: 100 }
+              : ticket
+          )
+        );
+        
+        // Poderia refetch dos tickets reais aqui se estivéssemos usando API real
+        
+        console.log('Ticket finalizado com sucesso');
+      } else {
+        console.error('Erro ao finalizar ticket no servidor');
+      }
 
       setFinalizationModal({ isOpen: false, ticket: null });
     } catch (error) {

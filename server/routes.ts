@@ -122,6 +122,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint específico para finalizar tickets
+  app.patch("/api/tickets/:id/finalize", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, finalizationData, progress } = req.body;
+      
+      // Atualizar o ticket com status resolvido e dados de finalização
+      const updateData = {
+        status: status || 'Resolvido',
+        progress: progress || 100,
+        // Salvar dados de finalização nos metadados ou campos específicos
+        finalizationComment: finalizationData?.comment,
+        hoursSpent: finalizationData?.hoursSpent,
+        equipmentRemoved: finalizationData?.equipmentRemoved,
+        materialsUsed: finalizationData?.materialsUsed,
+        extraCharge: finalizationData?.extraCharge,
+        chargeType: finalizationData?.chargeType,
+        finalizedAt: new Date().toISOString()
+      };
+      
+      const ticket = await storage.updateTicket(id, updateData);
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
+      
+      res.json({ success: true, ticket });
+    } catch (error) {
+      console.error("Error finalizing ticket:", error);
+      res.status(500).json({ message: "Failed to finalize ticket" });
+    }
+  });
+
   // Comments
   app.get("/api/tickets/:ticketId/comments", async (req, res) => {
     try {
