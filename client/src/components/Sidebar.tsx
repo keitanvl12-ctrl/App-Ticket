@@ -18,6 +18,7 @@ const navigationItems = [
   { path: "/kanban", icon: Columns, label: "Quadro Kanban" },
   { path: "/analytics", icon: BarChart3, label: "Análises" },
   { path: "/team", icon: Users, label: "Equipe" },
+  { path: "/config", icon: Settings, label: "Status e Prioridades" },
   { path: "/settings", icon: Settings, label: "Configurações" },
 ];
 

@@ -27,6 +27,7 @@ import Departments from "@/pages/Departments";
 import NotFound from "@/pages/NotFound";
 import UserProfiles from "@/pages/UserProfiles";
 import SLAConfiguration from "@/pages/SLAConfiguration";
+import ConfigurationPage from "@/pages/ConfigurationPage";
 
 function Router() {
   return (
@@ -47,6 +48,7 @@ function Router() {
         <Route path="/reports" component={ReportsNew} />
         <Route path="/user-profiles" component={UserProfiles} />
         <Route path="/sla-config" component={SLAConfiguration} />
+        <Route path="/config" component={ConfigurationPage} />
         <Route path="/settings" component={Settings} />
         <Route path="/profile" component={Profile} />
         <Route path="/login" component={Login} />

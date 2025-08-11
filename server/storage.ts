@@ -673,6 +673,32 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async updateStatusConfig(id: string, updates: Partial<StatusConfig>): Promise<StatusConfig | undefined> {
+    const [result] = await db
+      .update(statusConfig)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(statusConfig.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteStatusConfig(id: string): Promise<void> {
+    await db.delete(statusConfig).where(eq(statusConfig.id, id));
+  }
+
+  async updatePriorityConfig(id: string, updates: Partial<PriorityConfig>): Promise<PriorityConfig | undefined> {
+    const [result] = await db
+      .update(priorityConfig)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(priorityConfig.id, id))
+      .returning();
+    return result;
+  }
+
+  async deletePriorityConfig(id: string): Promise<void> {
+    await db.delete(priorityConfig).where(eq(priorityConfig.id, id));
+  }
+
   // Departments methods
   async getAllDepartments(): Promise<Department[]> {
     return await db.select().from(departments);

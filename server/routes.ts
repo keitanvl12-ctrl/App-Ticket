@@ -312,6 +312,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/config/status", async (req, res) => {
+    try {
+      const statusConfig = await storage.createStatusConfig(req.body);
+      res.json(statusConfig);
+    } catch (error) {
+      console.error("Error creating status config:", error);
+      res.status(500).json({ message: "Failed to create status configuration" });
+    }
+  });
+
+  app.put("/api/config/status/:id", async (req, res) => {
+    try {
+      const statusConfig = await storage.updateStatusConfig(req.params.id, req.body);
+      res.json(statusConfig);
+    } catch (error) {
+      console.error("Error updating status config:", error);
+      res.status(500).json({ message: "Failed to update status configuration" });
+    }
+  });
+
+  app.delete("/api/config/status/:id", async (req, res) => {
+    try {
+      await storage.deleteStatusConfig(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting status config:", error);
+      res.status(500).json({ message: "Failed to delete status configuration" });
+    }
+  });
+
   app.get("/api/config/priority", async (req, res) => {
     try {
       const priorityConfigs = await storage.getAllPriorityConfigs();
@@ -319,6 +349,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching priority configs:", error);
       res.status(500).json({ message: "Failed to fetch priority configurations" });
+    }
+  });
+
+  app.post("/api/config/priority", async (req, res) => {
+    try {
+      const priorityConfig = await storage.createPriorityConfig(req.body);
+      res.json(priorityConfig);
+    } catch (error) {
+      console.error("Error creating priority config:", error);
+      res.status(500).json({ message: "Failed to create priority configuration" });
+    }
+  });
+
+  app.put("/api/config/priority/:id", async (req, res) => {
+    try {
+      const priorityConfig = await storage.updatePriorityConfig(req.params.id, req.body);
+      res.json(priorityConfig);
+    } catch (error) {
+      console.error("Error updating priority config:", error);
+      res.status(500).json({ message: "Failed to update priority configuration" });
+    }
+  });
+
+  app.delete("/api/config/priority/:id", async (req, res) => {
+    try {
+      await storage.deletePriorityConfig(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting priority config:", error);
+      res.status(500).json({ message: "Failed to delete priority configuration" });
     }
   });
 
