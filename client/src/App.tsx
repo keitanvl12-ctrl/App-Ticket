@@ -21,6 +21,7 @@ import UserManagement from "@/pages/UserManagement";
 import Categories from "@/pages/Categories";
 import TicketForms from "@/pages/TicketForms";
 import CustomFields from "@/pages/CustomFields";
+import CustomFieldsManager from "@/pages/CustomFieldsManager";
 import WorkflowApprovals from "@/pages/WorkflowApprovals";
 import Approvals from "@/pages/Approvals";
 import ReportsNew from "@/pages/ReportsNew";
@@ -43,7 +44,7 @@ function Router() {
         <Route path="/departments" component={Departments} />
         <Route path="/categories" component={Categories} />
         <Route path="/forms" component={TicketForms} />
-        <Route path="/fields" component={CustomFields} />
+        <Route path="/fields" component={CustomFieldsManager} />
         <Route path="/approvals" component={Approvals} />
         <Route path="/workflow-approvals" component={WorkflowApprovals} />
         <Route path="/reports" component={ReportsNew} />
