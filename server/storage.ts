@@ -1018,32 +1018,9 @@ export class DatabaseStorage implements IStorage {
           slaHours = matchedRule.resolutionTime; // Usar tempo de resolução da regra
           slaSource = `regra SLA: ${matchedRule.name}`;
           
-          // Log para debug (remover após teste)
-          if (ticket.ticketNumber === 'TICK-005400') {
-            console.log('SLA Rule Match for', ticket.ticketNumber, {
-              ruleName: matchedRule.name,
-              resolutionTime: matchedRule.resolutionTime,
-              category: matchedRule.category,
-              priority: matchedRule.priority,
-              departmentId: matchedRule.departmentId,
-              ticketCategory: ticket.category,
-              ticketPriority: ticket.priority,
-              ticketDepartment: ticket.responsibleDepartmentId
-            });
-          }
+
         } else {
-          // Log quando nenhuma regra é encontrada
-          if (ticket.ticketNumber === 'TICK-005400') {
-            console.log('No SLA Rule Match for', ticket.ticketNumber, {
-              ticketCategory: ticket.category,
-              ticketPriority: ticket.priority,
-              ticketDepartment: ticket.responsibleDepartmentId,
-              availableRules: slaRulesQuery.length,
-              willUsePriorityFallback: ticket.priority,
-              currentHours: slaHours,
-              currentSource: slaSource
-            });
-          }
+
         }
         
       } catch (slaError) {
@@ -1075,14 +1052,7 @@ export class DatabaseStorage implements IStorage {
           slaHours = prioritySLA[ticket.priority];
           slaSource = `prioridade: ${ticket.priority} (${slaHours}h)`;
           
-          // Log para debug
-          if (ticket.ticketNumber === 'TICK-005400') {
-            console.log('Applied Priority SLA for', ticket.ticketNumber, {
-              priority: ticket.priority,
-              slaHours: slaHours,
-              slaSource: slaSource
-            });
-          }
+
         }
       }
       

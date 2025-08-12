@@ -534,8 +534,19 @@ export default function KanbanBoard() {
     return config?.name || priority;
   };
 
-  // Função SLA - SEMPRE usar dados do backend
+  // Função SLA - SEMPRE usar dados do backend - NÃO calcular localmente  
   const getSLAProgressPercentage = (ticket: any) => {
+    // Log temporário para debug - remover após teste
+    if (ticket.ticketNumber === 'TICK-005400') {
+      console.log('Frontend SLA Data for', ticket.ticketNumber, {
+        slaProgressPercent: ticket.slaProgressPercent,
+        slaStatus: ticket.slaStatus,
+        slaHoursTotal: ticket.slaHoursTotal,
+        slaSource: ticket.slaSource
+      });
+    }
+    
+    // SEMPRE usar o valor calculado pelo backend
     return ticket.slaProgressPercent || 0;
   };
 
