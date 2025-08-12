@@ -1039,15 +1039,16 @@ export class DatabaseStorage implements IStorage {
               ticketPriority: ticket.priority,
               ticketDepartment: ticket.responsibleDepartmentId,
               availableRules: slaRulesQuery.length,
-              fallbackHours: slaHours,
-              fallbackSource: slaSource
+              willUsePriorityFallback: ticket.priority,
+              currentHours: slaHours,
+              currentSource: slaSource
             });
           }
         }
         
       } catch (slaError) {
-        console.error('Erro ao buscar regras SLA, usando fallback:', slaError);
-        // Fallback: mapear prioridades para SLA simples se não conseguir buscar regras
+        console.error('Erro ao buscar regras SLA, usando fallback por prioridade:', slaError);
+        // Se não conseguir buscar regras, usar sistema de prioridades por padrão
         const prioritySLA: Record<string, number> = {
           'critical': 2,   // 2 horas para crítico
           'high': 4,       // 4 horas para alto  
@@ -1057,7 +1058,31 @@ export class DatabaseStorage implements IStorage {
 
         if (ticket.priority && prioritySLA[ticket.priority]) {
           slaHours = prioritySLA[ticket.priority];
-          slaSource = `prioridade fallback: ${ticket.priority}`;
+          slaSource = `prioridade: ${ticket.priority} (${slaHours}h)`;
+        }
+      }
+      
+      // Se ainda não encontrou regra específica mas tem prioridade, aplicar SLA por prioridade
+      if (slaSource === 'padrão (4h)' && ticket.priority) {
+        const prioritySLA: Record<string, number> = {
+          'critical': 2,   // 2 horas para crítico
+          'high': 4,       // 4 horas para alto  
+          'medium': 8,     // 8 horas para médio
+          'low': 24        // 24 horas para baixo
+        };
+        
+        if (prioritySLA[ticket.priority]) {
+          slaHours = prioritySLA[ticket.priority];
+          slaSource = `prioridade: ${ticket.priority} (${slaHours}h)`;
+          
+          // Log para debug
+          if (ticket.ticketNumber === 'TICK-005400') {
+            console.log('Applied Priority SLA for', ticket.ticketNumber, {
+              priority: ticket.priority,
+              slaHours: slaHours,
+              slaSource: slaSource
+            });
+          }
         }
       }
       

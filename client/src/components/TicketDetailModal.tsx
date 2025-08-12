@@ -322,7 +322,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                     />
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    Meta: {ticket.slaHoursTotal || 4}h
+                    Meta: {ticket.slaHoursTotal || 4}h ({ticket.slaSource || 'padrão'})
                   </div>
                 </div>
               </div>
