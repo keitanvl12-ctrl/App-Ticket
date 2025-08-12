@@ -265,37 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create user endpoint
-  app.post("/api/users", requireRole(['administrador']), async (req: AuthenticatedRequest, res) => {
-    try {
-      const userData = req.body;
-      
-      // Validate required fields
-      if (!userData.name || !userData.email || !userData.role) {
-        return res.status(400).json({ message: "Nome, email e função são obrigatórios" });
-      }
-
-      // Check if email already exists
-      const existingUser = await storage.getUserByEmail(userData.email);
-      if (existingUser) {
-        return res.status(409).json({ message: "Email já está em uso" });
-      }
-
-      const newUser = await storage.createUser({
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        departmentId: userData.departmentId || null,
-        isActive: true,
-        isBlocked: false
-      });
-      
-      res.status(201).json(newUser);
-    } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).json({ message: "Erro ao criar usuário" });
-    }
-  });
+  // User management endpoints
 
   // Users
   app.get("/api/users", async (req, res) => {
@@ -329,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Change user password endpoint (Admin only)
-  app.put("/api/users/:id/change-password", requireRole(['administrador']), async (req, res) => {
+  app.put("/api/users/:id/change-password", requireRole('administrador'), async (req, res) => {
     try {
       const { id } = req.params;
       const { password } = req.body;
@@ -351,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Block/Unblock user endpoint (Admin only)
-  app.put("/api/users/:id/block", requireRole(['administrador']), async (req, res) => {
+  app.put("/api/users/:id/block", requireRole('administrador'), async (req, res) => {
     try {
       const { id } = req.params;
       const { block } = req.body;
@@ -370,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user endpoint (Admin only)
-  app.delete("/api/users/:id", requireRole(['administrador']), async (req, res) => {
+  app.delete("/api/users/:id", requireRole('administrador'), async (req, res) => {
     try {
       const { id } = req.params;
       console.log('Attempting to delete user with ID:', id);
@@ -417,7 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", requireRole(['administrador']), async (req, res) => {
+  app.post("/api/users", requireRole('administrador'), async (req, res) => {
     try {
       // Validar campos obrigatórios
       if (!req.body.name || !req.body.email || !req.body.password || !req.body.role || !req.body.departmentId) {
