@@ -48,33 +48,43 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
     critical: 'Crítica'
   };
 
-  const formatTimeRemaining = (ms: number) => {
-    const isViolation = ms < 0;
-    const absMs = Math.abs(ms);
-    const hours = Math.floor(absMs / (1000 * 60 * 60));
-    const minutes = Math.floor((absMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (isViolation) {
-      return `Violação: ${hours}h ${minutes}m`;
+  const formatTimeRemaining = (hoursRemaining: number) => {
+    if (hoursRemaining <= 0) {
+      const hoursViolated = Math.abs(hoursRemaining);
+      return `Vencido há ${hoursViolated.toFixed(1)}h`;
     }
-    return `${hours}h ${minutes}m restantes`;
+    
+    const hours = Math.floor(hoursRemaining);
+    const minutes = Math.floor((hoursRemaining - hours) * 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m restantes`;
+    } else {
+      return `${minutes}m restantes`;
+    }
   };
 
-  const getTimeColor = (ms: number) => {
-    if (ms < 0) return 'text-red-600 dark:text-red-400';
-    if (ms < 60 * 60 * 1000) return 'text-yellow-600 dark:text-yellow-400'; // < 1 hora
+  const getTimeColor = (hoursRemaining: number) => {
+    if (hoursRemaining <= 0) return 'text-red-600 dark:text-red-400';
+    if (hoursRemaining <= 1) return 'text-yellow-600 dark:text-yellow-400'; // < 1 hora
     return 'text-green-600 dark:text-green-400';
   };
 
+  // Usar dados reais do SLA calculado no backend
+  const hoursRemaining = ticket.slaHoursRemaining || 0;
+  const hoursTotal = ticket.slaHoursTotal || 4;
+  const slaStatus = ticket.slaStatus || 'met';
+  
   const calculateProgress = () => {
-    const elapsed = Date.now() - ticket.createdAt.getTime();
-    const progress = Math.min((elapsed / ticket.slaTarget) * 100, 100);
-    return Math.max(progress, 0);
+    if (hoursTotal <= 0) return 0;
+    const hoursElapsed = hoursTotal - hoursRemaining;
+    const progress = (hoursElapsed / hoursTotal) * 100;
+    return Math.min(Math.max(progress, 0), 100);
   };
 
   const progress = calculateProgress();
-  const isViolation = ticket.timeRemaining < 0;
-  const isUrgent = ticket.timeRemaining > 0 && ticket.timeRemaining < 60 * 60 * 1000; // menos de 1 hora
+  const isViolation = slaStatus === 'violated';
+  const isUrgent = slaStatus === 'at_risk';
   const isCritical = ticket.priority === 'critical';
 
   // Determinar estilo do card baseado na criticidade
@@ -101,7 +111,7 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2 flex-wrap gap-1">
             <span className="text-sm font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-              #{ticket.id}
+              {ticket.ticketNumber}
             </span>
             
             {/* Indicadores de Status Crítico */}
@@ -139,7 +149,7 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
             isCritical ? 'text-orange-800 dark:text-orange-200' :
             'text-slate-900 dark:text-slate-100'
           }`}>
-            {ticket.title}
+            {ticket.subject}
           </h3>
         </div>
       </div>
@@ -154,7 +164,7 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
           {statusLabels[ticket.status]}
         </span>
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
-          {ticket.department}
+          {ticket.department?.name || 'N/A'}
         </span>
       </div>
 
@@ -174,7 +184,7 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
                 ? 'bg-orange-500 text-white'
                 : 'bg-green-500 text-white'
           }`}>
-            {formatTimeRemaining(ticket.timeRemaining)}
+            {formatTimeRemaining(hoursRemaining)}
           </div>
         </div>
         
@@ -211,7 +221,7 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
             {progress.toFixed(1)}% do tempo utilizado
           </span>
           <span className="text-slate-500 dark:text-slate-400">
-            Meta: {Math.round(ticket.slaTarget / (1000 * 60 * 60))}h
+            Meta: {hoursTotal}h
           </span>
         </div>
       </div>
@@ -224,11 +234,11 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
             isCritical ? 'bg-orange-500' : 
             'bg-blue-500'
           }`}>
-            {ticket.assignee.split(' ').map(n => n[0]).join('')}
+            {ticket.assignedToUser?.name ? ticket.assignedToUser.name.split(' ').map(n => n[0]).join('') : 'NA'}
           </div>
           <div>
             <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {ticket.assignee}
+              {ticket.assignedToUser?.name || 'Não atribuído'}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               Responsável
@@ -261,7 +271,7 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
                 window.location.href = `/?ticket=${ticket.id}&action=urgent`;
                 // Mostrar toast de alerta
                 const event = new CustomEvent('show-urgent-alert', { 
-                  detail: { ticketId: ticket.id, title: ticket.title } 
+                  detail: { ticketId: ticket.id, title: ticket.subject } 
                 });
                 window.dispatchEvent(event);
               }}

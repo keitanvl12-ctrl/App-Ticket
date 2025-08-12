@@ -1015,7 +1015,7 @@ export class DatabaseStorage implements IStorage {
       return {
         ...ticket,
         slaStatus,
-        slaHoursRemaining: Math.round(hoursRemaining * 100) / 100,
+        slaHoursRemaining: hoursRemaining > 0 ? Math.round(hoursRemaining * 100) / 100 : 0,
         slaHoursTotal: slaHours,
         slaSource
       };
