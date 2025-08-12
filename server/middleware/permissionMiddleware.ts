@@ -23,7 +23,7 @@ const ROLE_PERMISSIONS = {
   supervisor: {
     canManageUsers: true, // Só do seu departamento
     canViewAllTickets: false,
-    canViewDepartmentTickets: true, // Todos do departamento
+    canViewDepartmentTickets: true, // Todos do departamento - FUNCIONAL
     canManageTickets: true,
     canViewReports: true,
     canManageSystem: false,

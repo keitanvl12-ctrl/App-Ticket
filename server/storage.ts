@@ -1320,8 +1320,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDashboardStats(filters?: any): Promise<DashboardStats> {
-    // Build filter conditions
-    const conditions = [];
+    // Build filter conditions - always exclude deleted tickets
+    const conditions = [
+      ne(tickets.status, 'deleted') // Only active tickets
+    ];
     
     if (filters?.priority && filters.priority !== 'all') {
       conditions.push(eq(tickets.priority, filters.priority));
@@ -1338,22 +1340,20 @@ export class DatabaseStorage implements IStorage {
       const endDate = endOfDay(filterDate);
       conditions.push(
         and(
-          gte(tickets.createdAt, startDate),
-          lte(tickets.createdAt, endDate)
+          gte(tickets.created_at, startDate),
+          lte(tickets.created_at, endDate)
         )
       );
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = and(...conditions);
     
     // Get total tickets with filters
     let totalTicketsQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
       totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
     }
-    if (whereClause) {
-      totalTicketsQuery = totalTicketsQuery.where(whereClause);
-    }
+    totalTicketsQuery = totalTicketsQuery.where(whereClause);
     const totalTicketsResult = await totalTicketsQuery;
     const totalTickets = totalTicketsResult[0]?.count || 0;
 
@@ -1414,20 +1414,21 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
+    // Add condition to exclude deleted tickets
+    baseConditions.push(ne(tickets.status, 'deleted'));
+
     // Get total with filters (excluding priority filter)
     let totalQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
       totalQuery = totalQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
     }
-    if (baseConditions.length > 0) {
-      totalQuery = totalQuery.where(and(...baseConditions));
-    }
+    totalQuery = totalQuery.where(and(...baseConditions));
     const totalTicketsResult = await totalQuery;
     const total = totalTicketsResult[0]?.count || 1;
 
     // Function to get priority count
     const getPriorityCount = async (priority: string) => {
-      const conditions = [...baseConditions, eq(tickets.priority, priority)];
+      const conditions = [...baseConditions, eq(tickets.priority, priority), ne(tickets.status, 'deleted')];
       let query = db.select({ count: count() }).from(tickets);
       if (filters?.department && filters.department !== 'all') {
         query = query.leftJoin(users, eq(tickets.assigned_to, users.id));
@@ -1473,6 +1474,9 @@ export class DatabaseStorage implements IStorage {
         createdConditions.push(eq(users.department_id, filters.department));
       }
 
+      // Add condition to exclude deleted tickets
+      createdConditions.push(ne(tickets.status, 'deleted'));
+
       // Get created tickets count
       let createdQuery = db.select({ count: count() }).from(tickets);
       if (filters?.department && filters.department !== 'all') {
@@ -1496,6 +1500,9 @@ export class DatabaseStorage implements IStorage {
       if (filters?.department && filters.department !== 'all') {
         resolvedConditions.push(eq(users.department_id, filters.department));
       }
+
+      // Add condition to exclude deleted tickets
+      resolvedConditions.push(ne(tickets.status, 'deleted'));
 
       // Get resolved tickets count
       let resolvedQuery = db.select({ count: count() }).from(tickets);
@@ -1790,14 +1797,14 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: string): Promise<boolean> {
     try {
       // First, delete related records (tickets, comments, etc.)
-      await db.delete(tickets).where(eq(tickets.assignedTo, id));
-      await db.delete(tickets).where(eq(tickets.requesterId, id));
-      await db.delete(comments).where(eq(comments.authorId, id));
+      await db.delete(tickets).where(eq(tickets.assigned_to, id));
+      await db.delete(tickets).where(eq(tickets.requester_id, id));
+      await db.delete(comments).where(eq(comments.user_id, id));
       
       // Then delete the user
-      await db.delete(users).where(eq(users.id, id));
+      const result = await db.delete(users).where(eq(users.id, id));
       
-      return true;
+      return result.rowCount !== null && result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting user:', error);
       return false;
