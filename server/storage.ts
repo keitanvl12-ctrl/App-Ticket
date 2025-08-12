@@ -1016,18 +1016,7 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Debug log para ticket específico
-      if (ticket.ticketNumber === 'TICK-005400') {
-        console.log('DEBUG SLA Calculation for', ticket.ticketNumber, {
-          elapsedHours: Math.round(elapsedHours * 100) / 100,
-          slaHours,
-          progressPercentage: Math.round(progressPercentage * 100) / 100,
-          cappedProgressPercentage: Math.round(cappedProgressPercentage * 100) / 100,
-          slaStatus,
-          createdAt: ticket.createdAt,
-          now: now.toISOString()
-        });
-      }
+
 
       return {
         ...ticket,

@@ -27,6 +27,17 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   
   const ticket = tickets.find((t: any) => t.id === ticketId);
 
+  // Debug log para o ticket TICK-005400
+  if (ticket && ticket.ticketNumber === 'TICK-005400') {
+    console.log('DEBUG Modal - ticket data:', {
+      ticketNumber: ticket.ticketNumber,
+      slaProgressPercent: ticket.slaProgressPercent,
+      slaStatus: ticket.slaStatus,
+      slaHoursTotal: ticket.slaHoursTotal,
+      slaHoursRemaining: ticket.slaHoursRemaining
+    });
+  }
+
   // Buscar comentários do ticket
   const { data: comments, isLoading: commentsLoading } = useQuery<any[]>({
     queryKey: ['/api/tickets', ticketId, 'comments'],
