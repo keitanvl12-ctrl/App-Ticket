@@ -544,43 +544,6 @@ export default function KanbanBoard() {
     return config?.name || priority;
   };
 
-  // Funções SLA conectadas ao banco de dados com nova hierarquia
-  const getSLAStatusColor = (ticket: any) => {
-    if (!ticket.slaStatus) return 'bg-gray-500';
-    
-    switch (ticket.slaStatus) {
-      case 'violated': return 'bg-red-500';
-      case 'at_risk': return 'bg-orange-500'; 
-      case 'met': return 'bg-green-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getSLATimeRemaining = (ticket: any) => {
-    if (!ticket.slaHoursRemaining && ticket.slaHoursRemaining !== 0) return '-';
-    
-    if (ticket.slaHoursRemaining <= 0) return 'Vencido';
-    if (ticket.slaHoursRemaining < 1) return `${Math.ceil(ticket.slaHoursRemaining * 60)}min`;
-    if (ticket.slaHoursRemaining < 24) return `${Math.ceil(ticket.slaHoursRemaining)}h`;
-    return `${Math.ceil(ticket.slaHoursRemaining / 24)}d`;
-  };
-
-  const getSLAStatus = (ticket: any) => {
-    if (!ticket.slaStatus) return 'N/A';
-    
-    switch (ticket.slaStatus) {
-      case 'violated': return 'Vencido';
-      case 'at_risk': return 'Em Risco';
-      case 'met': return 'No Prazo';
-      default: return 'N/A';
-    }
-  };
-
-  // Função para exibir fonte do SLA (debug/informativo)
-  const getSLASource = (ticket: any) => {
-    return ticket.slaSource || 'padrão (4h)';
-  };
-
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = (ticket.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (ticket.ticketNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1082,35 +1045,12 @@ export default function KanbanBoard() {
                             </div>
                           </div>
 
-                          {/* Priority Badge and SLA */}
+                          {/* Priority Badge */}
                           <div className="flex items-center justify-between">
                             <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
                               {getPriorityLabel(ticket.priority)}
                             </Badge>
                             <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
-                          </div>
-
-                          {/* SLA Status */}
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                            <div className="flex items-center space-x-1">
-                              <div className={`w-2 h-2 rounded-full ${getSLAStatusColor(ticket)}`}></div>
-                              <span className="text-xs text-gray-600">SLA: {getSLATimeRemaining(ticket)}</span>
-                            </div>
-                            <span className="text-xs text-gray-400">{getSLAStatus(ticket)}</span>
-                          </div>
-
-                          {/* Progress Bar */}
-                          <div className="space-y-1">
-                            <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div 
-                                className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(ticket)}`}
-                                style={{ width: `${calculateSLAProgress(ticket)}%` }}
-                              />
-                            </div>
-                            <div className="flex justify-between text-xs text-gray-500">
-                              <span>Progresso SLA</span>
-                              <span>{Math.round(calculateSLAProgress(ticket))}%</span>
-                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -1253,7 +1193,6 @@ export default function KanbanBoard() {
           isOpen={finalizationModal.isOpen}
           ticket={finalizationModal.ticket}
           onClose={() => setFinalizationModal({ isOpen: false, ticket: null })}
-          onConfirm={handleFinalizationConfirm}
         />
       )}
 
