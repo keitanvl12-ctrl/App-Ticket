@@ -40,6 +40,7 @@ import RolesManagement from "@/pages/RolesManagement";
 import HierarchyDemo from "@/components/HierarchyDemo";
 import { PermissionGuard, AdminOnly, SupervisorOnly } from "@/components/PermissionGuard";
 import { useEffect, useState } from "react";
+import { useWebSocket } from "./hooks/useWebSocket";
 
 // Simple auth check
 const useAuth = () => {
