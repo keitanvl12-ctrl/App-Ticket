@@ -302,13 +302,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                     <span className="text-sm">
                       {ticket.slaProgressPercent !== undefined ? 
                         `${Math.round(ticket.slaProgressPercent)}%` :
-                        (ticket.slaHoursRemaining !== undefined ? 
-                          (ticket.slaHoursRemaining > 0 ? 
-                            `${Math.ceil(ticket.slaHoursRemaining)}h restantes` : 
-                            'Vencido'
-                          ) : 
-                          'N/A'
-                        )
+                        'N/A'
                       }
                     </span>
                   </div>
@@ -323,9 +317,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                       style={{ 
                         width: `${ticket.slaProgressPercent !== undefined ? 
                           Math.min(Math.max(ticket.slaProgressPercent, 0), 100) :
-                          (ticket.slaHoursTotal && ticket.slaHoursRemaining !== undefined ? 
-                            Math.min(((ticket.slaHoursTotal - ticket.slaHoursRemaining) / ticket.slaHoursTotal) * 100, 100) : 
-                            0)
+                          0
                         }%` 
                       }}
                     />

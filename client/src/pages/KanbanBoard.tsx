@@ -536,28 +536,13 @@ export default function KanbanBoard() {
 
   // Funções SLA - Usando dados calculados pelo backend
   const getSLAProgressPercentage = (ticket: any) => {
-
-    
-    // Usar dados SLA calculados pelo backend se disponíveis
+    // SEMPRE usar dados SLA calculados pelo backend
     if (ticket.slaProgressPercent !== undefined && ticket.slaProgressPercent !== null) {
-      return Math.max(Math.min(ticket.slaProgressPercent, 100), 0);
+      return ticket.slaProgressPercent;
     }
     
-    // Se o ticket tem dados SLA do backend, usar eles
-    if (ticket.slaData && ticket.slaData.minutesElapsed !== undefined && ticket.slaData.slaLimitMinutes) {
-      const progress = (ticket.slaData.minutesElapsed / ticket.slaData.slaLimitMinutes) * 100;
-      return Math.max(Math.min(progress, 100), 0);
-    }
-    
-    // Fallback: usar dados básicos se não houver dados detalhados do SLA
-    if (!ticket.slaHoursTotal || ticket.slaHoursTotal <= 0) return 0;
-    if (ticket.status === 'resolved') return 100;
-    
-    const now = new Date();
-    const createdAt = new Date(ticket.createdAt);
-    const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-    const progressPercentage = Math.min((hoursElapsed / ticket.slaHoursTotal) * 100, 100);
-    return Math.max(progressPercentage, 0);
+    // Fallback apenas se o backend não enviar dados
+    return 0;
   };
 
   const getSLAProgressColor = (ticket: any) => {
