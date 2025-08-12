@@ -1001,7 +1001,7 @@ export class DatabaseStorage implements IStorage {
       const now = new Date();
       const createdAt = new Date(ticket.createdAt);
       const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-      const hoursRemaining = slaHours - hoursElapsed;
+      const hoursRemaining = Math.max(slaHours - hoursElapsed, -999); // Limitar valores negativos extremos
 
       // Determinar status do SLA
       let slaStatus: 'met' | 'at_risk' | 'violated' = 'met';
@@ -1015,7 +1015,7 @@ export class DatabaseStorage implements IStorage {
       return {
         ...ticket,
         slaStatus,
-        slaHoursRemaining: hoursRemaining > 0 ? Math.round(hoursRemaining * 100) / 100 : 0,
+        slaHoursRemaining: Math.round(hoursRemaining * 100) / 100,
         slaHoursTotal: slaHours,
         slaSource
       };

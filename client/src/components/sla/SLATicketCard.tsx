@@ -2,21 +2,15 @@ import React from 'react';
 import Icon from '../AppIcon';
 import Button from '../Button';
 
-interface SLATicket {
-  id: string;
-  title: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  status: 'open' | 'in_progress' | 'pending' | 'resolved';
-  department: string;
-  createdAt: Date;
-  slaTarget: number; // em milliseconds
-  timeRemaining: number; // em milliseconds (negativo = violação)
-  assignee: string;
-  escalated: boolean;
-}
+import { TicketWithDetails } from '@shared/schema';
 
 interface SLATicketCardProps {
-  ticket: SLATicket;
+  ticket: TicketWithDetails & {
+    slaHoursRemaining?: number;
+    slaHoursTotal?: number;
+    slaStatus?: 'met' | 'at_risk' | 'violated';
+    slaSource?: string;
+  };
 }
 
 export default function SLATicketCard({ ticket }: SLATicketCardProps) {
@@ -310,7 +304,7 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
       {/* Created Time */}
       <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          Criado em {ticket.createdAt.toLocaleString('pt-BR')}
+          Criado em {new Date(ticket.createdAt).toLocaleString('pt-BR')}
         </span>
       </div>
     </div>
