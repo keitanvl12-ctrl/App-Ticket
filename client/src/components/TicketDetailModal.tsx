@@ -41,6 +41,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   const ticket = (tickets as any[])?.find((t: any) => t.id === ticketId);
 
   console.log("Ticket data:", ticket);
+  console.log("Ticket assignedToUser:", ticket?.assignedToUser);
   console.log("FormData raw:", ticket?.formData);
 
   // Parse form data if available
@@ -60,6 +61,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
       console.log("🔄 Attempting assignment:", { ticketId, assignedTo });
       const result = await apiRequest(`/api/tickets/${ticketId}/assign`, 'PATCH', { assignedTo });
       console.log("✅ Assignment result:", result);
+      console.log("✅ Assignment result assignedToUser:", result?.assignedToUser);
       return result;
     },
     onSuccess: (data) => {

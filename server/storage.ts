@@ -846,10 +846,15 @@ export class DatabaseStorage implements IStorage {
     if (!ticket) return undefined;
 
     // Get assigned user
+    console.log("🔍 Ticket assignedTo field:", ticket.assignedTo);
     let assignedToUser = null;
     if (ticket.assignedTo) {
+      console.log("🔍 Getting assigned user for:", ticket.assignedTo);
       const [assignedUser] = await db.select().from(users).where(eq(users.id, ticket.assignedTo));
       assignedToUser = assignedUser || null;
+      console.log("🔍 Found assigned user:", assignedToUser?.name || 'Not found');
+    } else {
+      console.log("🔍 No assignedTo field in ticket");
     }
 
     // Get comments

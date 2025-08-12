@@ -175,17 +175,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("ASSIGN - Usuário encontrado:", assignedUser.name);
       }
       
-      const ticket = await storage.updateTicket(ticketId, { 
+      // Update ticket assignment
+      const updatedTicket = await storage.updateTicket(ticketId, { 
         assignedTo: assignedTo || null,
         updatedAt: new Date()
       });
       
-      if (!ticket) {
+      if (!updatedTicket) {
         console.log("ASSIGN - Ticket não encontrado:", ticketId);
         return res.status(404).json({ message: "Ticket não encontrado" });
       }
       
+      // Get full ticket details with user info
+      const ticket = await storage.getTicket(ticketId);
+      
+      if (!ticket) {
+        console.log("ASSIGN - Erro ao buscar detalhes do ticket:", ticketId);
+        return res.status(404).json({ message: "Ticket não encontrado" });
+      }
+      
       console.log("ASSIGN - Sucesso:", { ticketId, assignedTo, ticketNumber: ticket.ticketNumber });
+      console.log("ASSIGN - Ticket assignedToUser:", ticket.assignedToUser);
       
       // Notify WebSocket clients of ticket assignment
       const wsServer = getWebSocketServer();
