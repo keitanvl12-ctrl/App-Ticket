@@ -548,7 +548,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-500">
-                          SLA: {slaData.slaHours}h {slaData.source}
+                          Meta: {slaData.slaHours}h ({slaData.source.includes('regra SLA') ? 'configurado' : slaData.source.replace('padrão (', '').replace(')', '').replace('h', '')})
                         </span>
                         <span className={slaData.isViolation ? 'text-red-600 font-medium' : 'text-gray-500'}>
                           {formatTimeRemaining(slaData.timeRemaining, slaData.isViolation)}
