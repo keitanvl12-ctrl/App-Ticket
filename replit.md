@@ -98,6 +98,16 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 
 # Recent Changes (August 2025)
 
+## Sistema de Atualização em Tempo Real Implementado (12/08/2025)
+- ✓ WebSocket conectado no Dashboard (/ws endpoint) 
+- ✓ Notificações automáticas quando tickets são criados/atualizados/finalizados
+- ✓ Invalidação automática do cache do React Query após mudanças
+- ✓ Auto-refresh a cada 30 segundos como backup
+- ✓ Corrigido inconsistência entre status português/inglês (resolved vs Resolvido)
+- ✓ Campo resolvedAt agora é definido corretamente quando tickets são finalizados
+- ✓ Dashboard atualiza instantaneamente "Resolvidos Hoje" após resolver tickets no Kanban
+- ✓ Sistema sincronizado em tempo real entre todas as telas (Dashboard ↔ Kanban)
+
 ## SLA Monitor Totalmente Funcional (12/08/2025)
 - ✓ Botão "Ver Detalhes" abre tickets em pop-up modal no SLA Monitor
 - ✓ Todos os botões funcionais: escalar, histórico, configuração e alertas

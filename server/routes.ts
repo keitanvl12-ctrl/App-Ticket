@@ -232,8 +232,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Atualizar o ticket com status resolvido e dados de finalização
       const updateData = {
-        status: status || 'Resolvido',
+        status: status || 'resolved',
         progress: progress || 100,
+        resolvedAt: new Date(),
         // Salvar dados de finalização nos metadados ou campos específicos
         finalizationComment: finalizationData?.comment,
         hoursSpent: finalizationData?.hoursSpent,
@@ -252,8 +253,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Notify WebSocket clients of ticket finalization
       const wsServer = getWebSocketServer();
       if (wsServer) {
+        console.log('Sending WebSocket notification for ticket finalization:', ticket.id);
         wsServer.broadcastUpdate('ticket_updated', { ticket, action: 'finalized' });
         wsServer.notifyDashboardUpdate();
+        console.log('WebSocket notification sent');
+      } else {
+        console.log('WebSocket server not available');
       }
       
       res.json({ success: true, ticket });
