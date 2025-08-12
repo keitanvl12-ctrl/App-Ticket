@@ -195,7 +195,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{ticket.category}</p>
+                <p className="text-sm">{ticket.category || 'Não definido'}</p>
               </CardContent>
             </Card>
           </div>
@@ -231,12 +231,12 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                       <div className="flex items-start space-x-3">
                         <Avatar className="w-6 h-6">
                           <AvatarFallback className="text-xs bg-gradient-to-br from-[#2c4257] to-[#6b8fb0] text-white">
-                            {comment.authorName?.slice(0, 2).toUpperCase()}
+                            {comment.user?.name?.slice(0, 2).toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <span className="text-sm font-medium">{comment.authorName}</span>
+                            <span className="text-sm font-medium">{comment.user?.name || 'Usuário'}</span>
                             <span className="text-xs text-gray-500">
                               {format(new Date(comment.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                             </span>
