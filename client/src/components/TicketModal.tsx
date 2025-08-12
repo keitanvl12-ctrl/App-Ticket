@@ -42,6 +42,56 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     equipmentRetired: '',
     materialsUsed: ''
   });
+
+  // Função para calcular horas trabalhadas (tempo ativo - tempo pausado)
+  const calculateWorkedHours = () => {
+    if (!ticket.createdAt) return '0:00';
+    
+    const createdAt = new Date(ticket.createdAt);
+    const now = new Date();
+    
+    // Calcular tempo total em milissegundos
+    let totalActiveTime = now.getTime() - createdAt.getTime();
+    
+    // Se há comentários, verificar tempos de pausa
+    if (comments && comments.length > 0) {
+      let pausedTime = 0;
+      let pauseStart = null;
+      
+      // Ordenar comentários por data
+      const sortedComments = [...comments].sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      for (const comment of sortedComments) {
+        const commentTime = new Date(comment.createdAt).getTime();
+        
+        // Detectar início de pausa
+        if (comment.content.includes('PAUSADO') || comment.content.includes('PAUSA')) {
+          pauseStart = commentTime;
+        }
+        
+        // Detectar fim de pausa
+        if ((comment.content.includes('RETOMADO') || comment.content.includes('REABERTO')) && pauseStart) {
+          pausedTime += commentTime - pauseStart;
+          pauseStart = null;
+        }
+      }
+      
+      // Se ainda está pausado
+      if (ticket.status === 'on_hold' && pauseStart) {
+        pausedTime += now.getTime() - pauseStart;
+      }
+      
+      totalActiveTime -= pausedTime;
+    }
+    
+    // Converter para horas e minutos
+    const hours = Math.floor(totalActiveTime / (1000 * 60 * 60));
+    const minutes = Math.floor((totalActiveTime % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -784,22 +834,29 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
 
       {/* Modal de Finalização Melhorado */}
       <Dialog open={showFinalization} onOpenChange={setShowFinalization}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-3">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-              <span>Finalizar Ticket {ticket.ticketNumber}</span>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-gray-200 pb-4">
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-7 h-7 text-green-600" />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Finalizar Ticket {ticket.ticketNumber}</h2>
+                  <p className="text-sm text-gray-600 mt-1">{ticket.title}</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-3 py-1">
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Finalização
+              </Badge>
             </DialogTitle>
-            <div className="text-sm text-gray-600">
-              {ticket.subject}
-            </div>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
             {/* Comentário de Resolução */}
-            <div>
-              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                Comentário de Finalização *
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700 flex items-center">
+                <FileText className="w-4 h-4 mr-2 text-blue-500" />
+                Comentário de Resolução *
               </Label>
               <Textarea
                 value={finalizationData.resolutionComment}
@@ -807,10 +864,15 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                   ...finalizationData,
                   resolutionComment: e.target.value
                 })}
-                placeholder="Descreva como o problema foi resolvido..."
-                className="min-h-[100px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Descreva detalhadamente:
+• Qual foi a causa raiz do problema?
+• Quais passos foram tomados para resolver?
+• Como foi validada a solução?
+• Há alguma recomendação para prevenir reincidência?"
+                className="min-h-[120px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 required
               />
+              <p className="text-xs text-gray-500">Campo obrigatório - seja específico na descrição da resolução</p>
             </div>
 
             {/* Apontamento de Horas */}
@@ -818,17 +880,29 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
               <Label className="text-sm font-semibold text-gray-700 mb-2 block">
                 Apontamento de Horas (Calculado automaticamente)
               </Label>
-              <div className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <Clock className="w-5 h-5 text-gray-400 mr-3" />
-                <span className="text-gray-600 font-medium">04:30</span>
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Clock className="w-6 h-6 text-amber-600" />
+                  <div>
+                    <span className="text-2xl font-mono font-bold text-amber-700">
+                      {calculateWorkedHours()}
+                    </span>
+                    <p className="text-xs text-amber-600 mt-1">Tempo de trabalho efetivo</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-amber-700">Calculado automaticamente</p>
+                  <p className="text-xs text-amber-600">Excluindo tempo de pausas</p>
+                </div>
               </div>
             </div>
 
             {/* Grid para Equipamentos e Materiais */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Equipamentos Retirados */}
-              <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-gray-700 flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-2 text-orange-500" />
                   Equipamentos Retirados
                 </Label>
                 <Textarea
@@ -837,14 +911,17 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     ...finalizationData,
                     equipmentRetired: e.target.value
                   })}
-                  placeholder="Liste os equipamentos retirados, se houver..."
-                  className="min-h-[80px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Ex: Desktop Dell OptiPlex 3070
+Modelo: ABC123
+Patrimônio: 001234"
+                  className="min-h-[100px] resize-none border-gray-300 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
 
               {/* Materiais Utilizados */}
-              <div>
-                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-gray-700 flex items-center">
+                  <FileText className="w-4 h-4 mr-2 text-blue-500" />
                   Materiais Utilizados
                 </Label>
                 <Textarea
@@ -853,31 +930,38 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     ...finalizationData,
                     materialsUsed: e.target.value
                   })}
-                  placeholder="Liste os materiais utilizados..."
-                  className="min-h-[80px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Ex: Cabo de rede CAT6 - 2m
+Conector RJ45 - 2 unidades
+Abraçadeira plástica - 5 unidades"
+                  className="min-h-[100px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
             </div>
 
             {/* Botões de Ação */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowFinalization(false);
-                  setFinalizationData({
-                    resolutionComment: '',
-                    hoursWorked: '',
-                    equipmentRetired: '',
-                    materialsUsed: ''
-                  });
-                }}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                <XCircle className="w-4 h-4 mr-2" />
-                Cancelar
-              </Button>
-              <Button
+            <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <div className="text-sm text-gray-500">
+                <p className="font-medium">Tempo total de trabalho: <span className="text-amber-600 font-mono">{calculateWorkedHours()}</span></p>
+                <p>Este ticket será marcado como <span className="font-medium text-green-600">Resolvido</span></p>
+              </div>
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowFinalization(false);
+                    setFinalizationData({
+                      resolutionComment: '',
+                      hoursWorked: '',
+                      equipmentRetired: '',
+                      materialsUsed: ''
+                    });
+                  }}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button
                 onClick={async () => {
                   if (!finalizationData.resolutionComment.trim()) {
                     toast({
@@ -890,9 +974,12 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
 
                   try {
                     // Criar comentário detalhado de finalização
+                    const workedHours = calculateWorkedHours();
                     const finalizationComment = `🔧 FINALIZAÇÃO DO TICKET
 
 **Resolução:** ${finalizationData.resolutionComment}
+
+**Tempo Trabalhado:** ${workedHours} (tempo efetivo, excluindo pausas)
 
 ${finalizationData.equipmentRetired ? `**Equipamentos Retirados:**
 ${finalizationData.equipmentRetired}
@@ -957,11 +1044,13 @@ ${finalizationData.materialsUsed}
                     });
                   }
                 }}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                disabled={!finalizationData.resolutionComment.trim()}
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Finalizar Ticket
               </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
