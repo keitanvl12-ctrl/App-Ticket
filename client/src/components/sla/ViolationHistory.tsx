@@ -13,48 +13,42 @@ interface ViolationRecord {
 }
 
 export default function ViolationHistory() {
-  // Buscar tickets reais
+  // Buscar dados reais dos tickets
   const { data: tickets = [] } = useQuery<any[]>({
-    queryKey: ['/api/tickets'],
+    queryKey: ['/api/tickets']
   });
 
-  // Buscar departamentos
   const { data: departments = [] } = useQuery<any[]>({
-    queryKey: ['/api/departments'],
+    queryKey: ['/api/departments']
   });
 
-  // Buscar usuários
-  const { data: users = [] } = useQuery<any[]>({
-    queryKey: ['/api/users'],
+  const { data: priorityConfigs = [] } = useQuery<any[]>({
+    queryKey: ['/api/config/priority']
   });
 
-  // Calcular violações SLA baseadas em tickets reais
+  // Calcular violações SLA baseado em tickets reais
   const violations: ViolationRecord[] = tickets
     .filter(ticket => {
-      // Tickets que violaram SLA (criados há mais tempo que o esperado e ainda abertos)
+      // Considerar tickets com mais de 24 horas como violação de SLA
       const createdAt = new Date(ticket.createdAt);
-      const now = new Date();
-      const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-      
-      // SLA baseado na prioridade: crítica=4h, alta=24h, média=72h, baixa=168h
-      let slaHours = 168; // padrão para baixa
-      if (ticket.priority === 'critica') slaHours = 4;
-      else if (ticket.priority === 'alta') slaHours = 24;
-      else if (ticket.priority === 'media') slaHours = 72;
-      
-      const isViolated = hoursSinceCreated > slaHours;
-      const isOpen = ticket.status !== 'resolvido' && ticket.status !== 'fechado';
-      
-      return isViolated || (!isOpen && hoursSinceCreated > slaHours);
+      const hoursOld = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+      return hoursOld > 24 && ticket.status !== 'resolvido';
     })
     .map(ticket => {
       const dept = departments.find(d => d.id === ticket.departmentId);
+      const priority = priorityConfigs.find(p => p.id === ticket.priority);
       
       // Determinar impacto baseado na prioridade
       let impact: 'low' | 'medium' | 'high' = 'medium';
-      if (ticket.priority === 'critica') impact = 'high';
-      else if (ticket.priority === 'baixa') impact = 'low';
-      
+      if (priority) {
+        const priorityName = priority.name.toLowerCase();
+        if (priorityName.includes('crítica') || priorityName.includes('critical')) {
+          impact = 'high';
+        } else if (priorityName.includes('baixa') || priorityName.includes('low')) {
+          impact = 'low';
+        }
+      }
+
       return {
         id: ticket.id,
         ticketId: ticket.ticketNumber,
@@ -96,6 +90,25 @@ export default function ViolationHistory() {
     }
   };
 
+  // Calcular estatísticas
+  const todayViolations = violations.filter(v => {
+    const today = new Date();
+    const violationDate = new Date(v.violationTime);
+    return violationDate.toDateString() === today.toDateString();
+  }).length;
+
+  const weekViolations = violations.filter(v => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return new Date(v.violationTime) >= weekAgo;
+  }).length;
+
+  const monthViolations = violations.filter(v => {
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    return new Date(v.violationTime) >= monthAgo;
+  }).length;
+
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
       <div className="flex items-center justify-between mb-4">
@@ -114,7 +127,13 @@ export default function ViolationHistory() {
         {violations.map((violation) => (
           <div 
             key={violation.id}
-            className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
+            className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer"
+            onClick={() => {
+              const event = new CustomEvent('open-ticket-modal', { 
+                detail: { ticketId: violation.id } 
+              });
+              window.dispatchEvent(event);
+            }}
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
@@ -152,6 +171,18 @@ export default function ViolationHistory() {
         ))}
       </div>
 
+      {violations.length === 0 && (
+        <div className="text-center py-8">
+          <Icon name="CheckCircle" size={48} className="text-green-500 dark:text-green-400 mx-auto mb-3" />
+          <h4 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-1">
+            Nenhuma Violação
+          </h4>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Todos os SLAs estão sendo cumpridos
+          </p>
+        </div>
+      )}
+
       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
         <button 
           className="w-full text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
@@ -167,15 +198,15 @@ export default function ViolationHistory() {
       <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-750 rounded-lg">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-lg font-bold text-red-600 dark:text-red-400">3</p>
+            <p className="text-lg font-bold text-red-600 dark:text-red-400">{todayViolations}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">Hoje</p>
           </div>
           <div>
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">12</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{weekViolations}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">Esta Semana</p>
           </div>
           <div>
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">45</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{monthViolations}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">Este Mês</p>
           </div>
         </div>

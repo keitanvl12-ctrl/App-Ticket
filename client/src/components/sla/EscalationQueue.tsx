@@ -15,51 +15,42 @@ interface EscalationItem {
 }
 
 export default function EscalationQueue() {
-  // Buscar tickets reais
+  // Buscar dados reais dos tickets
   const { data: tickets = [] } = useQuery<any[]>({
-    queryKey: ['/api/tickets'],
+    queryKey: ['/api/tickets']
   });
 
-  // Buscar configurações de prioridade
   const { data: priorityConfigs = [] } = useQuery<any[]>({
-    queryKey: ['/api/config/priority'],
+    queryKey: ['/api/config/priority']
   });
 
-  // Buscar usuários
-  const { data: users = [] } = useQuery<any[]>({
-    queryKey: ['/api/users'],
-  });
-
-  // Filtrar tickets que precisam de escalação (críticos ou altas prioridades em atraso)
+  // Filtrar tickets que precisam de escalação (críticos e alta prioridade com mais de 2 horas)
   const escalationQueue: EscalationItem[] = tickets
     .filter(ticket => {
-      // Tickets com prioridade crítica ou alta que estão em atraso SLA
-      const isHighPriority = ticket.priority === 'critica' || ticket.priority === 'alta';
-      const isOpen = ticket.status !== 'resolvido' && ticket.status !== 'fechado';
-      
-      if (!isHighPriority || !isOpen) return false;
-      
-      // Calcular se está em atraso (mais de 4 horas para crítica, 24h para alta)
+      const priority = priorityConfigs.find(p => p.id === ticket.priority);
+      const isHighPriority = priority && ['crítica', 'alta', 'critical', 'high'].includes(priority.name.toLowerCase());
       const createdAt = new Date(ticket.createdAt);
-      const now = new Date();
-      const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-      
-      if (ticket.priority === 'critica' && hoursSinceCreated > 4) return true;
-      if (ticket.priority === 'alta' && hoursSinceCreated > 24) return true;
-      
-      return false;
+      const hoursOld = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+      return isHighPriority && hoursOld > 2 && ticket.status !== 'resolvido';
     })
-    .map(ticket => ({
-      id: ticket.id,
-      ticketId: ticket.ticketNumber,
-      title: ticket.subject,
-      priority: ticket.priority === 'critica' ? 'critical' : 'high',
-      currentAssignee: ticket.assignedToName || 'Não atribuído',
-      escalationTime: new Date(Date.now() + (Math.random() * 60 + 30) * 60 * 1000), // 30-90 min futuro
-      nextLevel: ticket.priority === 'critica' ? 'Gerência TI' : 'Coordenação',
-      reason: ticket.priority === 'critica' ? 'SLA crítico violado' : 'Sem resposta por tempo excessivo'
-    }))
-    .slice(0, 5); // Limitar a 5 itens
+    .map(ticket => {
+      const priority = priorityConfigs.find(p => p.id === ticket.priority);
+      const priorityLevel = priority?.name.toLowerCase().includes('crítica') || priority?.name.toLowerCase().includes('critical') ? 'critical' : 'high';
+      const createdAt = new Date(ticket.createdAt);
+      const escalationTime = new Date(createdAt.getTime() + (priorityLevel === 'critical' ? 4 : 8) * 60 * 60 * 1000);
+      
+      return {
+        id: ticket.id,
+        ticketId: ticket.ticketNumber,
+        title: ticket.subject,
+        priority: priorityLevel,
+        currentAssignee: ticket.assignedToName || 'Não atribuído',
+        escalationTime,
+        nextLevel: priorityLevel === 'critical' ? 'Diretoria' : 'Gerência',
+        reason: priorityLevel === 'critical' ? 'SLA crítico violado' : 'Tempo limite excedido'
+      };
+    })
+    .slice(0, 10); // Limitar a 10 itens
 
   const priorityColors = {
     high: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
@@ -199,7 +190,7 @@ export default function EscalationQueue() {
                       className="flex-1"
                       onClick={() => {
                         const event = new CustomEvent('open-ticket-modal', { 
-                          detail: { ticketId: item.ticketId } 
+                          detail: { ticketId: item.id } 
                         });
                         window.dispatchEvent(event);
                       }}
