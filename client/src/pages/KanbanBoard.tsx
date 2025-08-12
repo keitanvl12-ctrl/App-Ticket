@@ -12,7 +12,7 @@ import { TicketModal } from '@/components/TicketModal';
 import CreateTicketModal from '@/components/CreateTicketModal';
 import TicketFinalizationModal from '@/components/TicketFinalizationModal';
 import ServiceOrderModal from '@/components/ServiceOrderModal';
-import SLATicketCard from '@/components/sla/SLATicketCard';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   DropdownMenu,
@@ -949,8 +949,8 @@ export default function KanbanBoard() {
                     <TicketModal key={ticket.id} ticket={ticket} onUpdate={(updatedTicket: any) => {
                       // Atualizar lista será feita pela revalidação de query
                     }}>
-                      <div
-                        className="cursor-move hover:shadow-xl transition-all duration-300 border-0 shadow-sm bg-white transform hover:scale-105 active:scale-95 rounded-lg"
+                      <Card 
+                        className="cursor-move hover:shadow-xl transition-all duration-300 border-0 shadow-sm bg-white transform hover:scale-105 active:scale-95"
                         draggable
                         onDragStart={(e) => handleDragStart(e, ticket)}
                         onDragEnd={handleDragEnd}
@@ -959,17 +959,162 @@ export default function KanbanBoard() {
                           willChange: 'transform, box-shadow, opacity'
                         }}
                       >
-                        <SLATicketCard 
-                          ticket={ticket}
-                          slaStatus={ticket.slaStatus || 'met'}
-                          hoursRemaining={ticket.slaHoursRemaining || 0}
-                          hoursTotal={ticket.slaHoursTotal || 0}
-                          onFinalize={(ticketToFinalize) => setFinalizationModal({ isOpen: true, ticket: ticketToFinalize })}
-                          onPause={(ticketToPause) => setPauseModal({ isOpen: true, ticket: ticketToPause })}
-                          onEdit={(ticketToEdit) => {/* Modal já é aberto pelo wrapper TicketModal */}}
-                          onDelete={handleDeleteTicket}
-                        />
-                      </div>
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          {/* Header */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-600">{ticket.ticketNumber}</span>
+                            <div className="flex items-center space-x-1">
+                              {/* Botão Finalizar (apenas para tickets não resolvidos) */}
+                              {ticket.status !== 'resolved' && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="w-6 h-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setFinalizationModal({ isOpen: true, ticket: ticket });
+                                  }}
+                                  title="Finalizar Ticket"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                  </svg>
+                                </Button>
+                              )}
+                              
+                              {/* Botão Pausar/Reativar */}
+                              {ticket.status === 'on_hold' ? (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="w-6 h-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // Lógica para reativar ticket (remover pausa)
+                                    console.log('Reativando ticket:', ticket.id);
+                                  }}
+                                  title="Reativar Ticket"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                  </svg>
+                                </Button>
+                              ) : ticket.status !== 'resolved' && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="w-6 h-6 p-0 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setPauseModal({ isOpen: true, ticket: ticket });
+                                  }}
+                                  title="Pausar Ticket"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                  </svg>
+                                </Button>
+                              )}
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="w-6 h-6 p-0 text-gray-400 hover:text-gray-600"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // O modal é aberto automaticamente pelo wrapper
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteTicket(ticket.id);
+                                    }}
+                                    className="text-red-600"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+
+                          {/* Title */}
+                          <div>
+                            <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 leading-tight">
+                              {ticket.subject}
+                            </h3>
+                            <p className="text-xs text-gray-600 line-clamp-2">
+                              {ticket.description}
+                            </p>
+                          </div>
+
+                          {/* Assignee and Date */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Avatar className="w-6 h-6">
+                                <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                                  {ticket.assignedToUser?.name?.charAt(0) || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs text-gray-600">{ticket.assignedToUser?.name || 'Não atribuído'}</span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(ticket.createdAt).toLocaleDateString('pt-BR')}
+                            </div>
+                          </div>
+
+                          {/* Priority Badge and SLA */}
+                          <div className="flex items-center justify-between">
+                            <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
+                              {getPriorityLabel(ticket.priority)}
+                            </Badge>
+                            <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
+                          </div>
+
+                          {/* SLA Status */}
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                            <div className="flex items-center space-x-1">
+                              <div className={`w-2 h-2 rounded-full ${getSLAStatusColor(ticket)}`}></div>
+                              <span className="text-xs text-gray-600">SLA: {getSLATimeRemaining(ticket)}</span>
+                            </div>
+                            <span className="text-xs text-gray-400">{getSLAStatus(ticket)}</span>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="space-y-1">
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(ticket)}`}
+                                style={{ width: `${calculateSLAProgress(ticket)}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Progresso SLA</span>
+                              <span>{Math.round(calculateSLAProgress(ticket))}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                     </TicketModal>
                   ))}
               </div>
