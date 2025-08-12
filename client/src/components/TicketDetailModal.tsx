@@ -27,16 +27,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   
   const ticket = tickets.find((t: any) => t.id === ticketId);
 
-  // Debug log para o ticket TICK-005400
-  if (ticket && ticket.ticketNumber === 'TICK-005400') {
-    console.log('DEBUG Modal - ticket data:', {
-      ticketNumber: ticket.ticketNumber,
-      slaProgressPercent: ticket.slaProgressPercent,
-      slaStatus: ticket.slaStatus,
-      slaHoursTotal: ticket.slaHoursTotal,
-      slaHoursRemaining: ticket.slaHoursRemaining
-    });
-  }
+
 
   // Buscar comentários do ticket
   const { data: comments, isLoading: commentsLoading } = useQuery<any[]>({
@@ -323,13 +314,10 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                         ticket.slaStatus === 'violated' ? 'bg-red-500' :
                         ticket.slaStatus === 'at_risk' ? 'bg-orange-500' :
                         ticket.slaStatus === 'met' ? 'bg-green-500' :
-                        'bg-blue-500'
+                        'bg-gray-500'
                       }`}
                       style={{ 
-                        width: `${ticket.slaProgressPercent !== undefined ? 
-                          Math.min(Math.max(ticket.slaProgressPercent, 0), 100) :
-                          0
-                        }%` 
+                        width: `${ticket.slaProgressPercent || 0}%` 
                       }}
                     />
                   </div>

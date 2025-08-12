@@ -534,42 +534,27 @@ export default function KanbanBoard() {
     return config?.name || priority;
   };
 
-  // Funções SLA - Usando dados calculados pelo backend
+  // Função SLA - SEMPRE usar dados do backend
   const getSLAProgressPercentage = (ticket: any) => {
-    // SEMPRE usar dados SLA calculados pelo backend
-    if (ticket.slaProgressPercent !== undefined && ticket.slaProgressPercent !== null) {
-      return ticket.slaProgressPercent;
-    }
-    
-    // Fallback apenas se o backend não enviar dados
-    return 0;
+    return ticket.slaProgressPercent || 0;
   };
 
   const getSLAProgressColor = (ticket: any) => {
-    // Usar status SLA calculado pelo backend se disponível
-    if (ticket.slaStatus === 'violated') return 'bg-red-500';
-    if (ticket.slaStatus === 'at_risk') return 'bg-orange-500';
-    if (ticket.slaStatus === 'met') return 'bg-green-500';
-    
-    // Fallback para cálculo baseado em progresso
-    const progress = getSLAProgressPercentage(ticket);
-    if (progress >= 100) return 'bg-red-500'; // Vencido
-    if (progress >= 90) return 'bg-orange-500';  // Em risco
-    if (progress >= 70) return 'bg-yellow-500';  // Atenção
-    return 'bg-green-500'; // No prazo
+    switch (ticket.slaStatus) {
+      case 'violated': return 'bg-red-500';
+      case 'at_risk': return 'bg-orange-500';
+      case 'met': return 'bg-green-500';
+      default: return 'bg-gray-500';
+    }
   };
 
   const getSLAStatusText = (ticket: any) => {
-    // Usar status SLA calculado pelo backend se disponível
-    if (ticket.slaStatus === 'violated') return 'Vencido';
-    if (ticket.slaStatus === 'at_risk') return 'Em risco';
-    if (ticket.slaStatus === 'met') return 'No prazo';
-    
-    // Fallback para cálculo baseado em progresso
-    const progress = getSLAProgressPercentage(ticket);
-    if (progress >= 100) return 'Vencido';
-    if (progress >= 90) return 'Em risco';
-    return 'No prazo';
+    switch (ticket.slaStatus) {
+      case 'violated': return 'Vencido';
+      case 'at_risk': return 'Em risco';
+      case 'met': return 'No prazo';
+      default: return 'N/A';
+    }
   };
 
   const filteredTickets = tickets.filter(ticket => {

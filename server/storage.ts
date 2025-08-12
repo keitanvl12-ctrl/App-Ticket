@@ -1023,7 +1023,7 @@ export class DatabaseStorage implements IStorage {
         slaStatus,
         slaHoursRemaining: remainingHours,
         slaHoursTotal: slaHours,
-        slaProgressPercent: Math.round(cappedProgressPercentage * 100) / 100, // Arredondado para 2 casas decimais
+        slaProgressPercent: cappedProgressPercentage, // SEMPRE usar o valor cappado (0-100)
         slaElapsedHours: Math.round(elapsedHours * 100) / 100, // Para debug
         slaSource
       };
