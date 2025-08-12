@@ -306,30 +306,29 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                               <h4 className="text-sm font-semibold text-gray-800 mb-3">Perguntas Específicas da Categoria</h4>
                               <div className="space-y-3">
                                 {Object.entries(formData.customFields).map(([fieldId, value]) => {
-                                  // Converter nomes técnicos em nomes amigáveis
-                                  const friendlyNames = {
-                                    'steps_to_reproduce': 'Passos para Reproduzir',
-                                    'system_version': 'Versão do Sistema',
-                                    'browser': 'Navegador',
-                                    'affected_users': 'Usuários Afetados',
-                                    'error_frequency': 'Frequência do Erro',
-                                    'priority_justification': 'Justificativa da Prioridade',
-                                    'expected_behavior': 'Comportamento Esperado',
-                                    'actual_behavior': 'Comportamento Atual',
-                                    'environment': 'Ambiente',
-                                    'additional_info': 'Informações Adicionais'
+                                  // Mapeamento direto dos IDs para nomes conhecidos
+                                  const fieldNameMap = {
+                                    'a9a261ac-57aa-4f03-941e-e2e31219be88': 'Justificativa de Negócio',
+                                    'e3db291f-5146-404e-9c97-deed94b6062a': 'Módulo do Sistema',
+                                    '576d5f9a-4e5d-491b-9d9d-f69a5e048775': 'Passos para Reproduzir',
+                                    '2723bfa7-97ec-4ede-9cd4-66e96333d8e8': 'Versão do Sistema',
+                                    'b9029d66-e6f8-445a-b162-b9b2e8eb6229': 'Navegador',
+                                    'e69761b7-4633-469f-ab77-81a31e6e8748': 'Tipo de Equipamento',
+                                    '7ce8caaa-0e67-4e2f-ac76-d60f80fcaea4': 'Número do Patrimônio',
+                                    'ae979ad3-afdb-47ab-8996-320e6aea2994': 'CPF do Funcionário',
+                                    'e808f2c5-809c-4477-82ab-c0f778b2f762': 'Período de Referência'
                                   };
                                   
-                                  const displayName = friendlyNames[fieldId] || fieldId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                  const displayName = fieldNameMap[fieldId] || `Campo ${fieldId.substring(0, 8)}...`;
                                   
                                   return (
-                                    <div key={fieldId} className="flex flex-col space-y-1">
-                                      <span className="text-sm font-medium text-gray-700">{displayName}:</span>
-                                      <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border max-w-full">
+                                    <div key={fieldId} className="flex flex-col space-y-2">
+                                      <span className="text-sm font-semibold text-blue-700">{displayName}:</span>
+                                      <div className="text-sm text-gray-900 bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
                                         {typeof value === 'string' && value.includes('\n') ? (
-                                          <pre className="whitespace-pre-wrap text-xs">{value}</pre>
+                                          <pre className="whitespace-pre-wrap text-sm">{value}</pre>
                                         ) : (
-                                          <span>{value || 'Não informado'}</span>
+                                          <span className="text-sm font-medium">{value || 'Não informado'}</span>
                                         )}
                                       </div>
                                     </div>
