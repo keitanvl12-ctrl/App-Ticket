@@ -705,7 +705,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Get role permissions
-  async getRolePermissions(role: string): Promise<any> {
+  getRolePermissions(role: string): any {
     const rolePermissions = {
       'admin': {
         'Usuários': {
@@ -802,27 +802,37 @@ export class DatabaseStorage implements IStorage {
     return rolePermissions[role] || {};
   }
 
-  // Buscar usuários que podem ser atribuídos a tickets (têm permissão para gerenciar tickets)
+  // Buscar usuários que podem ser atribuídos a tickets
   async getAssignableUsers(): Promise<User[]> {
     try {
       const allUsers = await this.getAllUsers();
       
-      // Filtrar usuários que têm permissão para gerenciar tickets
+      // Filtrar usuários baseado no role - todos os roles principais podem ser responsáveis
       const assignableUsers = allUsers.filter(user => {
-        const rolePermissions = this.getRolePermissions(user.role);
-        const ticketPermissions = rolePermissions['Tickets'];
-        
-        // Verificar se o usuário tem permissão para gerenciar tickets
-        // Inclui admin, supervisor e colaborador (todos podem atender)
-        return ticketPermissions && ticketPermissions['Gerenciar Tickets'] === true;
+        // Admin, supervisor e colaborador podem ser responsáveis por tickets
+        const canBeAssigned = ['admin', 'supervisor', 'colaborador'].includes(user.role);
+        console.log(`Usuario ${user.name} (${user.role}): pode ser responsável? ${canBeAssigned}`);
+        return canBeAssigned;
       });
       
+      console.log("👥 Total de usuários no sistema:", allUsers.length);
       console.log("👥 Usuários que podem ser responsáveis por tickets:", assignableUsers.length);
       assignableUsers.forEach(user => {
         console.log(`  - ${user.name} (${user.role})`);
       });
       
-      return assignableUsers;
+      return assignableUsers.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        departmentId: user.departmentId,
+        isBlocked: user.isBlocked,
+        isActive: user.isActive,
+        lastLoginAt: user.lastLoginAt,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      } as User));
     } catch (error) {
       console.error('Erro ao buscar usuários atribuíveis:', error);
       return [];
