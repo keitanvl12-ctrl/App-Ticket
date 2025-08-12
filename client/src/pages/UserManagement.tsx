@@ -42,6 +42,150 @@ interface User {
   departmentId?: string;
 }
 
+// Modal de Criação de Usuário
+function CreateUserDialog() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch departments
+  const { data: departments = [] } = useQuery({
+    queryKey: ["/api/departments"],
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: { name: string; email: string; role: string; departmentId?: string }) => {
+      return apiRequest('/api/users', 'POST', userData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Usuário criado",
+        description: "O usuário foi criado com sucesso.",
+      });
+      handleClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao criar usuário",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setName('');
+    setEmail('');
+    setRole('');
+    setDepartmentId('');
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name.trim() || !email.trim() || !role) {
+      toast({
+        title: "Erro",
+        description: "Nome, email e função são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createUserMutation.mutate({
+      name: name.trim(),
+      email: email.trim(),
+      role,
+      departmentId: departmentId || undefined
+    });
+  };
+
+  return (
+    <DialogContent className="sm:max-w-[500px]">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Plus className="w-5 h-5 text-green-600" />
+          Criar Novo Usuário
+        </DialogTitle>
+      </DialogHeader>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Nome Completo *</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Digite o nome completo"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="usuario@empresa.com"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="role">Função *</Label>
+          <Select value={role} onValueChange={setRole} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a função do usuário" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Administrador</SelectItem>
+              <SelectItem value="supervisor">Supervisor</SelectItem>
+              <SelectItem value="colaborador">Colaborador</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="department">Departamento</Label>
+          <Select value={departmentId} onValueChange={setDepartmentId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um departamento (opcional)" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((dept: any) => (
+                <SelectItem key={dept.id} value={dept.id}>
+                  {dept.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={createUserMutation.isPending}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {createUserMutation.isPending ? "Criando..." : "Criar Usuário"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
 // Modal de Alteração de Senha
 function PasswordChangeModal({ 
   user, 
@@ -174,6 +318,7 @@ export default function UserManagement() {
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<User | null>(null);
   const [userDetailsModalOpen, setUserDetailsModalOpen] = useState(false);
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<string | null>(null);
+  const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
 
   // Fetch users
   const { data: users = [], isLoading } = useQuery<User[]>({
@@ -217,6 +362,27 @@ export default function UserManagement() {
       toast({
         title: "Erro",
         description: error.message || "Erro ao remover usuário",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: { name: string; email: string; role: string; departmentId?: string }) => {
+      return apiRequest('/api/users', 'POST', userData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Usuário criado",
+        description: "O usuário foi criado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao criar usuário",
         variant: "destructive",
       });
     },
@@ -415,8 +581,17 @@ export default function UserManagement() {
 
       {/* Users Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Lista de Usuários ({filteredUsers.length})</CardTitle>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-green-600 hover:bg-green-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
+            <CreateUserDialog />
+          </Dialog>
         </CardHeader>
         <CardContent>
           <Table>

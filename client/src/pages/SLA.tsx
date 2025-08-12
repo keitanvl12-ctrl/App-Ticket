@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Clock, Target, Zap, Shield, Bell, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,44 +20,77 @@ export default function SLA() {
     timeRange: '24h'
   });
 
-  const slaTickets = [
-    {
-      id: '1',
-      title: 'Sistema de pagamento fora do ar',
-      priority: 'critical' as const,
-      status: 'open' as const,
-      department: 'TI',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      slaTarget: 2 * 60 * 60 * 1000, // 2 horas
-      timeRemaining: -30 * 60 * 1000, // -30 minutos (violação)
-      assignee: 'João Silva',
-      escalated: true
-    },
-    {
-      id: '2',
-      title: 'Erro no módulo de relatórios',
-      priority: 'high' as const,
-      status: 'in_progress' as const,
-      department: 'TI',
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      slaTarget: 8 * 60 * 60 * 1000, // 8 horas
-      timeRemaining: 4 * 60 * 60 * 1000, // 4 horas restantes
-      assignee: 'Maria Santos',
-      escalated: false
-    },
-    {
-      id: '3',
-      title: 'Solicitação de acesso urgente',
-      priority: 'medium' as const,
-      status: 'pending' as const,
-      department: 'RH',
-      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      slaTarget: 24 * 60 * 60 * 1000, // 24 horas
-      timeRemaining: 18 * 60 * 60 * 1000, // 18 horas restantes
-      assignee: 'Carlos Oliveira',
-      escalated: false
-    }
-  ];
+  // Buscar tickets reais da API
+  const { data: realTickets = [], isLoading: ticketsLoading } = useQuery({
+    queryKey: ['/api/tickets'],
+  });
+
+  // Buscar usuários para pegar nomes
+  const { data: users = [] } = useQuery({
+    queryKey: ['/api/users'],
+  });
+
+  // Buscar departamentos para pegar nomes
+  const { data: departments = [] } = useQuery({
+    queryKey: ['/api/departments'],
+  });
+
+  // Criar mapeamento de IDs para nomes
+  const userMap = users.reduce((acc: any, user: any) => {
+    acc[user.id] = user.name;
+    return acc;
+  }, {});
+
+  const departmentMap = departments.reduce((acc: any, dept: any) => {
+    acc[dept.id] = dept.name;
+    return acc;
+  }, {});
+
+  // Transformar tickets reais em formato SLA
+  const slaTickets = realTickets
+    .filter((ticket: any) => ['open', 'in_progress', 'pending'].includes(ticket.status))
+    .map((ticket: any) => {
+      const createdAt = new Date(ticket.created_at);
+      const now = new Date();
+      const elapsedMs = now.getTime() - createdAt.getTime();
+      
+      // Calcular SLA target baseado na prioridade
+      let slaTargetMs = 24 * 60 * 60 * 1000; // 24h default
+      switch(ticket.priority) {
+        case 'critical': slaTargetMs = 2 * 60 * 60 * 1000; break; // 2h
+        case 'high': slaTargetMs = 8 * 60 * 60 * 1000; break; // 8h  
+        case 'medium': slaTargetMs = 24 * 60 * 60 * 1000; break; // 24h
+        case 'low': slaTargetMs = 72 * 60 * 60 * 1000; break; // 72h
+      }
+      
+      const timeRemaining = slaTargetMs - elapsedMs;
+      const isEscalated = timeRemaining < 0 || (ticket.priority === 'critical' && timeRemaining < 60 * 60 * 1000);
+      
+      return {
+        id: ticket.ticket_number || ticket.id,
+        title: ticket.subject,
+        priority: ticket.priority,
+        status: ticket.status, 
+        department: departmentMap[ticket.responsible_department_id] || 'Não definido',
+        assignee: userMap[ticket.assigned_to] || 'Não atribuído',
+        timeRemaining,
+        slaTarget: slaTargetMs,
+        createdAt,
+        escalated: isEscalated
+      };
+    });
+
+  if (ticketsLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   const filteredTickets = slaTickets.filter(ticket => {
     if (filters.priority !== 'all' && ticket.priority !== filters.priority) return false;
@@ -84,11 +118,21 @@ export default function SLA() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => window.location.href = '/sla/alerts'}
+          >
             <Bell className="w-4 h-4" />
             Configurar Alertas
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => window.location.href = '/sla/rules'}
+          >
             <Target className="w-4 h-4" />
             Regras SLA
           </Button>
@@ -105,7 +149,15 @@ export default function SLA() {
                 <strong>{criticalTickets.length} ticket(s) crítico(s)</strong> precisam de ação imediata!
                 Violações ativas ou risco extremo de violação.
               </div>
-              <Button variant="destructive" size="sm" className="ml-4">
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="ml-4"
+                onClick={() => {
+                  // Redirecionar para o kanban board com filtros críticos
+                  window.location.href = '/?priority=critical&status=open';
+                }}
+              >
                 <Zap className="w-4 h-4 mr-2" />
                 Ação Urgente
               </Button>

@@ -237,27 +237,54 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs"
+            onClick={() => window.location.href = `/?ticket=${ticket.id}`}
+          >
             <Icon name="Eye" size={14} className="mr-1" />
             Ver Detalhes
           </Button>
           
           {isViolation && (
-            <Button variant="destructive" size="sm" className="text-xs font-bold animate-pulse">
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="text-xs font-bold animate-pulse"
+              onClick={() => {
+                window.location.href = `/?ticket=${ticket.id}&action=urgent`;
+                // Mostrar toast de alerta
+                const event = new CustomEvent('show-urgent-alert', { 
+                  detail: { ticketId: ticket.id, title: ticket.title } 
+                });
+                window.dispatchEvent(event);
+              }}
+            >
               <Icon name="AlertTriangle" size={14} className="mr-1" />
               AÇÃO URGENTE
             </Button>
           )}
           
           {isCritical && !isViolation && (
-            <Button variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700 text-xs font-bold">
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="bg-orange-600 hover:bg-orange-700 text-xs font-bold"
+              onClick={() => window.location.href = `/?ticket=${ticket.id}&priority=critical`}
+            >
               <Icon name="Zap" size={14} className="mr-1" />
               PRIORITÁRIO
             </Button>
           )}
           
           {isUrgent && !isViolation && !isCritical && (
-            <Button variant="secondary" size="sm" className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold"
+              onClick={() => window.location.href = `/?ticket=${ticket.id}&priority=urgent`}
+            >
               <Icon name="Clock" size={14} className="mr-1" />
               URGENTE
             </Button>
