@@ -180,6 +180,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requesterName: req.body.requesterName || req.body.fullName || currentUser.name,
         requesterEmail: req.body.requesterEmail || req.body.email || currentUser.email,
         requesterPhone: req.body.requesterPhone || req.body.phone || '',
+        // Salvar TODOS os dados do formulário original como JSON
+        formData: JSON.stringify({
+          fullName: req.body.requesterName || req.body.fullName,
+          email: req.body.requesterEmail || req.body.email,
+          phone: req.body.requesterPhone || req.body.phone,
+          requesterDepartment: req.body.requesterDepartment,
+          responsibleDepartment: req.body.responsibleDepartment,
+          category: req.body.category,
+          customFields: req.body.customFields || {},
+          originalRequestBody: req.body // Salvar o corpo completo da requisição
+        }),
         priority: req.body.priority === 'Baixa' || req.body.priority === 'baixa' || req.body.priority === 'low' ? 'low' : 
                   req.body.priority === 'Média' || req.body.priority === 'média' || req.body.priority === 'medium' ? 'medium' :
                   req.body.priority === 'Alta' || req.body.priority === 'alta' || req.body.priority === 'high' ? 'high' :

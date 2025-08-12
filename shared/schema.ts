@@ -61,6 +61,8 @@ export const tickets = pgTable("tickets", {
   requesterName: text("requester_name"), // Nome completo do solicitante
   requesterEmail: text("requester_email"), // E-mail do solicitante
   requesterPhone: text("requester_phone"), // Telefone do solicitante
+  // Dados completos do formulário original como JSON
+  formData: text("form_data"), // JSON com todas as respostas do formulário original
   requesterDepartmentId: varchar("requester_department_id").references(() => departments.id), // Departamento do solicitante (informativo)
   responsibleDepartmentId: varchar("responsible_department_id").references(() => departments.id), // Departamento responsável (determina categorização)
   createdBy: varchar("created_by").references(() => users.id).notNull(),

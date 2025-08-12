@@ -257,25 +257,114 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
             </div>
           </div>
 
-          {/* Custom Fields / Category Questions */}
-          {customFieldValues && customFieldValues.length > 0 && (
+          {/* Dados Completos do Formulário Original */}
+          {ticket.formData && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-semibold flex items-center">
                   <AlertCircle className="w-5 h-5 mr-2" />
-                  Informações Específicas da Categoria
+                  Informações Detalhadas do Formulário
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {customFieldValues.map((fieldValue) => (
-                    <div key={fieldValue.id} className="border-b pb-3 last:border-b-0 last:pb-0">
-                      <div className="flex justify-between items-start">
-                        <span className="text-sm font-medium text-gray-600">{fieldValue.fieldName}:</span>
-                        <span className="text-sm text-gray-900 max-w-xs text-right">{fieldValue.value || 'Não informado'}</span>
-                      </div>
-                    </div>
-                  ))}
+                  {(() => {
+                    try {
+                      const formData = JSON.parse(ticket.formData);
+                      return (
+                        <div className="space-y-4">
+                          {/* Informações Básicas do Solicitante */}
+                          {(formData.fullName || formData.email || formData.phone) && (
+                            <div className="border-b pb-4">
+                              <h4 className="text-sm font-semibold text-gray-800 mb-3">Dados do Solicitante</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                {formData.fullName && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Nome Completo:</span>
+                                    <span className="font-medium">{formData.fullName}</span>
+                                  </div>
+                                )}
+                                {formData.email && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">E-mail:</span>
+                                    <span className="font-medium">{formData.email}</span>
+                                  </div>
+                                )}
+                                {formData.phone && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Telefone:</span>
+                                    <span className="font-medium">{formData.phone}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Campos Customizados da Categoria */}
+                          {formData.customFields && Object.keys(formData.customFields).length > 0 && (
+                            <div className="border-b pb-4">
+                              <h4 className="text-sm font-semibold text-gray-800 mb-3">Perguntas Específicas da Categoria</h4>
+                              <div className="space-y-3">
+                                {Object.entries(formData.customFields).map(([fieldId, value]) => {
+                                  // Converter nomes técnicos em nomes amigáveis
+                                  const friendlyNames = {
+                                    'steps_to_reproduce': 'Passos para Reproduzir',
+                                    'system_version': 'Versão do Sistema',
+                                    'browser': 'Navegador',
+                                    'affected_users': 'Usuários Afetados',
+                                    'error_frequency': 'Frequência do Erro',
+                                    'priority_justification': 'Justificativa da Prioridade',
+                                    'expected_behavior': 'Comportamento Esperado',
+                                    'actual_behavior': 'Comportamento Atual',
+                                    'environment': 'Ambiente',
+                                    'additional_info': 'Informações Adicionais'
+                                  };
+                                  
+                                  const displayName = friendlyNames[fieldId] || fieldId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                  
+                                  return (
+                                    <div key={fieldId} className="flex flex-col space-y-1">
+                                      <span className="text-sm font-medium text-gray-700">{displayName}:</span>
+                                      <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border max-w-full">
+                                        {typeof value === 'string' && value.includes('\n') ? (
+                                          <pre className="whitespace-pre-wrap text-xs">{value}</pre>
+                                        ) : (
+                                          <span>{value || 'Não informado'}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Outros dados do formulário */}
+                          {formData.originalRequestBody && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-800 mb-3">Informações Adicionais</h4>
+                              <div className="space-y-2 text-sm">
+                                {Object.entries(formData.originalRequestBody).map(([key, value]) => {
+                                  // Pular campos que já foram exibidos
+                                  if (['subject', 'description', 'priority', 'fullName', 'email', 'phone', 'customFields'].includes(key)) {
+                                    return null;
+                                  }
+                                  return (
+                                    <div key={key} className="flex justify-between">
+                                      <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                                      <span className="font-medium max-w-xs text-right">{typeof value === 'string' ? value : JSON.stringify(value)}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    } catch (e) {
+                      return <p className="text-sm text-gray-500">Dados do formulário não disponíveis</p>;
+                    }
+                  })()}
                 </div>
               </CardContent>
             </Card>
