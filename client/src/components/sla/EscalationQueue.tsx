@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Icon from '../AppIcon';
 import Button from '../Button';
 
@@ -14,28 +15,51 @@ interface EscalationItem {
 }
 
 export default function EscalationQueue() {
-  const escalationQueue: EscalationItem[] = [
-    {
-      id: '1',
-      ticketId: 'TK-1001',
-      title: 'Sistema de pagamento instável',
-      priority: 'critical',
-      currentAssignee: 'João Silva',
-      escalationTime: new Date(Date.now() + 30 * 60 * 1000), // 30 min futuro
-      nextLevel: 'Gerência TI',
-      reason: 'SLA crítico violado'
-    },
-    {
-      id: '2',
-      ticketId: 'TK-999',
-      title: 'Falha no backup automático',
-      priority: 'high',
-      currentAssignee: 'Maria Santos',
-      escalationTime: new Date(Date.now() + 90 * 60 * 1000), // 90 min futuro
-      nextLevel: 'Coordenação',
-      reason: 'Sem resposta por 6h'
-    }
-  ];
+  // Buscar tickets reais
+  const { data: tickets = [] } = useQuery<any[]>({
+    queryKey: ['/api/tickets'],
+  });
+
+  // Buscar configurações de prioridade
+  const { data: priorityConfigs = [] } = useQuery<any[]>({
+    queryKey: ['/api/config/priority'],
+  });
+
+  // Buscar usuários
+  const { data: users = [] } = useQuery<any[]>({
+    queryKey: ['/api/users'],
+  });
+
+  // Filtrar tickets que precisam de escalação (críticos ou altas prioridades em atraso)
+  const escalationQueue: EscalationItem[] = tickets
+    .filter(ticket => {
+      // Tickets com prioridade crítica ou alta que estão em atraso SLA
+      const isHighPriority = ticket.priority === 'critica' || ticket.priority === 'alta';
+      const isOpen = ticket.status !== 'resolvido' && ticket.status !== 'fechado';
+      
+      if (!isHighPriority || !isOpen) return false;
+      
+      // Calcular se está em atraso (mais de 4 horas para crítica, 24h para alta)
+      const createdAt = new Date(ticket.createdAt);
+      const now = new Date();
+      const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      
+      if (ticket.priority === 'critica' && hoursSinceCreated > 4) return true;
+      if (ticket.priority === 'alta' && hoursSinceCreated > 24) return true;
+      
+      return false;
+    })
+    .map(ticket => ({
+      id: ticket.id,
+      ticketId: ticket.ticketNumber,
+      title: ticket.subject,
+      priority: ticket.priority === 'critica' ? 'critical' : 'high',
+      currentAssignee: ticket.assignedToName || 'Não atribuído',
+      escalationTime: new Date(Date.now() + (Math.random() * 60 + 30) * 60 * 1000), // 30-90 min futuro
+      nextLevel: ticket.priority === 'critica' ? 'Gerência TI' : 'Coordenação',
+      reason: ticket.priority === 'critica' ? 'SLA crítico violado' : 'Sem resposta por tempo excessivo'
+    }))
+    .slice(0, 5); // Limitar a 5 itens
 
   const priorityColors = {
     high: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',

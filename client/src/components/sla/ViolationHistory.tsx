@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Icon from '../AppIcon';
 
 interface ViolationRecord {
@@ -12,35 +13,60 @@ interface ViolationRecord {
 }
 
 export default function ViolationHistory() {
-  const violations: ViolationRecord[] = [
-    {
-      id: '1',
-      ticketId: 'TK-1001',
-      title: 'Sistema de pagamento instável',
-      violationTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      department: 'TI',
-      assignee: 'João Silva',
-      impact: 'high'
-    },
-    {
-      id: '2',
-      ticketId: 'TK-998',
-      title: 'Erro no relatório mensal',
-      violationTime: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      department: 'Financeiro',
-      assignee: 'Maria Santos',
-      impact: 'medium'
-    },
-    {
-      id: '3',
-      ticketId: 'TK-995',
-      title: 'Acesso negado no sistema',
-      violationTime: new Date(Date.now() - 12 * 60 * 60 * 1000),
-      department: 'RH',
-      assignee: 'Carlos Oliveira',
-      impact: 'low'
-    }
-  ];
+  // Buscar tickets reais
+  const { data: tickets = [] } = useQuery<any[]>({
+    queryKey: ['/api/tickets'],
+  });
+
+  // Buscar departamentos
+  const { data: departments = [] } = useQuery<any[]>({
+    queryKey: ['/api/departments'],
+  });
+
+  // Buscar usuários
+  const { data: users = [] } = useQuery<any[]>({
+    queryKey: ['/api/users'],
+  });
+
+  // Calcular violações SLA baseadas em tickets reais
+  const violations: ViolationRecord[] = tickets
+    .filter(ticket => {
+      // Tickets que violaram SLA (criados há mais tempo que o esperado e ainda abertos)
+      const createdAt = new Date(ticket.createdAt);
+      const now = new Date();
+      const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      
+      // SLA baseado na prioridade: crítica=4h, alta=24h, média=72h, baixa=168h
+      let slaHours = 168; // padrão para baixa
+      if (ticket.priority === 'critica') slaHours = 4;
+      else if (ticket.priority === 'alta') slaHours = 24;
+      else if (ticket.priority === 'media') slaHours = 72;
+      
+      const isViolated = hoursSinceCreated > slaHours;
+      const isOpen = ticket.status !== 'resolvido' && ticket.status !== 'fechado';
+      
+      return isViolated || (!isOpen && hoursSinceCreated > slaHours);
+    })
+    .map(ticket => {
+      const dept = departments.find(d => d.id === ticket.departmentId);
+      
+      // Determinar impacto baseado na prioridade
+      let impact: 'low' | 'medium' | 'high' = 'medium';
+      if (ticket.priority === 'critica') impact = 'high';
+      else if (ticket.priority === 'baixa') impact = 'low';
+      
+      return {
+        id: ticket.id,
+        ticketId: ticket.ticketNumber,
+        title: ticket.subject,
+        violationTime: new Date(ticket.createdAt),
+        department: dept ? dept.name : 'N/A',
+        assignee: ticket.assignedToName || 'Não atribuído',
+        impact
+      };
+    })
+    .sort((a, b) => b.violationTime.getTime() - a.violationTime.getTime()) // Mais recentes primeiro
+    .slice(0, 10); // Limitar a 10 itens
 
   const impactColors = {
     low: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',

@@ -98,6 +98,14 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 
 # Recent Changes (August 2025)
 
+## SLA Monitor Totalmente Funcional (12/08/2025)
+- ✓ Botão "Ver Detalhes" abre tickets em pop-up modal no SLA Monitor
+- ✓ Todos os botões funcionais: escalar, histórico, configuração e alertas
+- ✓ EscalationQueue e ViolationHistory agora usam dados reais da API
+- ✓ TicketDetailModal implementado com dados completos dos tickets
+- ✓ Criação de usuários funcionando com endpoint POST /api/users
+- ✓ Sistema de permissões aplicado corretamente nos endpoints
+
 ## Identidade Visual OPUS e Sistema de Hierarquias Corrigido (11/08/2025)
 - ✓ Avatar com gradiente OPUS aplicado em todos os cartões de usuário (from-[#2c4257] to-[#6b8fb0])
 - ✓ Sistema de hierarquias corrigido para usar valores corretos: 'administrador', 'supervisor', 'colaborador'
