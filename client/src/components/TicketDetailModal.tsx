@@ -38,7 +38,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
     enabled: isOpen && !!ticketId,
   });
   
-  const ticket = tickets.find((t: any) => t.id === ticketId);
+  const ticket = (tickets as any[])?.find((t: any) => t.id === ticketId);
 
   console.log("Ticket data:", ticket);
   console.log("FormData raw:", ticket?.formData);
@@ -58,10 +58,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   const assignTicketMutation = useMutation({
     mutationFn: async ({ ticketId, assignedTo }: { ticketId: string; assignedTo: string | null }) => {
       console.log("Attempting assignment:", { ticketId, assignedTo });
-      const result = await apiRequest(`/api/tickets/${ticketId}/assign`, {
-        method: 'PATCH',
-        body: JSON.stringify({ assignedTo }),
-      });
+      const result = await apiRequest(`/api/tickets/${ticketId}/assign`, 'PATCH', { assignedTo });
       console.log("Assignment result:", result);
       return result;
     },
@@ -434,7 +431,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                                     'e808f2c5-809c-4477-82ab-c0f778b2f762': 'Período de Referência'
                                   };
                                   
-                                  const displayName = fieldNameMap[fieldId] || `Campo ${fieldId.substring(0, 8)}...`;
+                                  const displayName = fieldNameMap[fieldId as keyof typeof fieldNameMap] || `Campo ${fieldId.substring(0, 8)}...`;
                                   
                                   return (
                                     <div key={fieldId} className="flex flex-col space-y-2">
@@ -448,7 +445,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                                       </div>
                                     </div>
                                   );
-                                })}
+                                }) || []}
                               </div>
                             </div>
                           )}
