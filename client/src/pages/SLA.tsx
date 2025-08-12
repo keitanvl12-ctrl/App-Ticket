@@ -50,39 +50,8 @@ export default function SLA() {
     return acc;
   }, {});
 
-  // Transformar tickets reais em formato SLA
-  const slaTickets = realTickets
-    .filter((ticket: any) => ['open', 'in_progress', 'pending'].includes(ticket.status))
-    .map((ticket: any) => {
-      const createdAt = new Date(ticket.created_at);
-      const now = new Date();
-      const elapsedMs = now.getTime() - createdAt.getTime();
-      
-      // Calcular SLA target baseado na prioridade
-      let slaTargetMs = 24 * 60 * 60 * 1000; // 24h default
-      switch(ticket.priority) {
-        case 'critical': slaTargetMs = 2 * 60 * 60 * 1000; break; // 2h
-        case 'high': slaTargetMs = 8 * 60 * 60 * 1000; break; // 8h  
-        case 'medium': slaTargetMs = 24 * 60 * 60 * 1000; break; // 24h
-        case 'low': slaTargetMs = 72 * 60 * 60 * 1000; break; // 72h
-      }
-      
-      const timeRemaining = slaTargetMs - elapsedMs;
-      const isEscalated = timeRemaining < 0 || (ticket.priority === 'critical' && timeRemaining < 60 * 60 * 1000);
-      
-      return {
-        id: ticket.ticket_number || ticket.id,
-        title: ticket.subject,
-        priority: ticket.priority,
-        status: ticket.status, 
-        department: departmentMap[ticket.responsible_department_id] || 'Não definido',
-        assignee: userMap[ticket.assigned_to] || 'Não atribuído',
-        timeRemaining,
-        slaTarget: slaTargetMs,
-        createdAt,
-        escalated: isEscalated
-      };
-    });
+  // Usar tickets reais com dados de SLA calculados no backend
+  const slaTickets = realTickets.filter((ticket: any) => ['open', 'in_progress', 'pending'].includes(ticket.status));
 
   // Listener para abrir ticket modal
   useEffect(() => {
@@ -112,13 +81,13 @@ export default function SLA() {
   const filteredTickets = slaTickets.filter(ticket => {
     if (filters.priority !== 'all' && ticket.priority !== filters.priority) return false;
     if (filters.status !== 'all' && ticket.status !== filters.status) return false;
-    if (filters.department !== 'all' && ticket.department !== filters.department) return false;
+    if (filters.department !== 'all' && ticket.department?.name !== filters.department) return false;
     return true;
   });
 
-  // Separar tickets por criticidade
-  const criticalTickets = filteredTickets.filter(t => t.priority === 'critical' || t.timeRemaining < 0);
-  const urgentTickets = filteredTickets.filter(t => (t.priority === 'high' && t.timeRemaining > 0 && t.timeRemaining < 2 * 60 * 60 * 1000)); 
+  // Separar tickets por criticidade baseado no SLA status
+  const criticalTickets = filteredTickets.filter(t => t.slaStatus === 'violated' || t.priority === 'critical');
+  const urgentTickets = filteredTickets.filter(t => t.slaStatus === 'at_risk' && !criticalTickets.includes(t)); 
   const normalTickets = filteredTickets.filter(t => !criticalTickets.includes(t) && !urgentTickets.includes(t));
 
   return (
