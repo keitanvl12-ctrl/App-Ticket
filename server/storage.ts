@@ -1329,7 +1329,7 @@ export class DatabaseStorage implements IStorage {
     
     if (filters?.department && filters.department !== 'all') {
       // Join with users to filter by department
-      conditions.push(eq(users.departmentId, filters.department));
+      conditions.push(eq(users.department_id, filters.department));
     }
     
     if (filters?.dateFilter) {
@@ -1349,7 +1349,7 @@ export class DatabaseStorage implements IStorage {
     // Get total tickets with filters
     let totalTicketsQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
-      totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+      totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
     }
     if (whereClause) {
       totalTicketsQuery = totalTicketsQuery.where(whereClause);
@@ -1361,7 +1361,7 @@ export class DatabaseStorage implements IStorage {
     const openConditions = [...conditions, eq(tickets.status, 'open')];
     let openTicketsQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
-      openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+      openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
     }
     openTicketsQuery = openTicketsQuery.where(and(...openConditions));
     const openTicketsResult = await openTicketsQuery;
@@ -1372,11 +1372,11 @@ export class DatabaseStorage implements IStorage {
     const resolvedConditions = [
       ...conditions,
       eq(tickets.status, 'resolved'),
-      gte(tickets.resolvedAt, today)
+      gte(tickets.resolved_at, today)
     ];
     let resolvedTodayQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
-      resolvedTodayQuery = resolvedTodayQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+      resolvedTodayQuery = resolvedTodayQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
     }
     resolvedTodayQuery = resolvedTodayQuery.where(and(...resolvedConditions));
     const resolvedTodayResult = await resolvedTodayQuery;
@@ -1399,7 +1399,7 @@ export class DatabaseStorage implements IStorage {
     const baseConditions = [];
     
     if (filters?.department && filters.department !== 'all') {
-      baseConditions.push(eq(users.departmentId, filters.department));
+      baseConditions.push(eq(users.department_id, filters.department));
     }
     
     if (filters?.dateFilter) {
@@ -1417,7 +1417,7 @@ export class DatabaseStorage implements IStorage {
     // Get total with filters (excluding priority filter)
     let totalQuery = db.select({ count: count() }).from(tickets);
     if (filters?.department && filters.department !== 'all') {
-      totalQuery = totalQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+      totalQuery = totalQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
     }
     if (baseConditions.length > 0) {
       totalQuery = totalQuery.where(and(...baseConditions));
@@ -1430,7 +1430,7 @@ export class DatabaseStorage implements IStorage {
       const conditions = [...baseConditions, eq(tickets.priority, priority)];
       let query = db.select({ count: count() }).from(tickets);
       if (filters?.department && filters.department !== 'all') {
-        query = query.leftJoin(users, eq(tickets.assigneeId, users.id));
+        query = query.leftJoin(users, eq(tickets.assigned_to, users.id));
       }
       query = query.where(and(...conditions));
       const result = await query;
@@ -1470,13 +1470,13 @@ export class DatabaseStorage implements IStorage {
       }
       
       if (filters?.department && filters.department !== 'all') {
-        createdConditions.push(eq(users.departmentId, filters.department));
+        createdConditions.push(eq(users.department_id, filters.department));
       }
 
       // Get created tickets count
       let createdQuery = db.select({ count: count() }).from(tickets);
       if (filters?.department && filters.department !== 'all') {
-        createdQuery = createdQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+        createdQuery = createdQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
       }
       createdQuery = createdQuery.where(and(...createdConditions));
       const createdResult = await createdQuery;
@@ -1494,13 +1494,13 @@ export class DatabaseStorage implements IStorage {
       }
       
       if (filters?.department && filters.department !== 'all') {
-        resolvedConditions.push(eq(users.departmentId, filters.department));
+        resolvedConditions.push(eq(users.department_id, filters.department));
       }
 
       // Get resolved tickets count
       let resolvedQuery = db.select({ count: count() }).from(tickets);
       if (filters?.department && filters.department !== 'all') {
-        resolvedQuery = resolvedQuery.leftJoin(users, eq(tickets.assigneeId, users.id));
+        resolvedQuery = resolvedQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
       }
       resolvedQuery = resolvedQuery.where(and(...resolvedConditions));
       const resolvedResult = await resolvedQuery;
