@@ -544,6 +544,30 @@ export default function KanbanBoard() {
     return config?.name || priority;
   };
 
+  // Funções SLA Helper (clean e funcionais)
+  const getSLAProgressPercentage = (ticket: any) => {
+    if (!ticket.slaHoursTotal || !ticket.slaHoursRemaining) return 0;
+    const used = ticket.slaHoursTotal - ticket.slaHoursRemaining;
+    return Math.max(0, Math.min(100, (used / ticket.slaHoursTotal) * 100));
+  };
+
+  const getSLAProgressColor = (ticket: any) => {
+    const progress = getSLAProgressPercentage(ticket);
+    if (progress >= 90) return 'bg-red-500';
+    if (progress >= 70) return 'bg-orange-500';
+    return 'bg-green-500';
+  };
+
+  const getSLAStatusText = (ticket: any) => {
+    if (!ticket.slaStatus) return 'No prazo';
+    switch (ticket.slaStatus) {
+      case 'violated': return 'Vencido';
+      case 'at_risk': return 'Em risco';
+      case 'met': return 'No prazo';
+      default: return 'No prazo';
+    }
+  };
+
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = (ticket.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (ticket.ticketNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1051,6 +1075,20 @@ export default function KanbanBoard() {
                               {getPriorityLabel(ticket.priority)}
                             </Badge>
                             <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
+                          </div>
+
+                          {/* SLA Progress - Clean and Functional */}
+                          <div className="space-y-1 pt-2 border-t border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">Progresso SLA</span>
+                              <span className="text-xs text-gray-500">{getSLAStatusText(ticket)}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className={`h-1.5 rounded-full transition-all duration-300 ${getSLAProgressColor(ticket)}`}
+                                style={{ width: `${getSLAProgressPercentage(ticket)}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
