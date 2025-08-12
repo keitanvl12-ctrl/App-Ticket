@@ -57,14 +57,17 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   // Mutation para atribuir responsável
   const assignTicketMutation = useMutation({
     mutationFn: async ({ ticketId, assignedTo }: { ticketId: string; assignedTo: string | null }) => {
-      console.log("Attempting assignment:", { ticketId, assignedTo });
+      console.log("🔄 Attempting assignment:", { ticketId, assignedTo });
       const result = await apiRequest(`/api/tickets/${ticketId}/assign`, 'PATCH', { assignedTo });
-      console.log("Assignment result:", result);
+      console.log("✅ Assignment result:", result);
       return result;
     },
-    onSuccess: () => {
-      console.log("Assignment mutation successful");
+    onSuccess: (data) => {
+      console.log("🎉 Assignment mutation successful:", data);
+      // Invalidate multiple cache keys to force refresh
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets', ticketId] });
+      queryClient.refetchQueries({ queryKey: ['/api/tickets'] });
       toast({
         title: "Responsável atribuído",
         description: "O ticket foi atribuído com sucesso.",
@@ -298,9 +301,12 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                       <div className="mt-3 space-y-2">
                         <Select 
                           onValueChange={(value) => {
+                            console.log("Select onChange triggered:", { value, ticketId: ticket.id });
                             if (value === 'unassign') {
+                              console.log("Unassigning ticket");
                               assignTicketMutation.mutate({ ticketId: ticket.id, assignedTo: null });
                             } else {
+                              console.log("Assigning ticket to user:", value);
                               assignTicketMutation.mutate({ ticketId: ticket.id, assignedTo: value });
                             }
                           }}

@@ -163,13 +163,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ticketId = req.params.id;
       const { assignedTo } = req.body;
+      console.log("ASSIGN - Request:", { ticketId, assignedTo, body: req.body });
       
       // Validar se o usuário existe quando assignedTo não for null
       if (assignedTo) {
         const assignedUser = await storage.getUser(assignedTo);
         if (!assignedUser) {
+          console.log("ASSIGN - Usuário não encontrado:", assignedTo);
           return res.status(400).json({ message: "Usuário não encontrado" });
         }
+        console.log("ASSIGN - Usuário encontrado:", assignedUser.name);
       }
       
       const ticket = await storage.updateTicket(ticketId, { 
@@ -178,12 +181,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       if (!ticket) {
+        console.log("ASSIGN - Ticket não encontrado:", ticketId);
         return res.status(404).json({ message: "Ticket não encontrado" });
+      }
+      
+      console.log("ASSIGN - Sucesso:", { ticketId, assignedTo, ticketNumber: ticket.ticketNumber });
+      
+      // Notify WebSocket clients of ticket assignment
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastUpdate('ticket_updated', { ticket });
+        wsServer.notifyDashboardUpdate();
       }
       
       res.json(ticket);
     } catch (error) {
-      console.error("Erro ao atribuir responsável:", error);
+      console.error("ASSIGN - Erro:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
