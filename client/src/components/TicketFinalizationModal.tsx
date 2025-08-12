@@ -159,38 +159,17 @@ ${finalizationData.materialsUsed}
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b border-gray-200 pb-6">
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Finalizar Ticket {ticket.ticketNumber}</h2>
-                <p className="text-sm text-gray-600 mt-1">{ticket.title}</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-4 py-2">
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Finalização
-            </Badge>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-lg font-medium">
+            Finalizar Ticket {ticket.ticketNumber}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-8 py-6">
-          {/* Resumo do Ticket */}
-          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-            <h4 className="font-bold text-gray-900 mb-3 text-lg">Resumo do Ticket</h4>
-            <p className="text-gray-700 mb-4">{ticket.title}</p>
-            <div className="flex items-center space-x-6 text-sm text-gray-600">
-              <span className="font-medium">Criado: {format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-              <span className="font-medium">Prioridade: <span className="capitalize">{ticket.priority}</span></span>
-            </div>
-          </div>
-
+        <div className="space-y-6">
           {/* Comentário de Resolução */}
-          <div className="space-y-4">
-            <Label className="text-lg font-bold text-gray-800 flex items-center">
-              <FileText className="w-6 h-6 mr-3 text-blue-600" />
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
               Comentário de Resolução *
             </Label>
             <Textarea
@@ -199,52 +178,29 @@ ${finalizationData.materialsUsed}
                 ...finalizationData,
                 resolutionComment: e.target.value
               })}
-              placeholder="Descreva detalhadamente como o problema foi resolvido:
-
-• Qual foi a causa raiz identificada?
-• Quais passos foram executados para resolver?
-• Como a solução foi testada e validada?
-• Há recomendações para prevenir reincidência?"
-              className="min-h-[160px] resize-none border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg text-base p-4"
+              placeholder="Descreva como o problema foi resolvido..."
+              className="min-h-[100px] resize-none"
               required
             />
-            <p className="text-sm text-gray-600 flex items-center">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              Campo obrigatório - seja específico na descrição da resolução
-            </p>
           </div>
 
-          {/* Apontamento de Horas - Destaque Principal */}
-          <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-400 rounded-2xl p-8 shadow-lg">
-            <Label className="text-xl font-black text-amber-800 flex items-center mb-6">
-              <Clock className="w-7 h-7 mr-3" />
-              Apontamento de Horas Trabalhadas
-            </Label>
+          {/* Tempo Trabalhado */}
+          <div className="border rounded-lg p-4 bg-gray-50">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <div className="bg-white rounded-xl px-8 py-6 border-3 border-amber-500 shadow-md">
-                  <span className="text-4xl font-mono font-black text-amber-700">
-                    {calculateWorkedHours()}
-                  </span>
-                </div>
-                <div className="text-amber-700">
-                  <p className="font-bold text-xl">Tempo efetivo de trabalho</p>
-                  <p className="text-base">Calculado automaticamente, excluindo pausas</p>
-                </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Tempo trabalhado</p>
+                <p className="text-xs text-gray-500">Calculado automaticamente</p>
               </div>
-              <div className="text-right text-amber-700">
-                <p className="text-base font-semibold">Início: {format(new Date(ticket.createdAt), 'dd/MM HH:mm', { locale: ptBR })}</p>
-                <p className="text-base font-semibold">Finalização: {format(new Date(), 'dd/MM HH:mm', { locale: ptBR })}</p>
-              </div>
+              <span className="text-lg font-mono font-semibold">
+                {calculateWorkedHours()}
+              </span>
             </div>
           </div>
 
-          {/* Grid para Equipamentos e Materiais */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Equipamentos Retirados */}
-            <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-6">
-              <Label className="text-lg font-bold text-orange-800 flex items-center mb-4">
-                <AlertTriangle className="w-6 h-6 mr-3" />
+          {/* Equipamentos e Materiais */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
                 Equipamentos Retirados
               </Label>
               <Textarea
@@ -253,20 +209,13 @@ ${finalizationData.materialsUsed}
                   ...finalizationData,
                   equipmentRetired: e.target.value
                 })}
-                placeholder="Liste os equipamentos que foram retirados:
-
-• Desktop Dell OptiPlex 3070
-• Modelo: ABC123
-• Patrimônio: 001234
-• Monitor Samsung 24 polegadas - Patrimônio: 005678"
-                className="min-h-[140px] resize-none border-orange-300 focus:border-orange-500 focus:ring-orange-200 bg-white text-base p-4"
+                placeholder="Lista de equipamentos..."
+                className="min-h-[80px] resize-none"
               />
             </div>
 
-            {/* Materiais Utilizados */}
-            <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6">
-              <Label className="text-lg font-bold text-blue-800 flex items-center mb-4">
-                <FileText className="w-6 h-6 mr-3" />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
                 Materiais Utilizados
               </Label>
               <Textarea
@@ -275,48 +224,33 @@ ${finalizationData.materialsUsed}
                   ...finalizationData,
                   materialsUsed: e.target.value
                 })}
-                placeholder="Liste os materiais que foram utilizados:
-
-• Cabo de rede CAT6 - 2 metros
-• Conector RJ45 - 2 unidades  
-• Abraçadeira plástica - 5 unidades
-• Parafuso M4 - 4 unidades"
-                className="min-h-[140px] resize-none border-blue-300 focus:border-blue-500 focus:ring-blue-200 bg-white text-base p-4"
+                placeholder="Lista de materiais..."
+                className="min-h-[80px] resize-none"
               />
             </div>
           </div>
 
-          {/* Botões de Ação */}
-          <div className="flex justify-between items-center pt-8 border-t-2 border-gray-200">
-            <div className="text-base text-gray-600">
-              <p className="font-bold">Tempo total de trabalho: <span className="text-amber-600 font-mono text-lg">{calculateWorkedHours()}</span></p>
-              <p>Este ticket será marcado como <span className="font-bold text-green-600">Resolvido</span></p>
-            </div>
-            <div className="flex space-x-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  onClose();
-                  setFinalizationData({
-                    resolutionComment: '',
-                    equipmentRetired: '',
-                    materialsUsed: ''
-                  });
-                }}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 text-base"
-              >
-                <XCircle className="w-5 h-5 mr-2" />
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleFinalize}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-base font-semibold"
-                disabled={!finalizationData.resolutionComment.trim()}
-              >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Finalizar Ticket
-              </Button>
-            </div>
+          {/* Botões */}
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                onClose();
+                setFinalizationData({
+                  resolutionComment: '',
+                  equipmentRetired: '',
+                  materialsUsed: ''
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleFinalize}
+              disabled={!finalizationData.resolutionComment.trim()}
+            >
+              Finalizar
+            </Button>
           </div>
         </div>
       </DialogContent>

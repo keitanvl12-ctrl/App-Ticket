@@ -6,6 +6,7 @@ TicketFlow Pro is a comprehensive, full-stack ticket management system developed
 
 Preferred communication style: Simple, everyday language.
 Language: Sistema completo traduzido para português brasileiro (interface, formulários, dados de exemplo).
+Design preference: Clean, minimalist interface design - avoid excessive visual elements, colors, and decorative components.
 
 # System Architecture
 
