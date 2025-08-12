@@ -549,14 +549,6 @@ export default function KanbanBoard() {
 
   const getSLAProgressColor = (ticket: any) => {
     const progress = getSLAProgressPercentage(ticket);
-    // Debug temporário
-    console.log('SLA Debug:', {
-      ticketId: ticket.id,
-      slaHoursTotal: ticket.slaHoursTotal,
-      progress: progress,
-      status: ticket.status
-    });
-    
     if (progress >= 90) return 'bg-red-500';
     if (progress >= 70) return 'bg-orange-500';
     return 'bg-green-500';
@@ -1176,10 +1168,10 @@ export default function KanbanBoard() {
                       <div className="w-16 bg-gray-200 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full ${getProgressColor(ticket)}`}
-                          style={{ width: `${calculateSLAProgress(ticket)}%` }}
+                          style={{ width: `${getSLAProgressPercentage(ticket)}%` }}
                         />
                       </div>
-                      <span className="text-xs text-gray-500 w-8">{Math.round(calculateSLAProgress(ticket))}%</span>
+                      <span className="text-xs text-gray-500 w-8">{Math.round(getSLAProgressPercentage(ticket))}%</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">{new Date(ticket.createdAt).toLocaleDateString('pt-BR')}</TableCell>

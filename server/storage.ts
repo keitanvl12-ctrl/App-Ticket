@@ -882,7 +882,7 @@ export class DatabaseStorage implements IStorage {
     } as TicketWithDetails;
 
     // Calcular SLA para o ticket individual também
-    return await this.addSLAToTicket(baseTicket);
+    return await this.calculateTicketSLA(baseTicket);
   }
 
   async getTicketsByUser(userId: string): Promise<TicketWithDetails[]> {
@@ -951,11 +951,11 @@ export class DatabaseStorage implements IStorage {
       allTickets.map(ticket => this.getTicket(ticket.id))
     );
 
-    // Calcular SLA para cada ticket
+    // Calcular SLA para cada ticket usando o método mais simples
     const ticketsWithSLA = await Promise.all(
       detailedTickets
         .filter(ticket => ticket !== undefined)
-        .map(async ticket => await this.addSLAToTicket(ticket as TicketWithDetails))
+        .map(async ticket => await this.calculateTicketSLA(ticket as TicketWithDetails))
     );
 
     return ticketsWithSLA;
@@ -963,16 +963,6 @@ export class DatabaseStorage implements IStorage {
 
   async calculateTicketSLA(ticket: TicketWithDetails): Promise<TicketWithDetails> {
     try {
-      // Se o ticket já foi resolvido, não precisa calcular SLA
-      if (ticket.status === 'resolved' || ticket.status === 'closed') {
-        return { 
-          ...ticket, 
-          slaStatus: 'met' as const, 
-          slaHoursRemaining: 0,
-          slaHoursTotal: 0,
-          slaSource: 'ticket resolvido'
-        };
-      }
 
       let slaHours = 4; // Padrão de 4 horas conforme solicitado
       let slaSource = 'padrão (4h)';
@@ -980,23 +970,29 @@ export class DatabaseStorage implements IStorage {
       // Simplificar lógica de SLA por enquanto para evitar erros do Drizzle
       // TODO: Reimplement complex SLA rules after fixing Drizzle issues
       
-      // Mapear prioridades para SLA simples
+      // Mapear prioridades para SLA simples (valores em inglês como vem do banco)
       const prioritySLA: Record<string, number> = {
-        'critica': 2,   // 2 horas para crítico
-        'alta': 4,      // 4 horas para alto  
-        'media': 8,     // 8 horas para médio
-        'baixa': 24     // 24 horas para baixo
+        'critical': 2,   // 2 horas para crítico
+        'high': 4,       // 4 horas para alto  
+        'medium': 8,     // 8 horas para médio
+        'low': 24        // 24 horas para baixo
       };
 
       if (ticket.priority && prioritySLA[ticket.priority]) {
         slaHours = prioritySLA[ticket.priority];
         slaSource = `prioridade: ${ticket.priority}`;
       }
+      
 
-      // Calcular tempo decorrido desde a criação
+
+      // Calcular tempo decorrido desde a criação até agora ou até resolução
       const now = new Date();
       const createdAt = new Date(ticket.createdAt);
-      const elapsedMilliseconds = now.getTime() - createdAt.getTime();
+      const endTime = (ticket.status === 'resolved' || ticket.status === 'closed') && ticket.resolvedAt 
+        ? new Date(ticket.resolvedAt) 
+        : now;
+      
+      const elapsedMilliseconds = endTime.getTime() - createdAt.getTime();
       const elapsedHours = elapsedMilliseconds / (1000 * 60 * 60);
 
       // Calcular progresso SLA
@@ -1005,12 +1001,18 @@ export class DatabaseStorage implements IStorage {
 
       // Determinar status SLA
       let slaStatus: 'met' | 'at_risk' | 'violated';
-      if (progressPercentage <= 60) {
-        slaStatus = 'met';
-      } else if (progressPercentage <= 100) {
-        slaStatus = 'at_risk';
+      if (ticket.status === 'resolved' || ticket.status === 'closed') {
+        // Para tickets resolvidos, verificar se foi dentro do SLA
+        slaStatus = progressPercentage <= 100 ? 'met' : 'violated';
       } else {
-        slaStatus = 'violated';
+        // Para tickets em andamento
+        if (progressPercentage <= 60) {
+          slaStatus = 'met';
+        } else if (progressPercentage <= 100) {
+          slaStatus = 'at_risk';
+        } else {
+          slaStatus = 'violated';
+        }
       }
 
       return {
@@ -2254,83 +2256,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // SLA Calculation methods
-  calculateTicketSLA(ticket: Ticket, slaRule: SlaRule, pauseRecords: any[]): any {
-    try {
-      const createdAt = new Date(ticket.createdAt);
-      const now = new Date();
-      const resolvedAt = ticket.resolvedAt ? new Date(ticket.resolvedAt) : null;
-      
-      // Calculate end time for SLA calculation
-      const endTime = resolvedAt || now;
-      
-      // Calculate total paused time in minutes
-      let totalPausedMinutes = 0;
-      
-      pauseRecords.forEach(pause => {
-        const pausedAt = new Date(pause.pausedAt);
-        let resumedAt: Date;
-        
-        if (pause.resumedAt) {
-          resumedAt = new Date(pause.resumedAt);
-        } else if (pause.expectedReturnAt) {
-          // If still paused, use expected return time or current time, whichever is smaller
-          const expectedReturn = new Date(pause.expectedReturnAt);
-          resumedAt = expectedReturn < now ? expectedReturn : now;
-        } else {
-          // If no expected return time, consider paused until now
-          resumedAt = now;
-        }
-        
-        // Only count pause time if it's within the ticket's active period
-        const effectivePauseStart = pausedAt > createdAt ? pausedAt : createdAt;
-        const effectivePauseEnd = resumedAt < endTime ? resumedAt : endTime;
-        
-        if (effectivePauseEnd > effectivePauseStart) {
-          totalPausedMinutes += differenceInHours(effectivePauseEnd, effectivePauseStart) * 60;
-        }
-      });
-      
-      // Calculate total elapsed time in hours
-      const totalElapsedHours = differenceInHours(endTime, createdAt);
-      
-      // Calculate effective time (elapsed - paused)
-      const effectiveHours = totalElapsedHours - (totalPausedMinutes / 60);
-      
-      // Determine SLA limit based on ticket status
-      const slaLimitHours = ticket.status === 'resolved' ? slaRule.resolutionTime : slaRule.responseTime;
-      
-      // Calculate remaining hours
-      const remainingHours = slaLimitHours - effectiveHours;
-      
-      // Determine SLA status
-      let status: 'met' | 'at_risk' | 'violated';
-      if (remainingHours > 1) {
-        status = 'met';
-      } else if (remainingHours > 0) {
-        status = 'at_risk';
-      } else {
-        status = 'violated';
-      }
-      
-      return {
-        status,
-        hoursRemaining: Math.max(0, remainingHours),
-        hoursTotal: slaLimitHours,
-        hoursElapsed: effectiveHours,
-        hoursLeft: remainingHours
-      };
-    } catch (error) {
-      console.error('Error calculating ticket SLA:', error);
-      return {
-        status: 'met',
-        hoursRemaining: 0,
-        hoursTotal: 0,
-        hoursElapsed: 0,
-        hoursLeft: 0
-      };
-    }
-  }
+
 }
 
 export const storage = new DatabaseStorage();
