@@ -92,7 +92,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Validate password from database using bcrypt
-    const bcrypt = require('bcryptjs');
+    const bcrypt = await import('bcryptjs');
     let isValidPassword = false;
     
     try {
