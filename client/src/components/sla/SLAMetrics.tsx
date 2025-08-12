@@ -65,29 +65,27 @@ export default function SLAMetrics() {
   const totalTickets = tickets.length;
   const openTickets = tickets.filter(t => t.status !== 'resolved').length;
   
-  // Tickets com SLA violado (mais de 24h para críticos, 48h para outros)
+  // Tickets com SLA violado baseado nos dados reais do backend
   const violatedTickets = tickets.filter(ticket => {
-    const priority = priorityConfigs.find(p => p.id === ticket.priority);
-    const isCritical = priority?.name.toLowerCase().includes('crítica');
-    const hoursOld = (Date.now() - new Date(ticket.createdAt).getTime()) / (1000 * 60 * 60);
-    const slaLimit = isCritical ? 24 : 48;
-    return ticket.status !== 'resolved' && hoursOld > slaLimit;
+    return ticket.slaStatus === 'violated';
   }).length;
 
   // Calcular porcentagem de cumprimento SLA
   const slaCompliance = totalTickets > 0 ? ((totalTickets - violatedTickets) / totalTickets * 100).toFixed(1) : '100';
   
-  // Calcular tempo médio de resposta
+  // Calcular tempo médio de resposta baseado nos dados SLA reais
   const avgResponseTime = tickets.length > 0 ? 
     (tickets.reduce((acc, ticket) => {
-      const hours = (Date.now() - new Date(ticket.createdAt).getTime()) / (1000 * 60 * 60);
-      return acc + (ticket.status === 'resolved' ? hours / 2 : hours); // Estimativa para resolvidos
+      if (ticket.slaHoursRemaining !== undefined && ticket.slaHoursTotal) {
+        const hoursUsed = ticket.slaHoursTotal - ticket.slaHoursRemaining;
+        return acc + Math.max(hoursUsed, 0);
+      }
+      return acc + 0;
     }, 0) / tickets.length).toFixed(1) : '0';
 
   // Tickets críticos necessitando atenção
   const criticalTickets = tickets.filter(ticket => {
-    const priority = priorityConfigs.find(p => p.id === ticket.priority);
-    return priority?.name.toLowerCase().includes('crítica') && ticket.status !== 'resolved';
+    return ticket.priority === 'critical' && ticket.status !== 'resolved';
   }).length;
 
   const metrics = [

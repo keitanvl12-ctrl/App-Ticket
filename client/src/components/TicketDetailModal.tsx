@@ -83,18 +83,24 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   }
 
   // Função para obter configuração de status
-  const getStatusConfig = (statusId: string) => {
-    return statusConfigs?.find(s => s.id === statusId) || { 
-      name: statusId, 
+  const getStatusConfig = (statusValue: string) => {
+    return statusConfigs?.find(s => s.value === statusValue) || { 
+      name: statusValue === 'open' ? 'Aberto' :
+            statusValue === 'in_progress' ? 'Em Andamento' :
+            statusValue === 'resolved' ? 'Resolvido' :
+            statusValue === 'closed' ? 'Fechado' : statusValue, 
       color: '#6B7280',
       textColor: '#FFFFFF'
     };
   };
 
   // Função para obter configuração de prioridade  
-  const getPriorityConfig = (priorityId: string) => {
-    return priorityConfigs?.find(p => p.id === priorityId) || { 
-      name: priorityId, 
+  const getPriorityConfig = (priorityValue: string) => {
+    return priorityConfigs?.find(p => p.value === priorityValue) || { 
+      name: priorityValue === 'critical' ? 'Crítica' :
+            priorityValue === 'high' ? 'Alta' :
+            priorityValue === 'medium' ? 'Média' :
+            priorityValue === 'low' ? 'Baixa' : priorityValue, 
       color: '#6B7280',
       textColor: '#FFFFFF'
     };
@@ -158,12 +164,12 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                 <div className="flex items-center space-x-2">
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="text-xs bg-gradient-to-br from-[#2c4257] to-[#6b8fb0] text-white">
-                      {ticket.requester?.slice(0, 2).toUpperCase()}
+                      {ticket.createdByUser?.name?.slice(0, 2).toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-sm">{ticket.requester}</p>
-                    <p className="text-xs text-gray-500">{ticket.requesterEmail}</p>
+                    <p className="font-medium text-sm">{ticket.createdByUser?.name || 'Usuário não identificado'}</p>
+                    <p className="text-xs text-gray-500">{ticket.createdByUser?.email || 'Email não disponível'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -177,7 +183,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{getDepartmentName(ticket.departmentId)}</p>
+                <p className="text-sm">{ticket.department?.name || 'Não definido'}</p>
               </CardContent>
             </Card>
 
@@ -276,21 +282,71 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                     </div>
                   </div>
                 )}
+                
+                {ticket.status === 'resolved' && ticket.resolvedAt && (
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Ticket resolvido</p>
+                      <p className="text-xs text-gray-500">
+                        {format(new Date(ticket.resolvedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* SLA Information */}
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Progresso SLA</span>
+                    <span className="text-sm">
+                      {ticket.slaHoursRemaining !== undefined ? 
+                        (ticket.slaHoursRemaining > 0 ? 
+                          `${Math.ceil(ticket.slaHoursRemaining)}h restantes` : 
+                          'Vencido'
+                        ) : 
+                        'N/A'
+                      }
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all ${
+                        ticket.slaStatus === 'violated' ? 'bg-red-500' :
+                        ticket.slaStatus === 'at_risk' ? 'bg-orange-500' :
+                        'bg-green-500'
+                      }`}
+                      style={{ 
+                        width: `${ticket.slaHoursTotal && ticket.slaHoursRemaining !== undefined ? 
+                          Math.min(((ticket.slaHoursTotal - ticket.slaHoursRemaining) / ticket.slaHoursTotal) * 100, 100) : 
+                          0}%` 
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Meta: {ticket.slaHoursTotal || 4}h
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Action Buttons */}
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-between pt-4 border-t">
             <Button variant="outline" onClick={onClose}>
               Fechar
             </Button>
             <div className="flex space-x-2">
+              <Button variant="outline" disabled>
+                Escalonamento (Em Breve)
+              </Button>
               <Button 
-                variant="outline"
-                onClick={() => window.location.href = `/?ticket=${ticketId}`}
+                onClick={() => {
+                  // Navegar para o Kanban com este ticket
+                  window.location.href = '/kanban';
+                  onClose();
+                }}
               >
-                <FileText className="w-4 h-4 mr-2" />
                 Abrir no Kanban
               </Button>
             </div>
