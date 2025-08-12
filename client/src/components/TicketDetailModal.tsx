@@ -342,8 +342,8 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
               </Button>
               <Button 
                 onClick={() => {
-                  // Navegar para o Kanban
-                  window.location.href = '/';
+                  // Navegar para a página do Kanban
+                  window.location.href = '/tickets';
                   onClose();
                 }}
               >
