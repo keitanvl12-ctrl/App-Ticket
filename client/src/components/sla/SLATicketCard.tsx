@@ -241,7 +241,12 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
             variant="outline" 
             size="sm" 
             className="text-xs"
-            onClick={() => window.location.href = `/?ticket=${ticket.id}`}
+            onClick={() => {
+              const event = new CustomEvent('open-ticket-modal', { 
+                detail: { ticketId: ticket.id } 
+              });
+              window.dispatchEvent(event);
+            }}
           >
             <Icon name="Eye" size={14} className="mr-1" />
             Ver Detalhes

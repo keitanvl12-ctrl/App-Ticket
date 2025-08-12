@@ -127,7 +127,12 @@ export default function ViolationHistory() {
       </div>
 
       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-        <button className="w-full text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+        <button 
+          className="w-full text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+          onClick={() => {
+            window.location.href = '/reports?tab=violations';
+          }}
+        >
           Ver Histórico Completo
         </button>
       </div>

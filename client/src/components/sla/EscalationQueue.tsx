@@ -148,18 +148,22 @@ export default function EscalationQueue() {
                     <Button
                       variant="default"
                       size="sm"
-                      iconName="ArrowUp"
-                      iconPosition="left"
                       className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => {
+                        alert(`Escalando ticket ${item.ticketId} para ${item.nextLevel}`);
+                      }}
                     >
+                      <Icon name="ArrowUp" size={14} className="mr-1" />
                       Escalar Agora
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      iconName="Clock"
-                      iconPosition="left"
+                      onClick={() => {
+                        alert(`Adiando escalação do ticket ${item.ticketId}`);
+                      }}
                     >
+                      <Icon name="Clock" size={14} className="mr-1" />
                       Adiar
                     </Button>
                   </>
@@ -168,18 +172,25 @@ export default function EscalationQueue() {
                     <Button
                       variant="outline"
                       size="sm"
-                      iconName="Eye"
-                      iconPosition="left"
                       className="flex-1"
+                      onClick={() => {
+                        const event = new CustomEvent('open-ticket-modal', { 
+                          detail: { ticketId: item.ticketId } 
+                        });
+                        window.dispatchEvent(event);
+                      }}
                     >
+                      <Icon name="Eye" size={14} className="mr-1" />
                       Ver Ticket
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      iconName="ArrowUp"
-                      iconPosition="left"
+                      onClick={() => {
+                        alert(`Escalação antecipada do ticket ${item.ticketId}`);
+                      }}
                     >
+                      <Icon name="ArrowUp" size={14} className="mr-1" />
                       Escalar
                     </Button>
                   </>
@@ -208,19 +219,23 @@ export default function EscalationQueue() {
           <Button
             variant="outline"
             size="sm"
-            iconName="Settings"
-            iconPosition="left"
             className="text-xs"
+            onClick={() => {
+              alert('Funcionalidade de Configuração de Escalação será implementada em breve');
+            }}
           >
+            <Icon name="Settings" size={14} className="mr-1" />
             Config. Escalação
           </Button>
           <Button
             variant="outline"
             size="sm"
-            iconName="Bell"
-            iconPosition="left"
             className="text-xs"
+            onClick={() => {
+              window.location.href = '/notifications';
+            }}
           >
+            <Icon name="Bell" size={14} className="mr-1" />
             Notificações
           </Button>
         </div>

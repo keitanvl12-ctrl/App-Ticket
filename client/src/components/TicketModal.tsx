@@ -743,3 +743,5 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     </Dialog>
   );
 }
+
+export default TicketModal;

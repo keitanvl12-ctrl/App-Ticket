@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Clock, Target, Zap, Shield, Bell, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import SLATicketCard from '@/components/sla/SLATicketCard';
 import SLAFilters from '@/components/sla/SLAFilters';
 import ViolationHistory from '@/components/sla/ViolationHistory';
 import EscalationQueue from '@/components/sla/EscalationQueue';
+import TicketDetailModal from '@/components/TicketDetailModal';
 
 export default function SLA() {
   const [filters, setFilters] = React.useState({
@@ -19,6 +20,9 @@ export default function SLA() {
     department: 'all',
     timeRange: '24h'
   });
+  
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
   // Buscar tickets reais da API
   const { data: realTickets = [], isLoading: ticketsLoading } = useQuery({
@@ -80,6 +84,19 @@ export default function SLA() {
       };
     });
 
+  // Listener para abrir ticket modal
+  useEffect(() => {
+    const handleOpenTicketModal = (e: CustomEvent) => {
+      setSelectedTicketId(e.detail.ticketId);
+      setIsTicketModalOpen(true);
+    };
+
+    window.addEventListener('open-ticket-modal', handleOpenTicketModal as EventListener);
+    return () => {
+      window.removeEventListener('open-ticket-modal', handleOpenTicketModal as EventListener);
+    };
+  }, []);
+
   if (ticketsLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -122,7 +139,9 @@ export default function SLA() {
             variant="outline" 
             size="sm" 
             className="flex items-center gap-2"
-            onClick={() => window.location.href = '/sla/alerts'}
+            onClick={() => {
+              alert('Funcionalidade de Configuração de Alertas será implementada em breve');
+            }}
           >
             <Bell className="w-4 h-4" />
             Configurar Alertas
@@ -131,7 +150,7 @@ export default function SLA() {
             variant="outline" 
             size="sm" 
             className="flex items-center gap-2"
-            onClick={() => window.location.href = '/sla/rules'}
+            onClick={() => window.location.href = '/sla-rules'}
           >
             <Target className="w-4 h-4" />
             Regras SLA
@@ -318,6 +337,18 @@ export default function SLA() {
         <EscalationQueue />
         <ViolationHistory />
       </div>
+
+      {/* Modal de Ticket */}
+      {selectedTicketId && (
+        <TicketDetailModal
+          ticketId={selectedTicketId}
+          isOpen={isTicketModalOpen}
+          onClose={() => {
+            setIsTicketModalOpen(false);
+            setSelectedTicketId(null);
+          }}
+        />
+      )}
 
       {/* CSS para animações */}
       <style>{`
