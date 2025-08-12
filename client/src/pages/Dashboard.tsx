@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useDashboardSync } from "@/hooks/useDashboardSync";
 import { Ticket, Hourglass, CheckCircle, Clock, AlertTriangle, TrendingUp, Users, Timer, Target, Activity } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
 import TicketTrendsChart from "@/components/TicketTrendsChart";
@@ -23,6 +24,9 @@ export default function Dashboard() {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const queryClient = useQueryClient();
+  
+  // Enable real-time dashboard synchronization
+  useDashboardSync();
 
   const navigateToTickets = (filter?: string) => {
     let path = '/tickets';
@@ -43,7 +47,7 @@ export default function Dashboard() {
 
   const queryParams = buildQueryParams();
 
-  // Auto-refresh dashboard stats every 30 seconds
+  // Dashboard stats with real-time updates
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats", queryParams],
     queryFn: async () => {
@@ -52,8 +56,9 @@ export default function Dashboard() {
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 10000, // Refresh every 10 seconds as backup
     refetchIntervalInBackground: true,
+    staleTime: 0, // Always consider data stale for immediate updates
   });
 
   // Fetch departments for filter dropdown
@@ -61,43 +66,7 @@ export default function Dashboard() {
     queryKey: ["/api/departments"],
   });
 
-  // Listen for WebSocket ticket updates and refresh dashboard
-  useEffect(() => {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        console.log('Dashboard WebSocket message received:', message);
-        if (message.type === 'ticket_updated' || message.type === 'ticket_created' || message.type === 'dashboard_update') {
-          console.log('Dashboard invalidating cache for:', message.type);
-          // Invalidate dashboard cache to trigger refetch - use partial matching to invalidate all related queries
-          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/priority-stats"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/trends"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/team-performance"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/department-stats"] });
-          console.log('Dashboard cache invalidated due to ticket update');
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-
-    ws.onopen = () => {
-      console.log('WebSocket connected for dashboard updates');
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [queryClient]);
+  // Real-time sync is now handled by useDashboardSync hook
 
   // Enhanced indicators data
   const performanceIndicators = [
