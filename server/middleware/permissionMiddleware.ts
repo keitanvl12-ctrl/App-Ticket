@@ -87,7 +87,7 @@ export function requirePermission(permission: PermissionKey) {
   };
 }
 
-export function requireRole(minRole: UserRole) {
+export function requireRole(minRole: UserRole | string) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authReq = req as AuthenticatedRequest;
@@ -98,20 +98,43 @@ export function requireRole(minRole: UserRole) {
 
       const userRole = authReq.user.role;
       
+      console.log('RequireRole Debug:', {
+        userRole,
+        minRole,
+        user: authReq.user
+      });
+      
       // Tratar caso especial do role "admin" = "administrador"
       const normalizedUserRole = userRole === 'admin' ? 'administrador' : userRole;
+      const normalizedMinRole = minRole === 'admin' ? 'administrador' : minRole;
+      
+      console.log('Normalized roles:', {
+        normalizedUserRole,
+        normalizedMinRole,
+        isAdmin: normalizedUserRole === 'administrador'
+      });
+      
+      // Se for administrador, sempre tem acesso
+      if (normalizedUserRole === 'administrador') {
+        console.log('Admin access granted');
+        return next();
+      }
       
       const userLevel = ROLE_HIERARCHY[normalizedUserRole as UserRole] || 0;
-      const requiredLevel = ROLE_HIERARCHY[minRole] || 0;
+      const requiredLevel = ROLE_HIERARCHY[normalizedMinRole as UserRole] || 0;
+
+      console.log('Hierarchy levels:', { userLevel, requiredLevel });
 
       if (userLevel < requiredLevel) {
+        console.log('Access denied - insufficient level');
         return res.status(403).json({ 
           message: 'Acesso negado. Nível hierárquico insuficiente.',
-          required: minRole,
+          required: normalizedMinRole,
           userRole: userRole
         });
       }
 
+      console.log('Access granted');
       next();
     } catch (error) {
       console.error('Erro no middleware de role:', error);
