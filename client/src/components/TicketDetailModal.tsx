@@ -57,12 +57,16 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   // Mutation para atribuir responsável
   const assignTicketMutation = useMutation({
     mutationFn: async ({ ticketId, assignedTo }: { ticketId: string; assignedTo: string | null }) => {
-      return apiRequest(`/api/tickets/${ticketId}/assign`, {
+      console.log("Attempting assignment:", { ticketId, assignedTo });
+      const result = await apiRequest(`/api/tickets/${ticketId}/assign`, {
         method: 'PATCH',
         body: JSON.stringify({ assignedTo }),
       });
+      console.log("Assignment result:", result);
+      return result;
     },
     onSuccess: () => {
+      console.log("Assignment mutation successful");
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       toast({
         title: "Responsável atribuído",
@@ -71,6 +75,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
       setIsAssigning(false);
     },
     onError: (error: any) => {
+      console.error("Assignment mutation failed:", error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao atribuir responsável",

@@ -254,11 +254,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/tickets/:id", async (req, res) => {
     try {
+      console.log("PATCH /api/tickets/:id - Request body:", req.body);
+      console.log("PATCH /api/tickets/:id - Ticket ID:", req.params.id);
+      
       const validatedData = updateTicketSchema.parse(req.body);
+      console.log("PATCH /api/tickets/:id - Validated data:", validatedData);
+      
       const ticket = await storage.updateTicket(req.params.id, validatedData);
       if (!ticket) {
+        console.log("PATCH /api/tickets/:id - Ticket not found:", req.params.id);
         return res.status(404).json({ message: "Ticket not found" });
       }
+      
+      console.log("PATCH /api/tickets/:id - Updated ticket:", ticket);
       
       // Notify WebSocket clients of ticket update
       const wsServer = getWebSocketServer();
@@ -269,7 +277,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(ticket);
     } catch (error) {
+      console.error("PATCH /api/tickets/:id - Error:", error);
       if (error instanceof z.ZodError) {
+        console.error("PATCH /api/tickets/:id - Validation errors:", error.errors);
         return res.status(400).json({ 
           message: "Validation error", 
           errors: error.errors 
