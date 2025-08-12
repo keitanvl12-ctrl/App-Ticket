@@ -176,6 +176,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: currentUser.id,
         requesterDepartmentId: req.body.requesterDepartment || currentUser.departmentId || null,
         responsibleDepartmentId: req.body.responsibleDepartment || null,
+        // Campos detalhados do solicitante vindos do formulário
+        requesterName: req.body.requesterName || req.body.fullName || currentUser.name,
+        requesterEmail: req.body.requesterEmail || req.body.email || currentUser.email,
+        requesterPhone: req.body.requesterPhone || req.body.phone || '',
         priority: req.body.priority === 'Baixa' || req.body.priority === 'baixa' || req.body.priority === 'low' ? 'low' : 
                   req.body.priority === 'Média' || req.body.priority === 'média' || req.body.priority === 'medium' ? 'medium' :
                   req.body.priority === 'Alta' || req.body.priority === 'alta' || req.body.priority === 'high' ? 'high' :

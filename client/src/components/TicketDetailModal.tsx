@@ -53,6 +53,12 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
     enabled: isOpen,
   });
 
+  // Buscar valores dos campos customizados do ticket
+  const { data: customFieldValues } = useQuery<any[]>({
+    queryKey: ['/api/tickets', ticketId, 'custom-fields'],
+    enabled: isOpen && !!ticketId,
+  });
+
   if (ticketLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -160,19 +166,43 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <User className="w-4 h-4 mr-1" />
-                  Solicitante
+                  Informações do Solicitante
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="text-xs bg-gradient-to-br from-[#2c4257] to-[#6b8fb0] text-white">
-                      {ticket.createdByUser?.name?.slice(0, 2).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium text-sm">{ticket.createdByUser?.name || 'Usuário não identificado'}</p>
-                    <p className="text-xs text-gray-500">{ticket.createdByUser?.email || 'Email não disponível'}</p>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-[#2c4257] to-[#6b8fb0] text-white">
+                        {(ticket.requesterName || ticket.createdByUser?.name)?.slice(0, 2).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{ticket.requesterName || ticket.createdByUser?.name || 'Nome não informado'}</p>
+                      <p className="text-xs text-gray-500">Solicitante</p>
+                    </div>
+                  </div>
+                  
+                  {/* Informações de contato detalhadas */}
+                  <div className="space-y-2 border-t pt-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">E-mail:</span>
+                      <span className="text-gray-700 font-medium">{ticket.requesterEmail || ticket.createdByUser?.email || 'Não informado'}</span>
+                    </div>
+                    
+                    {ticket.requesterPhone && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-500">Telefone:</span>
+                        <span className="text-gray-700 font-medium">{ticket.requesterPhone}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Departamento:</span>
+                      <span className="text-gray-700 font-medium">
+                        {ticket.requesterDepartment?.name || 'Não informado'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -182,11 +212,20 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <Building2 className="w-4 h-4 mr-1" />
-                  Departamento
+                  Atendimento
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{ticket.department?.name || 'Não definido'}</p>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-gray-500">Responsável:</p>
+                    <p className="text-sm font-medium">{ticket.department?.name || 'Não atribuído'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Atendente:</p>
+                    <p className="text-sm font-medium">{ticket.assignedToUser?.name || 'Não atribuído'}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -217,6 +256,30 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
               </div>
             </div>
           </div>
+
+          {/* Custom Fields / Category Questions */}
+          {customFieldValues && customFieldValues.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  Informações Específicas da Categoria
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {customFieldValues.map((fieldValue) => (
+                    <div key={fieldValue.id} className="border-b pb-3 last:border-b-0 last:pb-0">
+                      <div className="flex justify-between items-start">
+                        <span className="text-sm font-medium text-gray-600">{fieldValue.fieldName}:</span>
+                        <span className="text-sm text-gray-900 max-w-xs text-right">{fieldValue.value || 'Não informado'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Comments Section */}
           {comments && comments.length > 0 && (
