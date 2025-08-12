@@ -204,8 +204,8 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Total de Tickets"
-            value={stats?.totalTickets || 127}
-            change={stats?.totalTicketsChange || "+8.2%"}
+            value={isLoading ? '...' : stats?.totalTickets || 0}
+            change={isLoading ? '...' : stats?.totalTicketsChange || '+0%'}
             changeType="positive"
             icon={Ticket}
             iconColor="text-blue-600"
@@ -214,8 +214,8 @@ export default function Dashboard() {
           />
           <StatsCard
             title="Tickets Abertos"
-            value={stats?.openTickets || 23}
-            change={stats?.openTicketsChange || "-12%"}
+            value={isLoading ? '...' : stats?.openTickets || 0}
+            change={isLoading ? '...' : stats?.openTicketsChange || '+0%'}
             changeType="negative"
             icon={Hourglass}
             iconColor="text-yellow-600"
@@ -224,8 +224,8 @@ export default function Dashboard() {
           />
           <StatsCard
             title="Resolvidos Hoje"
-            value={stats?.resolvedToday || 15}
-            change={stats?.resolvedTodayChange || "+23%"}
+            value={isLoading ? '...' : stats?.resolvedToday || 0}
+            change={isLoading ? '...' : stats?.resolvedTodayChange || '+0%'}
             changeType="positive"
             icon={CheckCircle}
             iconColor="text-green-600"
@@ -234,8 +234,8 @@ export default function Dashboard() {
           />
           <StatsCard
             title="Críticos Pendentes"
-            value={8}
-            change="-2"
+            value={isLoading ? '...' : stats?.criticalTickets || 0}
+            change={isLoading ? '...' : '-0'}
             changeType="negative"
             icon={AlertTriangle}
             iconColor="text-red-600"
