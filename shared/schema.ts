@@ -276,6 +276,7 @@ export type DashboardStats = {
   openTickets: number;
   resolvedTickets: number;
   resolvedToday: number;
+  criticalTickets: number;
   averageResolutionTime: number;
   avgResponseTime: string;
   totalTicketsChange: string;

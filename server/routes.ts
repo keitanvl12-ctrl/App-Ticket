@@ -15,6 +15,7 @@ import { departmentStorage } from "./departmentStorage";
 import { insertDepartmentSchema, insertCategorySchema, insertCustomFieldSchema } from "@shared/schema";
 import { insertTicketSchema, insertCommentSchema } from "@shared/schema";
 import { z } from "zod";
+import { getWebSocketServer } from "./websocket";
 
 const updateTicketSchema = insertTicketSchema.partial();
 
@@ -162,6 +163,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertTicketSchema.parse(ticketData);
       console.log("Validated data:", validatedData);
       const ticket = await storage.createTicket(validatedData);
+      
+      // Notify WebSocket clients of new ticket
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastUpdate('ticket_created', { ticket });
+        wsServer.notifyDashboardUpdate();
+      }
+      
       res.status(201).json(ticket);
     } catch (error) {
       console.error("Error creating ticket:", error);
@@ -183,6 +192,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
       }
+      
+      // Notify WebSocket clients of ticket update
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastUpdate('ticket_updated', { ticket });
+        wsServer.notifyDashboardUpdate();
+      }
+      
       res.json(ticket);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -230,6 +247,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ticket = await storage.updateTicket(id, updateData);
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
+      }
+      
+      // Notify WebSocket clients of ticket finalization
+      const wsServer = getWebSocketServer();
+      if (wsServer) {
+        wsServer.broadcastUpdate('ticket_updated', { ticket, action: 'finalized' });
+        wsServer.notifyDashboardUpdate();
       }
       
       res.json({ success: true, ticket });
