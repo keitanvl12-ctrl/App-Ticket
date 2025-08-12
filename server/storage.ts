@@ -963,24 +963,102 @@ export class DatabaseStorage implements IStorage {
 
   async calculateTicketSLA(ticket: TicketWithDetails): Promise<TicketWithDetails> {
     try {
-
       let slaHours = 4; // Padrão de 4 horas conforme solicitado
       let slaSource = 'padrão (4h)';
 
-      // Simplificar lógica de SLA por enquanto para evitar erros do Drizzle
-      // TODO: Reimplement complex SLA rules after fixing Drizzle issues
-      
-      // Mapear prioridades para SLA simples (valores em inglês como vem do banco)
-      const prioritySLA: Record<string, number> = {
-        'critical': 2,   // 2 horas para crítico
-        'high': 4,       // 4 horas para alto  
-        'medium': 8,     // 8 horas para médio
-        'low': 24        // 24 horas para baixo
-      };
+      try {
+        // Buscar regras SLA configuradas no sistema
+        const slaRulesQuery = await db.select().from(slaRules).where(eq(slaRules.isActive, true));
+        
+        // Encontrar a regra SLA mais específica que corresponde ao ticket
+        // Prioridade: departamento + categoria + prioridade > departamento + categoria > departamento + prioridade > categoria + prioridade > departamento > categoria > prioridade > geral
+        let matchedRule = null;
+        let maxSpecificity = -1;
+        
+        for (const rule of slaRulesQuery) {
+          let specificity = 0;
+          let matches = true;
+          
+          // Verificar se a regra corresponde ao departamento
+          if (rule.departmentId) {
+            if (rule.departmentId === ticket.responsibleDepartmentId || rule.departmentId === ticket.requesterDepartmentId) {
+              specificity += 4; // Peso alto para departamento
+            } else {
+              matches = false;
+            }
+          }
+          
+          // Verificar se a regra corresponde à categoria
+          if (rule.category) {
+            if (rule.category === ticket.category) {
+              specificity += 2; // Peso médio para categoria
+            } else {
+              matches = false;
+            }
+          }
+          
+          // Verificar se a regra corresponde à prioridade
+          if (rule.priority) {
+            if (rule.priority === ticket.priority) {
+              specificity += 1; // Peso baixo para prioridade
+            } else {
+              matches = false;
+            }
+          }
+          
+          // Se a regra corresponde e é mais específica, usar ela
+          if (matches && specificity > maxSpecificity) {
+            matchedRule = rule;
+            maxSpecificity = specificity;
+          }
+        }
+        
+        // Aplicar a regra encontrada
+        if (matchedRule) {
+          slaHours = matchedRule.resolutionTime; // Usar tempo de resolução da regra
+          slaSource = `regra SLA: ${matchedRule.name}`;
+          
+          // Log para debug (remover após teste)
+          if (ticket.ticketNumber === 'TICK-005400') {
+            console.log('SLA Rule Match for', ticket.ticketNumber, {
+              ruleName: matchedRule.name,
+              resolutionTime: matchedRule.resolutionTime,
+              category: matchedRule.category,
+              priority: matchedRule.priority,
+              departmentId: matchedRule.departmentId,
+              ticketCategory: ticket.category,
+              ticketPriority: ticket.priority,
+              ticketDepartment: ticket.responsibleDepartmentId
+            });
+          }
+        } else {
+          // Log quando nenhuma regra é encontrada
+          if (ticket.ticketNumber === 'TICK-005400') {
+            console.log('No SLA Rule Match for', ticket.ticketNumber, {
+              ticketCategory: ticket.category,
+              ticketPriority: ticket.priority,
+              ticketDepartment: ticket.responsibleDepartmentId,
+              availableRules: slaRulesQuery.length,
+              fallbackHours: slaHours,
+              fallbackSource: slaSource
+            });
+          }
+        }
+        
+      } catch (slaError) {
+        console.error('Erro ao buscar regras SLA, usando fallback:', slaError);
+        // Fallback: mapear prioridades para SLA simples se não conseguir buscar regras
+        const prioritySLA: Record<string, number> = {
+          'critical': 2,   // 2 horas para crítico
+          'high': 4,       // 4 horas para alto  
+          'medium': 8,     // 8 horas para médio
+          'low': 24        // 24 horas para baixo
+        };
 
-      if (ticket.priority && prioritySLA[ticket.priority]) {
-        slaHours = prioritySLA[ticket.priority];
-        slaSource = `prioridade: ${ticket.priority}`;
+        if (ticket.priority && prioritySLA[ticket.priority]) {
+          slaHours = prioritySLA[ticket.priority];
+          slaSource = `prioridade fallback: ${ticket.priority}`;
+        }
       }
       
 
