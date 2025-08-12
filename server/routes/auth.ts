@@ -91,11 +91,12 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // For demo purposes, we'll accept the hardcoded passwords
+    // For demo purposes, we'll accept the hardcoded passwords and the new user created
     const isValidPassword = 
       (email === 'admin@empresa.com' && password === 'admin123') ||
       (email === 'maria.santos@empresa.com' && password === 'maria123') ||
-      (email === 'ana.costa@empresa.com' && password === 'ana123');
+      (email === 'ana.costa@empresa.com' && password === 'ana123') ||
+      (email === 'felipe.lacerda@grupoopus.com' && password === 'felipe123');
 
     if (!isValidPassword) {
       return res.status(401).json({
