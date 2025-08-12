@@ -1077,11 +1077,7 @@ export default function KanbanBoard() {
                             <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
                           </div>
 
-                          {/* SLA Progress - Simple and Clean */}
-                          <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-                            <span>Progresso SLA</span>
-                            <span>{getSLAStatusText(ticket)}</span>
-                          </div>
+
                         </div>
                       </CardContent>
                     </Card>
