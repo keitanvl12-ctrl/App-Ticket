@@ -16,6 +16,7 @@ import { insertDepartmentSchema, insertCategorySchema, insertCustomFieldSchema }
 import { insertTicketSchema, insertCommentSchema, updateTicketSchema } from "@shared/schema";
 import { z } from "zod";
 import { getWebSocketServer } from "./websocket";
+import { registerServiceOrderRoutes } from "./routes/serviceOrder";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -1104,6 +1105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete custom field" });
     }
   });
+
+  // Register Service Order routes
+  registerServiceOrderRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

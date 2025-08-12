@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { TicketModal } from '@/components/TicketModal';
 import CreateTicketModal from '@/components/CreateTicketModal';
 import TicketFinalizationModal from '@/components/TicketFinalizationModal';
+import ServiceOrderModal from '@/components/ServiceOrderModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   DropdownMenu,
@@ -255,6 +256,11 @@ export default function KanbanBoard() {
     isOpen: boolean;
     ticket: any | null;
   }>({ isOpen: false, ticket: null });
+  const [serviceOrderModal, setServiceOrderModal] = useState<{
+    isOpen: boolean;
+    ticket: any | null;
+    finalizationData: any | null;
+  }>({ isOpen: false, ticket: null, finalizationData: null });
   const [pauseModal, setPauseModal] = useState<{
     isOpen: boolean;
     ticket: any | null;
@@ -673,8 +679,25 @@ export default function KanbanBoard() {
         refetchTickets();
         
         console.log('Ticket finalizado com sucesso');
+        
+        // Automatically show Service Order modal after successful finalization
+        setServiceOrderModal({
+          isOpen: true,
+          ticket: finalizationModal.ticket,
+          finalizationData: finalizationData
+        });
+        
+        toast({
+          title: "Ticket Finalizado",
+          description: "Ticket finalizado com sucesso! Gerando Ordem de Serviço...",
+        });
       } else {
         console.error('Erro ao finalizar ticket no servidor');
+        toast({
+          title: "Erro",
+          description: "Erro ao finalizar ticket. Tente novamente.",
+          variant: "destructive",
+        });
       }
 
       setFinalizationModal({ isOpen: false, ticket: null });
@@ -1189,6 +1212,16 @@ export default function KanbanBoard() {
           ticket={pauseModal.ticket}
           onClose={() => setPauseModal({ isOpen: false, ticket: null })}
           onPause={handlePauseConfirm}
+        />
+      )}
+
+      {/* Service Order Modal */}
+      {serviceOrderModal.isOpen && serviceOrderModal.ticket && (
+        <ServiceOrderModal
+          ticket={serviceOrderModal.ticket}
+          isOpen={serviceOrderModal.isOpen}
+          onClose={() => setServiceOrderModal({ isOpen: false, ticket: null, finalizationData: null })}
+          finalizationData={serviceOrderModal.finalizationData}
         />
       )}
     </div>

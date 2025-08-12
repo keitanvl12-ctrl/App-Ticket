@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Eye, Edit, Save, X, Paperclip, MessageCircle, Clock, User, 
   FileText, Image, Download, Upload, Calendar, AlertCircle,
-  CheckCircle, Pause, Play, MoreHorizontal, Send
+  CheckCircle, Pause, Play, MoreHorizontal, Send, Receipt
 } from 'lucide-react';
+import ServiceOrderModal from './ServiceOrderModal';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -33,6 +34,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   const [editedTicket, setEditedTicket] = useState(ticket);
   const [newComment, setNewComment] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [showServiceOrder, setShowServiceOrder] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -322,6 +324,17 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
             </Badge>
           </DialogTitle>
           <div className="flex items-center space-x-2">
+            {/* Botão Ordem de Serviço */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowServiceOrder(true)}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+            >
+              <Receipt className="w-4 h-4 mr-2" />
+              Ordem de Serviço
+            </Button>
+            
             {isEditing ? (
               <>
                 <Button size="sm" onClick={handleSave} disabled={saveTicketMutation.isPending}>
@@ -740,6 +753,14 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
           </TabsContent>
         </Tabs>
       </DialogContent>
+      
+      {/* Service Order Modal */}
+      <ServiceOrderModal
+        ticket={ticket}
+        isOpen={showServiceOrder}
+        onClose={() => setShowServiceOrder(false)}
+        finalizationData={null}
+      />
     </Dialog>
   );
 }

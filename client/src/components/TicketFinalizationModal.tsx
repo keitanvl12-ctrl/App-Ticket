@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ServiceOrderModal from './ServiceOrderModal';
 
 interface TicketFinalizationModalProps {
   isOpen: boolean;
@@ -36,6 +37,8 @@ export default function TicketFinalizationModal({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showServiceOrder, setShowServiceOrder] = useState(false);
+  const [finalizedTicket, setFinalizedTicket] = useState(null);
 
   if (!isOpen) return null;
 
@@ -45,6 +48,10 @@ export default function TicketFinalizationModal({
     
     try {
       await onConfirm(formData);
+      
+      // Store finalization data and show service order modal
+      setFinalizedTicket({ ...ticket, finalizationData: formData });
+      setShowServiceOrder(true);
       onClose();
     } catch (error) {
       console.error('Erro ao finalizar ticket:', error);
@@ -199,6 +206,16 @@ export default function TicketFinalizationModal({
           </div>
         </form>
       </div>
+      
+      {/* Service Order Modal */}
+      {finalizedTicket && (
+        <ServiceOrderModal
+          ticket={finalizedTicket}
+          isOpen={showServiceOrder}
+          onClose={() => setShowServiceOrder(false)}
+          finalizationData={finalizedTicket.finalizationData}
+        />
+      )}
     </div>
   );
 }
