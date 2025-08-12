@@ -892,6 +892,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pause/Resume ticket endpoints
+  app.post("/api/tickets/:id/pause", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason, duration } = req.body;
+      
+      if (!reason || !duration) {
+        return res.status(400).json({ message: "Motivo e duração são obrigatórios" });
+      }
+      
+      const pauseRecord = await storage.createPauseRecord(id, reason, duration);
+      res.json(pauseRecord);
+    } catch (error) {
+      console.error("Error pausing ticket:", error);
+      res.status(500).json({ message: "Failed to pause ticket" });
+    }
+  });
+
+  app.post("/api/tickets/:id/resume", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.resumeTicket(id);
+      res.json({ success });
+    } catch (error) {
+      console.error("Error resuming ticket:", error);
+      res.status(500).json({ message: "Failed to resume ticket" });
+    }
+  });
+
+  app.get("/api/tickets/:id/pause-records", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const pauseRecords = await storage.getTicketPauseRecords(id);
+      res.json(pauseRecords);
+    } catch (error) {
+      console.error("Error fetching pause records:", error);
+      res.status(500).json({ message: "Failed to fetch pause records" });
+    }
+  });
+
   // SLA endpoints
   app.get("/api/sla/rules", async (req, res) => {
     try {

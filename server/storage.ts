@@ -104,6 +104,21 @@ export interface IStorage {
   // Dashboard Real Data
   getTeamPerformance(): Promise<any[]>;
   getDepartmentStats(): Promise<any[]>;
+
+  // SLA Management
+  getSLARule(ticket: Ticket): Promise<SlaRule | null>;
+  getSLARules(): Promise<SlaRule[]>;
+  createSLARule(rule: InsertSlaRule): Promise<SlaRule>;
+  updateSLARule(id: string, updates: Partial<SlaRule>): Promise<SlaRule | undefined>;
+  deleteSLARule(id: string): Promise<boolean>;
+  
+  // Pause Management  
+  getTicketPauseRecords(ticketId: string): Promise<any[]>;
+  createPauseRecord(ticketId: string, reason: string, duration: number): Promise<any>;
+  resumeTicket(ticketId: string): Promise<boolean>;
+  
+  // SLA Calculation
+  calculateTicketSLA(ticket: Ticket, slaRule: SlaRule, pauseRecords: any[]): any;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -867,7 +882,7 @@ export class DatabaseStorage implements IStorage {
     } as TicketWithDetails;
 
     // Calcular SLA para o ticket individual também
-    return await this.calculateTicketSLA(baseTicket);
+    return await this.addSLAToTicket(baseTicket);
   }
 
   async getTicketsByUser(userId: string): Promise<TicketWithDetails[]> {
@@ -940,7 +955,7 @@ export class DatabaseStorage implements IStorage {
     const ticketsWithSLA = await Promise.all(
       detailedTickets
         .filter(ticket => ticket !== undefined)
-        .map(async ticket => await this.calculateTicketSLA(ticket as TicketWithDetails))
+        .map(async ticket => await this.addSLAToTicket(ticket as TicketWithDetails))
     );
 
     return ticketsWithSLA;
@@ -1970,6 +1985,350 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error in getDepartmentStats:', error);
       return [];
+    }
+  }
+
+  // SLA Management methods
+  async getSLARule(ticket: Ticket): Promise<SlaRule | null> {
+    try {
+      // Find the most specific SLA rule for this ticket
+      // Priority: department + category + priority > department + priority > department + category > priority > department > default
+      
+      let slaRule = null;
+      
+      // Try department + category + priority
+      if (ticket.responsibleDepartmentId && ticket.category && ticket.priority) {
+        [slaRule] = await db
+          .select()
+          .from(slaRules)
+          .where(and(
+            eq(slaRules.departmentId, ticket.responsibleDepartmentId),
+            eq(slaRules.category, ticket.category),
+            eq(slaRules.priority, ticket.priority),
+            eq(slaRules.isActive, true)
+          ))
+          .limit(1);
+      }
+      
+      // Try department + priority
+      if (!slaRule && ticket.responsibleDepartmentId && ticket.priority) {
+        [slaRule] = await db
+          .select()
+          .from(slaRules)
+          .where(and(
+            eq(slaRules.departmentId, ticket.responsibleDepartmentId),
+            isNull(slaRules.category),
+            eq(slaRules.priority, ticket.priority),
+            eq(slaRules.isActive, true)
+          ))
+          .limit(1);
+      }
+      
+      // Try department + category
+      if (!slaRule && ticket.responsibleDepartmentId && ticket.category) {
+        [slaRule] = await db
+          .select()
+          .from(slaRules)
+          .where(and(
+            eq(slaRules.departmentId, ticket.responsibleDepartmentId),
+            eq(slaRules.category, ticket.category),
+            isNull(slaRules.priority),
+            eq(slaRules.isActive, true)
+          ))
+          .limit(1);
+      }
+      
+      // Try priority only
+      if (!slaRule && ticket.priority) {
+        [slaRule] = await db
+          .select()
+          .from(slaRules)
+          .where(and(
+            isNull(slaRules.departmentId),
+            isNull(slaRules.category),
+            eq(slaRules.priority, ticket.priority),
+            eq(slaRules.isActive, true)
+          ))
+          .limit(1);
+      }
+      
+      // Try department only
+      if (!slaRule && ticket.responsibleDepartmentId) {
+        [slaRule] = await db
+          .select()
+          .from(slaRules)
+          .where(and(
+            eq(slaRules.departmentId, ticket.responsibleDepartmentId),
+            isNull(slaRules.category),
+            isNull(slaRules.priority),
+            eq(slaRules.isActive, true)
+          ))
+          .limit(1);
+      }
+      
+      // Try default rule (no department, category, or priority)
+      if (!slaRule) {
+        [slaRule] = await db
+          .select()
+          .from(slaRules)
+          .where(and(
+            isNull(slaRules.departmentId),
+            isNull(slaRules.category),
+            isNull(slaRules.priority),
+            eq(slaRules.isActive, true)
+          ))
+          .limit(1);
+      }
+      
+      return slaRule || null;
+    } catch (error) {
+      console.error('Error getting SLA rule:', error);
+      return null;
+    }
+  }
+
+  async getSLARules(): Promise<SlaRule[]> {
+    return await db.select().from(slaRules).orderBy(slaRules.name);
+  }
+
+  async createSLARule(rule: InsertSlaRule): Promise<SlaRule> {
+    const [newRule] = await db.insert(slaRules).values(rule).returning();
+    return newRule;
+  }
+
+  async updateSLARule(id: string, updates: Partial<SlaRule>): Promise<SlaRule | undefined> {
+    const [updatedRule] = await db
+      .update(slaRules)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(slaRules.id, id))
+      .returning();
+    return updatedRule || undefined;
+  }
+
+  async deleteSLARule(id: string): Promise<boolean> {
+    const result = await db.delete(slaRules).where(eq(slaRules.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Pause Management methods
+  async getTicketPauseRecords(ticketId: string): Promise<any[]> {
+    try {
+      // Get pause records from comments with type "pause" and "resume"
+      const pauseComments = await db
+        .select({
+          id: comments.id,
+          content: comments.content,
+          createdAt: comments.createdAt,
+          userId: comments.userId,
+          type: comments.type
+        })
+        .from(comments)
+        .where(and(
+          eq(comments.ticketId, ticketId),
+          or(eq(comments.type, 'pause'), eq(comments.type, 'resume'))
+        ))
+        .orderBy(comments.createdAt);
+
+      const pauseRecords = [];
+      let currentPause = null;
+
+      for (const comment of pauseComments) {
+        if (comment.type === 'pause') {
+          // Extract duration from pause comment content
+          const durationMatch = comment.content.match(/(\d+)\s*horas?/i);
+          const duration = durationMatch ? parseInt(durationMatch[1]) : 1;
+          
+          currentPause = {
+            id: comment.id,
+            ticketId,
+            pausedAt: comment.createdAt.toISOString(),
+            reason: comment.content,
+            pausedBy: comment.userId,
+            expectedReturnAt: new Date(new Date(comment.createdAt).getTime() + duration * 60 * 60 * 1000).toISOString()
+          };
+        } else if (comment.type === 'resume' && currentPause) {
+          currentPause.resumedAt = comment.createdAt.toISOString();
+          pauseRecords.push(currentPause);
+          currentPause = null;
+        }
+      }
+
+      // If there's an unresolved pause, add it
+      if (currentPause) {
+        pauseRecords.push(currentPause);
+      }
+
+      return pauseRecords;
+    } catch (error) {
+      console.error('Error getting pause records:', error);
+      return [];
+    }
+  }
+
+  async createPauseRecord(ticketId: string, reason: string, duration: number): Promise<any> {
+    try {
+      // Create pause comment
+      const pauseComment = await this.createComment({
+        ticketId,
+        userId: 'system', // In real implementation, use current user
+        content: `**Ticket pausado por ${duration} horas**\n\nMotivo: ${reason}`,
+        type: 'pause'
+      });
+
+      // Update ticket status to on_hold
+      await this.updateTicket(ticketId, {
+        status: 'on_hold',
+        pauseReason: reason,
+        pausedAt: new Date()
+      });
+
+      return pauseComment;
+    } catch (error) {
+      console.error('Error creating pause record:', error);
+      throw error;
+    }
+  }
+
+  async resumeTicket(ticketId: string): Promise<boolean> {
+    try {
+      // Create resume comment
+      await this.createComment({
+        ticketId,
+        userId: 'system', // In real implementation, use current user
+        content: '**Ticket retomado automaticamente**\n\nTempo de pausa expirado.',
+        type: 'resume'
+      });
+
+      // Update ticket status back to in_progress
+      await this.updateTicket(ticketId, {
+        status: 'in_progress',
+        pauseReason: null,
+        pausedAt: null
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error resuming ticket:', error);
+      return false;
+    }
+  }
+
+  // SLA helper method to add SLA data to a ticket
+  async addSLAToTicket(ticket: TicketWithDetails): Promise<TicketWithDetails> {
+    try {
+      // Get SLA rule for this ticket
+      const slaRule = await this.getSLARule(ticket);
+      
+      if (!slaRule) {
+        return {
+          ...ticket,
+          slaStatus: 'met' as const,
+          slaHoursRemaining: 0,
+          slaHoursTotal: 0,
+          slaSource: 'Sem SLA definido'
+        };
+      }
+      
+      // Get pause records
+      const pauseRecords = await this.getTicketPauseRecords(ticket.id);
+      
+      // Calculate SLA data
+      const slaData = this.calculateTicketSLA(ticket, slaRule, pauseRecords);
+      
+      return {
+        ...ticket,
+        slaStatus: slaData.status,
+        slaHoursRemaining: slaData.hoursRemaining,
+        slaHoursTotal: slaData.hoursTotal,
+        slaSource: slaRule.name
+      };
+    } catch (error) {
+      console.error('Error adding SLA to ticket:', error);
+      return {
+        ...ticket,
+        slaStatus: 'met' as const,
+        slaHoursRemaining: 0,
+        slaHoursTotal: 0,
+        slaSource: 'Erro no cálculo'
+      };
+    }
+  }
+
+  // SLA Calculation methods
+  calculateTicketSLA(ticket: Ticket, slaRule: SlaRule, pauseRecords: any[]): any {
+    try {
+      const createdAt = new Date(ticket.createdAt);
+      const now = new Date();
+      const resolvedAt = ticket.resolvedAt ? new Date(ticket.resolvedAt) : null;
+      
+      // Calculate end time for SLA calculation
+      const endTime = resolvedAt || now;
+      
+      // Calculate total paused time in minutes
+      let totalPausedMinutes = 0;
+      
+      pauseRecords.forEach(pause => {
+        const pausedAt = new Date(pause.pausedAt);
+        let resumedAt: Date;
+        
+        if (pause.resumedAt) {
+          resumedAt = new Date(pause.resumedAt);
+        } else if (pause.expectedReturnAt) {
+          // If still paused, use expected return time or current time, whichever is smaller
+          const expectedReturn = new Date(pause.expectedReturnAt);
+          resumedAt = expectedReturn < now ? expectedReturn : now;
+        } else {
+          // If no expected return time, consider paused until now
+          resumedAt = now;
+        }
+        
+        // Only count pause time if it's within the ticket's active period
+        const effectivePauseStart = pausedAt > createdAt ? pausedAt : createdAt;
+        const effectivePauseEnd = resumedAt < endTime ? resumedAt : endTime;
+        
+        if (effectivePauseEnd > effectivePauseStart) {
+          totalPausedMinutes += differenceInHours(effectivePauseEnd, effectivePauseStart) * 60;
+        }
+      });
+      
+      // Calculate total elapsed time in hours
+      const totalElapsedHours = differenceInHours(endTime, createdAt);
+      
+      // Calculate effective time (elapsed - paused)
+      const effectiveHours = totalElapsedHours - (totalPausedMinutes / 60);
+      
+      // Determine SLA limit based on ticket status
+      const slaLimitHours = ticket.status === 'resolved' ? slaRule.resolutionTime : slaRule.responseTime;
+      
+      // Calculate remaining hours
+      const remainingHours = slaLimitHours - effectiveHours;
+      
+      // Determine SLA status
+      let status: 'met' | 'at_risk' | 'violated';
+      if (remainingHours > 1) {
+        status = 'met';
+      } else if (remainingHours > 0) {
+        status = 'at_risk';
+      } else {
+        status = 'violated';
+      }
+      
+      return {
+        status,
+        hoursRemaining: Math.max(0, remainingHours),
+        hoursTotal: slaLimitHours,
+        hoursElapsed: effectiveHours,
+        hoursLeft: remainingHours
+      };
+    } catch (error) {
+      console.error('Error calculating ticket SLA:', error);
+      return {
+        status: 'met',
+        hoursRemaining: 0,
+        hoursTotal: 0,
+        hoursElapsed: 0,
+        hoursLeft: 0
+      };
     }
   }
 }
