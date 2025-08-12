@@ -851,11 +851,21 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-6">
+            {/* Resumo do Ticket */}
+            <div className="bg-gray-50 rounded-lg p-4 border">
+              <h4 className="font-semibold text-gray-900 mb-2">Resumo do Ticket</h4>
+              <p className="text-sm text-gray-700">{ticket.title}</p>
+              <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                <span>Criado: {format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+                <span>Prioridade: {ticket.priority}</span>
+              </div>
+            </div>
+
             {/* Comentário de Resolução */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700 flex items-center">
-                <FileText className="w-4 h-4 mr-2 text-blue-500" />
+            <div className="space-y-3">
+              <Label className="text-base font-semibold text-gray-800 flex items-center">
+                <FileText className="w-5 h-5 mr-2 text-blue-600" />
                 Comentário de Resolução *
               </Label>
               <Textarea
@@ -864,35 +874,42 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                   ...finalizationData,
                   resolutionComment: e.target.value
                 })}
-                placeholder="Descreva detalhadamente:
-• Qual foi a causa raiz do problema?
-• Quais passos foram tomados para resolver?
-• Como foi validada a solução?
-• Há alguma recomendação para prevenir reincidência?"
-                className="min-h-[120px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Descreva detalhadamente como o problema foi resolvido:
+
+• Qual foi a causa raiz identificada?
+• Quais passos foram executados para resolver?
+• Como a solução foi testada e validada?
+• Há recomendações para prevenir reincidência?"
+                className="min-h-[140px] resize-none border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg text-sm"
                 required
               />
-              <p className="text-xs text-gray-500">Campo obrigatório - seja específico na descrição da resolução</p>
+              <p className="text-xs text-gray-600 flex items-center">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                Campo obrigatório - seja específico na descrição da resolução
+              </p>
             </div>
 
-            {/* Apontamento de Horas */}
-            <div>
-              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                Apontamento de Horas (Calculado automaticamente)
+            {/* Apontamento de Horas - Destaque */}
+            <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 rounded-xl p-6">
+              <Label className="text-base font-bold text-amber-800 flex items-center mb-4">
+                <Clock className="w-5 h-5 mr-2" />
+                Apontamento de Horas Trabalhadas
               </Label>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-6 h-6 text-amber-600" />
-                  <div>
-                    <span className="text-2xl font-mono font-bold text-amber-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-white rounded-lg px-6 py-4 border-2 border-amber-400 shadow-sm">
+                    <span className="text-3xl font-mono font-black text-amber-700">
                       {calculateWorkedHours()}
                     </span>
-                    <p className="text-xs text-amber-600 mt-1">Tempo de trabalho efetivo</p>
+                  </div>
+                  <div className="text-amber-700">
+                    <p className="font-semibold text-lg">Tempo efetivo de trabalho</p>
+                    <p className="text-sm">Calculado automaticamente, excluindo pausas</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-amber-700">Calculado automaticamente</p>
-                  <p className="text-xs text-amber-600">Excluindo tempo de pausas</p>
+                <div className="text-right text-amber-600">
+                  <p className="text-sm font-medium">Início: {format(new Date(ticket.createdAt), 'dd/MM HH:mm', { locale: ptBR })}</p>
+                  <p className="text-sm">Finalização: {format(new Date(), 'dd/MM HH:mm', { locale: ptBR })}</p>
                 </div>
               </div>
             </div>
@@ -900,9 +917,9 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
             {/* Grid para Equipamentos e Materiais */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Equipamentos Retirados */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700 flex items-center">
-                  <AlertTriangle className="w-4 h-4 mr-2 text-orange-500" />
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <Label className="text-base font-semibold text-orange-800 flex items-center mb-3">
+                  <AlertTriangle className="w-5 h-5 mr-2" />
                   Equipamentos Retirados
                 </Label>
                 <Textarea
@@ -911,17 +928,20 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     ...finalizationData,
                     equipmentRetired: e.target.value
                   })}
-                  placeholder="Ex: Desktop Dell OptiPlex 3070
-Modelo: ABC123
-Patrimônio: 001234"
-                  className="min-h-[100px] resize-none border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                  placeholder="Liste os equipamentos que foram retirados:
+
+• Desktop Dell OptiPlex 3070
+• Modelo: ABC123
+• Patrimônio: 001234
+• Monitor Samsung 24 polegadas - Patrimônio: 005678"
+                  className="min-h-[120px] resize-none border-orange-300 focus:border-orange-500 focus:ring-orange-200 bg-white"
                 />
               </div>
 
               {/* Materiais Utilizados */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700 flex items-center">
-                  <FileText className="w-4 h-4 mr-2 text-blue-500" />
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <Label className="text-base font-semibold text-blue-800 flex items-center mb-3">
+                  <FileText className="w-5 h-5 mr-2" />
                   Materiais Utilizados
                 </Label>
                 <Textarea
@@ -930,10 +950,13 @@ Patrimônio: 001234"
                     ...finalizationData,
                     materialsUsed: e.target.value
                   })}
-                  placeholder="Ex: Cabo de rede CAT6 - 2m
-Conector RJ45 - 2 unidades
-Abraçadeira plástica - 5 unidades"
-                  className="min-h-[100px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Liste os materiais que foram utilizados:
+
+• Cabo de rede CAT6 - 2 metros
+• Conector RJ45 - 2 unidades  
+• Abraçadeira plástica - 5 unidades
+• Parafuso M4 - 4 unidades"
+                  className="min-h-[120px] resize-none border-blue-300 focus:border-blue-500 focus:ring-blue-200 bg-white"
                 />
               </div>
             </div>
