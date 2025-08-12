@@ -542,7 +542,8 @@ export default function KanbanBoard() {
         slaProgressPercent: ticket.slaProgressPercent,
         slaStatus: ticket.slaStatus,
         slaHoursTotal: ticket.slaHoursTotal,
-        slaSource: ticket.slaSource
+        slaSource: ticket.slaSource,
+        SHOULD_BE: '4h padrão'
       });
     }
     

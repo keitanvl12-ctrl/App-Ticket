@@ -963,8 +963,19 @@ export class DatabaseStorage implements IStorage {
 
   async calculateTicketSLA(ticket: TicketWithDetails): Promise<TicketWithDetails> {
     try {
-      let slaHours = 4; // Padrão de 4 horas conforme solicitado
+      // FORÇAR SEMPRE 4h como padrão - NUNCA usar prioridades
+      let slaHours = 4;
       let slaSource = 'padrão (4h)';
+      
+      // Log para debug - verificar se está chegando aqui
+      if (ticket.ticketNumber === 'TICK-005400') {
+        console.log('=== SLA CALCULATION START ===', {
+          ticketNumber: ticket.ticketNumber,
+          initialSlaHours: slaHours,
+          initialSlaSource: slaSource,
+          priority: ticket.priority
+        });
+      }
 
       try {
         // Buscar regras SLA configuradas no sistema
@@ -1015,46 +1026,36 @@ export class DatabaseStorage implements IStorage {
         
         // Aplicar a regra encontrada
         if (matchedRule) {
-          slaHours = matchedRule.resolutionTime; // Usar tempo de resolução da regra
+          slaHours = matchedRule.resolutionTime;
           slaSource = `regra SLA: ${matchedRule.name}`;
           
-
+          if (ticket.ticketNumber === 'TICK-005400') {
+            console.log('=== MATCHED SLA RULE ===', {
+              ruleName: matchedRule.name,
+              resolutionTime: matchedRule.resolutionTime,
+              newSlaHours: slaHours,
+              newSlaSource: slaSource
+            });
+          }
         } else {
-
+          if (ticket.ticketNumber === 'TICK-005400') {
+            console.log('=== NO SLA RULE MATCHED - KEEPING DEFAULT ===', {
+              slaHours: slaHours,
+              slaSource: slaSource,
+              availableRules: slaRulesQuery.length
+            });
+          }
         }
         
       } catch (slaError) {
-        console.error('Erro ao buscar regras SLA, usando fallback por prioridade:', slaError);
-        // Se não conseguir buscar regras, usar sistema de prioridades por padrão
-        const prioritySLA: Record<string, number> = {
-          'critical': 2,   // 2 horas para crítico
-          'high': 4,       // 4 horas para alto  
-          'medium': 8,     // 8 horas para médio
-          'low': 24        // 24 horas para baixo
-        };
-
-        if (ticket.priority && prioritySLA[ticket.priority]) {
-          slaHours = prioritySLA[ticket.priority];
-          slaSource = `prioridade: ${ticket.priority} (${slaHours}h)`;
-        }
+        console.error('Erro ao buscar regras SLA, mantendo padrão de 4h:', slaError);
+        // Em caso de erro, manter o padrão de 4h
+        // NÃO usar sistema de prioridades
       }
       
-      // Se ainda não encontrou regra específica mas tem prioridade, aplicar SLA por prioridade
-      if (slaSource === 'padrão (4h)' && ticket.priority) {
-        const prioritySLA: Record<string, number> = {
-          'critical': 2,   // 2 horas para crítico
-          'high': 4,       // 4 horas para alto  
-          'medium': 8,     // 8 horas para médio
-          'low': 24        // 24 horas para baixo
-        };
-        
-        if (prioritySLA[ticket.priority]) {
-          slaHours = prioritySLA[ticket.priority];
-          slaSource = `prioridade: ${ticket.priority} (${slaHours}h)`;
-          
-
-        }
-      }
+      // NÃO aplicar SLA por prioridade se não tiver regra configurada
+      // Sempre usar o padrão de 4h quando não há regra SLA configurada
+      // (removido o sistema de fallback por prioridade conforme solicitado)
       
 
 
@@ -1091,15 +1092,28 @@ export class DatabaseStorage implements IStorage {
 
 
 
-      return {
+      const result = {
         ...ticket,
         slaStatus,
         slaHoursRemaining: remainingHours,
         slaHoursTotal: slaHours,
-        slaProgressPercent: cappedProgressPercentage, // SEMPRE usar o valor cappado (0-100)
-        slaElapsedHours: Math.round(elapsedHours * 100) / 100, // Para debug
+        slaProgressPercent: cappedProgressPercentage,
+        slaElapsedHours: Math.round(elapsedHours * 100) / 100,
         slaSource
       };
+      
+      // Log final para debug
+      if (ticket.ticketNumber === 'TICK-005400') {
+        console.log('=== FINAL SLA RESULT ===', {
+          ticketNumber: ticket.ticketNumber,
+          finalSlaHours: slaHours,
+          finalSlaSource: slaSource,
+          slaProgressPercent: cappedProgressPercentage,
+          slaStatus: slaStatus
+        });
+      }
+      
+      return result;
 
     } catch (error) {
       console.error('Erro ao calcular SLA:', error);
