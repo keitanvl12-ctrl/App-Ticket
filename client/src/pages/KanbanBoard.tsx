@@ -520,17 +520,7 @@ export default function KanbanBoard() {
     return 'bg-blue-500';
   };
 
-  // Função para calcular progresso baseado no SLA usando dados do backend
-  const calculateSLAProgress = (ticket: any) => {
-    if (!ticket.slaHoursTotal || ticket.slaHoursTotal <= 0) return 0;
-    if (ticket.status === 'resolved') return 100;
-    
-    const now = new Date();
-    const createdAt = new Date(ticket.createdAt);
-    const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-    const progressPercentage = Math.min((hoursElapsed / ticket.slaHoursTotal) * 100, 100);
-    return Math.max(progressPercentage, 0);
-  };
+
 
   // Função para traduzir status do banco para português
   const getStatusLabel = (status: string) => {
@@ -544,28 +534,39 @@ export default function KanbanBoard() {
     return config?.name || priority;
   };
 
-  // Funções SLA Helper (clean e funcionais)
+  // Funções SLA - Usando dados reais do servidor
   const getSLAProgressPercentage = (ticket: any) => {
-    if (!ticket.slaHoursTotal || !ticket.slaHoursRemaining) return 0;
-    const used = ticket.slaHoursTotal - ticket.slaHoursRemaining;
-    return Math.max(0, Math.min(100, (used / ticket.slaHoursTotal) * 100));
+    // Usa a função original que calcula baseado no tempo real
+    if (!ticket.slaHoursTotal || ticket.slaHoursTotal <= 0) return 0;
+    if (ticket.status === 'resolved') return 100;
+    
+    const now = new Date();
+    const createdAt = new Date(ticket.createdAt);
+    const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    const progressPercentage = Math.min((hoursElapsed / ticket.slaHoursTotal) * 100, 100);
+    return Math.max(progressPercentage, 0);
   };
 
   const getSLAProgressColor = (ticket: any) => {
     const progress = getSLAProgressPercentage(ticket);
+    // Debug temporário
+    console.log('SLA Debug:', {
+      ticketId: ticket.id,
+      slaHoursTotal: ticket.slaHoursTotal,
+      progress: progress,
+      status: ticket.status
+    });
+    
     if (progress >= 90) return 'bg-red-500';
     if (progress >= 70) return 'bg-orange-500';
     return 'bg-green-500';
   };
 
   const getSLAStatusText = (ticket: any) => {
-    if (!ticket.slaStatus) return 'No prazo';
-    switch (ticket.slaStatus) {
-      case 'violated': return 'Vencido';
-      case 'at_risk': return 'Em risco';
-      case 'met': return 'No prazo';
-      default: return 'No prazo';
-    }
+    const progress = getSLAProgressPercentage(ticket);
+    if (progress >= 100) return 'Vencido';
+    if (progress >= 90) return 'Em risco';
+    return 'No prazo';
   };
 
   const filteredTickets = tickets.filter(ticket => {
