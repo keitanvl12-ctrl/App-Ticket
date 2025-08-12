@@ -119,6 +119,9 @@ export interface IStorage {
   
   // SLA Calculation
   calculateTicketSLA(ticket: Ticket, slaRule: SlaRule, pauseRecords: any[]): any;
+  
+  // User Assignment
+  getAssignableUsers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -797,6 +800,33 @@ export class DatabaseStorage implements IStorage {
     };
 
     return rolePermissions[role] || {};
+  }
+
+  // Buscar usuários que podem ser atribuídos a tickets (têm permissão para gerenciar tickets)
+  async getAssignableUsers(): Promise<User[]> {
+    try {
+      const allUsers = await this.getAllUsers();
+      
+      // Filtrar usuários que têm permissão para gerenciar tickets
+      const assignableUsers = allUsers.filter(user => {
+        const rolePermissions = this.getRolePermissions(user.role);
+        const ticketPermissions = rolePermissions['Tickets'];
+        
+        // Verificar se o usuário tem permissão para gerenciar tickets
+        // Inclui admin, supervisor e colaborador (todos podem atender)
+        return ticketPermissions && ticketPermissions['Gerenciar Tickets'] === true;
+      });
+      
+      console.log("👥 Usuários que podem ser responsáveis por tickets:", assignableUsers.length);
+      assignableUsers.forEach(user => {
+        console.log(`  - ${user.name} (${user.role})`);
+      });
+      
+      return assignableUsers;
+    } catch (error) {
+      console.error('Erro ao buscar usuários atribuíveis:', error);
+      return [];
+    }
   }
 
   async getTicket(id: string): Promise<TicketWithDetails | undefined> {

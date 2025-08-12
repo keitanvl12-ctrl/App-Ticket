@@ -32,9 +32,9 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
     enabled: isOpen && !!ticketId,
   });
   
-  // Buscar usuários para atribuição
+  // Buscar usuários que podem ser atribuídos (com permissão para gerenciar tickets)
   const { data: users = [] } = useQuery<any[]>({
-    queryKey: ['/api/users'],
+    queryKey: ['/api/users/assignable'],
     enabled: isOpen && !!ticketId,
   });
   

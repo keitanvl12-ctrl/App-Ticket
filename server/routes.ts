@@ -280,7 +280,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("PATCH /api/tickets/:id - Request body:", req.body);
       console.log("PATCH /api/tickets/:id - Ticket ID:", req.params.id);
       
-      const validatedData = updateTicketSchema.parse(req.body);
+      // Convert timestamp fields from ISO strings to Date objects before validation
+      const processedData = { ...req.body };
+      if (processedData.pausedAt && typeof processedData.pausedAt === 'string') {
+        processedData.pausedAt = new Date(processedData.pausedAt);
+      }
+      if (processedData.resolvedAt && typeof processedData.resolvedAt === 'string') {
+        processedData.resolvedAt = new Date(processedData.resolvedAt);
+      }
+      
+      const validatedData = updateTicketSchema.parse(processedData);
       console.log("PATCH /api/tickets/:id - Validated data:", validatedData);
       
       const ticket = await storage.updateTicket(req.params.id, validatedData);
@@ -399,6 +408,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User management endpoints
 
+
+
   // Users
   app.get("/api/users", async (req, res) => {
     try {
@@ -495,6 +506,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting user:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Endpoint para buscar usuários que podem ser atribuídos a tickets (DEVE vir antes do endpoint parametrizado)
+  app.get("/api/users/assignable", async (req, res) => {
+    try {
+      console.log("🎯 Endpoint /api/users/assignable chamado");
+      const assignableUsers = await storage.getAssignableUsers();
+      console.log("🎯 Retornando", assignableUsers.length, "usuários atribuíveis");
+      res.json(assignableUsers);
+    } catch (error) {
+      console.error("Erro ao buscar usuários atribuíveis:", error);
+      res.status(500).json({ message: "Erro ao buscar usuários atribuíveis" });
     }
   });
 
