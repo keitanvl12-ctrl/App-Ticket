@@ -95,24 +95,42 @@ router.post('/login', async (req, res) => {
     const bcrypt = await import('bcryptjs');
     let isValidPassword = false;
     
+    console.log('Authenticating user:', email);
+    console.log('Stored password:', user.password ? user.password.substring(0, 20) + '...' : 'NO PASSWORD');
+    
     try {
-      // If user has a hashed password, use bcrypt to compare
       if (user.password) {
-        isValidPassword = await bcrypt.compare(password, user.password);
-      }
-      
-      // Fallback for demo users with plain text passwords
-      if (!isValidPassword) {
-        const demoPasswordMap = {
+        // Check if password is already hashed (starts with $2b$)
+        if (user.password.startsWith('$2b$')) {
+          console.log('Comparing password with bcrypt hash');
+          isValidPassword = await bcrypt.compare(password, user.password);
+          console.log('Bcrypt comparison result:', isValidPassword);
+        } else {
+          console.log('Legacy plaintext password detected');
+          // Handle legacy plaintext passwords - convert to hash after login
+          isValidPassword = (password === user.password);
+          if (isValidPassword) {
+            // Update with hashed password for future logins
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await storage.updateUser(user.id, { password: hashedPassword });
+            console.log('Password converted to hash for future logins');
+          }
+        }
+      } else {
+        console.log('No password stored, checking demo passwords');
+        // Fallback for demo users with predefined passwords
+        const demoPasswordMap: Record<string, string> = {
           'admin@empresa.com': 'admin123',
           'maria.santos@empresa.com': 'maria123',
           'ana.costa@empresa.com': 'ana123',
+          'carlos.oliveira@empresa.com': 'carlos123',
           'felipe.lacerda@grupoopus.com': 'felipe123'
         };
         
         const expectedPassword = demoPasswordMap[email];
         if (expectedPassword && password === expectedPassword) {
           isValidPassword = true;
+          console.log('Demo password matched, converting to hash');
           
           // Update user with hashed password for future logins
           const hashedPassword = await bcrypt.hash(password, 10);

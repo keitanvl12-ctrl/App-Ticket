@@ -1771,8 +1771,10 @@ export class DatabaseStorage implements IStorage {
   // Security functions for user management
   async changeUserPassword(id: string, newPassword: string): Promise<boolean> {
     try {
+      console.log('Changing password for user ID:', id);
       const bcrypt = await import('bcryptjs');
       const hashedPassword = await bcrypt.hash(newPassword, 10);
+      console.log('Generated hash for new password:', hashedPassword.substring(0, 20) + '...');
       
       const [user] = await db
         .update(users)
@@ -1783,6 +1785,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(users.id, id))
         .returning();
       
+      console.log('Password change result:', user ? 'SUCCESS' : 'FAILED');
       return !!user;
     } catch (error) {
       console.error('Error changing user password:', error);
