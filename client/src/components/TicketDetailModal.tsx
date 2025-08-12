@@ -1,16 +1,19 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '../lib/queryClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Clock, User, FileText, Calendar, AlertCircle,
-  CheckCircle, Building2, Tag, MessageCircle
+  CheckCircle, Building2, Tag, MessageCircle, UserPlus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketDetailModalProps {
   ticketId: string;
@@ -19,13 +22,62 @@ interface TicketDetailModalProps {
 }
 
 export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketDetailModalProps) {
+  const [isAssigning, setIsAssigning] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   // Buscar dados do ticket
   const { data: tickets = [], isLoading: ticketLoading } = useQuery({
     queryKey: ['/api/tickets'],
     enabled: isOpen && !!ticketId,
   });
   
+  // Buscar usuários para atribuição
+  const { data: users = [] } = useQuery<any[]>({
+    queryKey: ['/api/users'],
+    enabled: isOpen && !!ticketId,
+  });
+  
   const ticket = tickets.find((t: any) => t.id === ticketId);
+
+  console.log("Ticket data:", ticket);
+  console.log("FormData raw:", ticket?.formData);
+
+  // Parse form data if available
+  let parsedFormData = null;
+  if (ticket?.formData) {
+    try {
+      parsedFormData = JSON.parse(ticket.formData);
+      console.log("Parsed form data:", parsedFormData);
+    } catch (error) {
+      console.error("Error parsing form data:", error);
+    }
+  }
+
+  // Mutation para atribuir responsável
+  const assignTicketMutation = useMutation({
+    mutationFn: async ({ ticketId, assignedTo }: { ticketId: string; assignedTo: string | null }) => {
+      return apiRequest(`/api/tickets/${ticketId}/assign`, {
+        method: 'PATCH',
+        body: JSON.stringify({ assignedTo }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      toast({
+        title: "Responsável atribuído",
+        description: "O ticket foi atribuído com sucesso.",
+      });
+      setIsAssigning(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atribuir responsável",
+        variant: "destructive",
+      });
+    },
+  });
 
 
 
@@ -222,8 +274,62 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                     <p className="text-sm font-medium">{ticket.department?.name || 'Não atribuído'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Atendente:</p>
-                    <p className="text-sm font-medium">{ticket.assignedToUser?.name || 'Não atribuído'}</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500">Atendente:</p>
+                        <p className="text-sm font-medium">{ticket.assignedToUser?.name || 'Não atribuído'}</p>
+                      </div>
+                      {!isAssigning && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsAssigning(true)}
+                          className="ml-2"
+                        >
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          {ticket.assignedToUser ? 'Alterar' : 'Atribuir'}
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {isAssigning && (
+                      <div className="mt-3 space-y-2">
+                        <Select 
+                          onValueChange={(value) => {
+                            if (value === 'unassign') {
+                              assignTicketMutation.mutate({ ticketId: ticket.id, assignedTo: null });
+                            } else {
+                              assignTicketMutation.mutate({ ticketId: ticket.id, assignedTo: value });
+                            }
+                          }}
+                          disabled={assignTicketMutation.isPending}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um responsável" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassign">Não atribuído</SelectItem>
+                            {users
+                              .filter(user => user.role !== 'colaborador')
+                              .map((user) => (
+                                <SelectItem key={user.id} value={user.id}>
+                                  {user.name} ({user.role})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsAssigning(false)}
+                            disabled={assignTicketMutation.isPending}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

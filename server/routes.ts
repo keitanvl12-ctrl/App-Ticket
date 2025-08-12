@@ -158,6 +158,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para atribuir responsável a um ticket
+  app.patch("/api/tickets/:id/assign", async (req, res) => {
+    try {
+      const ticketId = req.params.id;
+      const { assignedTo } = req.body;
+      
+      // Validar se o usuário existe quando assignedTo não for null
+      if (assignedTo) {
+        const assignedUser = await storage.getUser(assignedTo);
+        if (!assignedUser) {
+          return res.status(400).json({ message: "Usuário não encontrado" });
+        }
+      }
+      
+      const ticket = await storage.updateTicket(ticketId, { 
+        assignedTo: assignedTo || null,
+        updatedAt: new Date()
+      });
+      
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket não encontrado" });
+      }
+      
+      res.json(ticket);
+    } catch (error) {
+      console.error("Erro ao atribuir responsável:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.post("/api/tickets", async (req, res) => {
     try {
       console.log("Request body:", req.body);

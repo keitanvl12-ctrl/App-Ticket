@@ -816,6 +816,10 @@ export class DatabaseStorage implements IStorage {
         createdAt: tickets.createdAt,
         updatedAt: tickets.updatedAt,
         resolvedAt: tickets.resolvedAt,
+        formData: tickets.formData,
+        requesterName: tickets.requesterName,
+        requesterEmail: tickets.requesterEmail,
+        requesterPhone: tickets.requesterPhone,
         department: {
           id: departments.id,
           name: departments.name,
