@@ -536,6 +536,16 @@ export default function KanbanBoard() {
 
   // Funções SLA - Usando dados calculados pelo backend
   const getSLAProgressPercentage = (ticket: any) => {
+    // Debug: log dos dados SLA do ticket
+    if (ticket.ticketNumber === 'TICK-005400') {
+      console.log('Dados SLA do ticket', ticket.ticketNumber, {
+        slaProgressPercent: ticket.slaProgressPercent,
+        slaStatus: ticket.slaStatus,
+        slaHoursTotal: ticket.slaHoursTotal,
+        slaHoursRemaining: ticket.slaHoursRemaining
+      });
+    }
+    
     // Usar dados SLA calculados pelo backend se disponíveis
     if (ticket.slaProgressPercent !== undefined && ticket.slaProgressPercent !== null) {
       return Math.max(Math.min(ticket.slaProgressPercent, 100), 0);

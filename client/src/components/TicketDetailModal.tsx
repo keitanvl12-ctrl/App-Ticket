@@ -300,12 +300,15 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium">Progresso SLA</span>
                     <span className="text-sm">
-                      {ticket.slaHoursRemaining !== undefined ? 
-                        (ticket.slaHoursRemaining > 0 ? 
-                          `${Math.ceil(ticket.slaHoursRemaining)}h restantes` : 
-                          'Vencido'
-                        ) : 
-                        'N/A'
+                      {ticket.slaProgressPercent !== undefined ? 
+                        `${Math.round(ticket.slaProgressPercent)}%` :
+                        (ticket.slaHoursRemaining !== undefined ? 
+                          (ticket.slaHoursRemaining > 0 ? 
+                            `${Math.ceil(ticket.slaHoursRemaining)}h restantes` : 
+                            'Vencido'
+                          ) : 
+                          'N/A'
+                        )
                       }
                     </span>
                   </div>
@@ -317,9 +320,12 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                         'bg-green-500'
                       }`}
                       style={{ 
-                        width: `${ticket.slaHoursTotal && ticket.slaHoursRemaining !== undefined ? 
-                          Math.min(((ticket.slaHoursTotal - ticket.slaHoursRemaining) / ticket.slaHoursTotal) * 100, 100) : 
-                          0}%` 
+                        width: `${ticket.slaProgressPercent !== undefined ? 
+                          Math.min(Math.max(ticket.slaProgressPercent, 0), 100) :
+                          (ticket.slaHoursTotal && ticket.slaHoursRemaining !== undefined ? 
+                            Math.min(((ticket.slaHoursTotal - ticket.slaHoursRemaining) / ticket.slaHoursTotal) * 100, 100) : 
+                            0)
+                        }%` 
                       }}
                     />
                   </div>
