@@ -1370,8 +1370,15 @@ export class DatabaseStorage implements IStorage {
 
       console.log('Total tickets:', totalTickets);
 
-      // Get open tickets with filters  
-      const openConditions = [...conditions, eq(tickets.status, 'open')];
+      // Get open tickets with filters (open + in_progress + on_hold)
+      const openConditions = [
+        ...conditions, 
+        or(
+          eq(tickets.status, 'open'),
+          eq(tickets.status, 'in_progress'),
+          eq(tickets.status, 'on_hold')
+        )
+      ];
       let openTicketsQuery = db.select({ count: count() }).from(tickets);
       if (filters?.department && filters.department !== 'all') {
         openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
@@ -1380,7 +1387,7 @@ export class DatabaseStorage implements IStorage {
       const openTicketsResult = await openTicketsQuery;
       const openTickets = Number(openTicketsResult[0]?.count) || 0;
 
-      console.log('Open tickets:', openTickets);
+      console.log('Open tickets (open + in_progress + on_hold):', openTickets);
 
       // Get resolved today with filters
       const today = startOfDay(new Date());
