@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -262,14 +262,62 @@ export default function KanbanBoard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [priorityFilter, setPriorityFilter] = useState('all');
+
+  // WebSocket for real-time updates
+  useEffect(() => {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('Kanban WebSocket message:', message);
+        if (message.type === 'ticket_updated' || message.type === 'ticket_created') {
+          // Refresh tickets to update column counts
+          queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+          console.log('Kanban tickets cache invalidated');
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onopen = () => {
+      console.log('Kanban WebSocket connected');
+    };
+
+    ws.onerror = (error) => {
+      console.error('Kanban WebSocket error:', error);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [queryClient]);
+
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Fetch real tickets from API
+  // Fetch real tickets from API with auto-refresh
   const { data: tickets = [], refetch: refetchTickets } = useQuery<any[]>({
     queryKey: ['/api/tickets'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchIntervalInBackground: true,
   });
+
+  // Debug logging
+  useEffect(() => {
+    if (tickets?.length > 0) {
+      console.log('Total tickets loaded:', tickets.length);
+      const statusCounts = tickets.reduce((acc, ticket) => {
+        acc[ticket.status] = (acc[ticket.status] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('Status distribution:', statusCounts);
+    }
+  }, [tickets]);
 
   // Fetch current user for role checking
   const { data: users } = useQuery<any[]>({
@@ -321,13 +369,17 @@ export default function KanbanBoard() {
   };
 
   // Define columns with dynamic counts using database configurations
-  const columns = statusConfigs?.map(status => ({
-    id: status.value,
-    title: status.name.toUpperCase(),
-    color: hexToTailwindBg(status.color),
-    headerColor: hexToTailwindBg(status.color),
-    count: tickets.filter(t => t.status === status.value).length
-  })) || [
+  const columns = statusConfigs?.map(status => {
+    const count = tickets.filter(t => t.status === status.value).length;
+    console.log(`Status ${status.value} (${status.name}): ${count} tickets`);
+    return {
+      id: status.value,
+      title: status.name.toUpperCase(),
+      color: hexToTailwindBg(status.color),
+      headerColor: hexToTailwindBg(status.color),
+      count: count
+    };
+  }) || [
     { id: 'open', title: 'A FAZER', color: 'bg-blue-500', headerColor: 'bg-blue-500', count: 0 },
     { id: 'in_progress', title: 'ATENDENDO', color: 'bg-green-500', headerColor: 'bg-green-500', count: 0 },
     { id: 'on_hold', title: 'PAUSADO', color: 'bg-yellow-500', headerColor: 'bg-yellow-500', count: 0 },
