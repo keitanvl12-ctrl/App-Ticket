@@ -70,12 +70,15 @@ export default function Dashboard() {
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        console.log('WebSocket message received:', message);
+        console.log('Dashboard WebSocket message received:', message);
         if (message.type === 'ticket_updated' || message.type === 'ticket_created' || message.type === 'dashboard_update') {
-          // Invalidate dashboard cache to trigger refetch
+          console.log('Dashboard invalidating cache for:', message.type);
+          // Invalidate dashboard cache to trigger refetch - use partial matching to invalidate all related queries
           queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
           queryClient.invalidateQueries({ queryKey: ["/api/dashboard/priority-stats"] });
           queryClient.invalidateQueries({ queryKey: ["/api/dashboard/trends"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/team-performance"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/department-stats"] });
           console.log('Dashboard cache invalidated due to ticket update');
         }
       } catch (error) {
