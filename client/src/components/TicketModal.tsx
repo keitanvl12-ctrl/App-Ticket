@@ -889,11 +889,25 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                   }
 
                   try {
+                    // Criar comentário detalhado de finalização
+                    const finalizationComment = `🔧 FINALIZAÇÃO DO TICKET
+
+**Resolução:** ${finalizationData.resolutionComment}
+
+${finalizationData.equipmentRetired ? `**Equipamentos Retirados:**
+${finalizationData.equipmentRetired}
+
+` : ''}${finalizationData.materialsUsed ? `**Materiais Utilizados:**
+${finalizationData.materialsUsed}
+
+` : ''}**Data de Finalização:** ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+**Técnico:** ${users?.find(u => u.id === ticket.assignedTo)?.name || 'Sistema'}`;
+
                     // Adicionar comentário de finalização
                     await apiRequest(`/api/tickets/${ticket.id}/comments`, {
                       method: 'POST',
                       body: {
-                        content: `FINALIZAÇÃO: ${finalizationData.resolutionComment}${finalizationData.equipmentRetired ? `\n\nEquipamentos retirados: ${finalizationData.equipmentRetired}` : ''}${finalizationData.materialsUsed ? `\n\nMateriais utilizados: ${finalizationData.materialsUsed}` : ''}`
+                        content: finalizationComment
                       }
                     });
 
@@ -907,23 +921,37 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
                     });
 
                     toast({
-                      title: "Ticket finalizado!",
+                      title: "✅ Ticket finalizado!",
                       description: "O ticket foi finalizado com sucesso.",
                     });
 
-                    // Atualizar caches
+                    // Atualizar caches e interface
                     queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
                     queryClient.invalidateQueries({ queryKey: ['/api/tickets', ticket.id, 'comments'] });
+
+                    // Limpar dados de finalização
+                    setFinalizationData({
+                      resolutionComment: '',
+                      hoursWorked: '',
+                      equipmentRetired: '',
+                      materialsUsed: ''
+                    });
 
                     setShowFinalization(false);
                     setIsOpen(false);
                     
+                    // Atualizar ticket na interface pai
                     if (onUpdate) {
-                      onUpdate({ ...ticket, status: 'resolved' });
+                      onUpdate({ ...ticket, status: 'resolved', resolvedAt: new Date().toISOString() });
                     }
+                    
+                    // Recarregar página para atualizar dados
+                    window.location.reload();
+                    
                   } catch (error) {
+                    console.error('Erro ao finalizar ticket:', error);
                     toast({
-                      title: "Erro ao finalizar",
+                      title: "❌ Erro ao finalizar",
                       description: "Ocorreu um erro ao finalizar o ticket. Tente novamente.",
                       variant: "destructive",
                     });
