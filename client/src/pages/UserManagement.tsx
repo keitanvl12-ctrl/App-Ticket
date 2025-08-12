@@ -615,15 +615,7 @@ export default function UserManagement() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Lista de Usuários ({filteredUsers.length})</CardTitle>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Usuário
-              </Button>
-            </DialogTrigger>
-            <CreateUserDialog />
-          </Dialog>
+          <CreateUserDialog />
         </CardHeader>
         <CardContent>
           <Table>
