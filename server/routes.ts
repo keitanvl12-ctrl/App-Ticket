@@ -13,11 +13,9 @@ import {
 import permissionsRoutes from "./routes/permissions";
 import { departmentStorage } from "./departmentStorage";
 import { insertDepartmentSchema, insertCategorySchema, insertCustomFieldSchema } from "@shared/schema";
-import { insertTicketSchema, insertCommentSchema } from "@shared/schema";
+import { insertTicketSchema, insertCommentSchema, updateTicketSchema } from "@shared/schema";
 import { z } from "zod";
 import { getWebSocketServer } from "./websocket";
-
-const updateTicketSchema = insertTicketSchema.partial();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   

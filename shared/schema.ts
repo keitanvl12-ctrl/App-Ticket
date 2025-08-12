@@ -64,6 +64,8 @@ export const tickets = pgTable("tickets", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
+  pauseReason: text("pause_reason"), // Motivo da pausa quando status = on_hold
+  pausedAt: timestamp("paused_at"), // Data/hora quando foi pausado
 });
 
 export const comments = pgTable("comments", {
@@ -181,6 +183,7 @@ export const insertTicketSchema = createInsertSchema(tickets).omit({
   createdAt: true,
   updatedAt: true,
   resolvedAt: true,
+  pausedAt: true, // Omitir pausedAt pois será setado automaticamente
 });
 
 export const insertCustomFieldSchema = createInsertSchema(customFields).omit({
@@ -270,6 +273,15 @@ export type InsertPriorityConfig = z.infer<typeof insertPriorityConfigSchema>;
 export type InsertSlaRule = z.infer<typeof insertSlaRuleSchema>;
 export type InsertCustomField = z.infer<typeof insertCustomFieldSchema>;
 export type InsertCustomFieldValue = z.infer<typeof insertCustomFieldValueSchema>;
+
+// Update Ticket Schema with pause fields
+export const updateTicketSchema = insertTicketSchema.partial().extend({
+  pauseReason: z.string().optional(),
+  pausedAt: z.string().optional(), // Accept string to parse as date
+  resolvedAt: z.string().optional(), // Accept string to parse as date  
+});
+
+export type UpdateTicket = z.infer<typeof updateTicketSchema>;
 
 export type DashboardStats = {
   totalTickets: number;

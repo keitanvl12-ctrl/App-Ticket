@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import PauseTicketModal from '@/components/PauseTicketModal';
 
 // Enhanced ticket data matching the reference image
 const mockTickets = [
@@ -254,6 +255,10 @@ export default function KanbanBoard() {
     isOpen: boolean;
     ticket: any | null;
   }>({ isOpen: false, ticket: null });
+  const [pauseModal, setPauseModal] = useState<{
+    isOpen: boolean;
+    ticket: any | null;
+  }>({ isOpen: false, ticket: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -439,6 +444,13 @@ export default function KanbanBoard() {
       // Se estiver movendo para "Resolvido", mostrar modal de finalização
       if (status === 'resolved') {
         setFinalizationModal({ isOpen: true, ticket: draggedTicket });
+        setDraggedTicket(null);
+        return;
+      }
+      
+      // Se estiver movendo para "Pausado", mostrar modal de motivo de pausa
+      if (status === 'on_hold') {
+        setPauseModal({ isOpen: true, ticket: draggedTicket });
         setDraggedTicket(null);
         return;
       }
@@ -668,6 +680,52 @@ export default function KanbanBoard() {
       setFinalizationModal({ isOpen: false, ticket: null });
     } catch (error) {
       console.error('Erro ao finalizar ticket:', error);
+    }
+  };
+
+  const handlePauseConfirm = async (pauseData: any) => {
+    if (!pauseModal.ticket) return;
+
+    try {
+      // Fazer chamada à API para pausar o ticket com motivo
+      const response = await fetch(`/api/tickets/${pauseModal.ticket.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'on_hold',
+          pauseReason: pauseData.reason + (pauseData.details ? ` - ${pauseData.details}` : ''),
+          pausedAt: new Date().toISOString()
+        }),
+      });
+
+      if (response.ok) {
+        // Refetch dos tickets para atualizar com dados reais do banco
+        refetchTickets();
+        
+        console.log('Ticket pausado com sucesso');
+        toast({
+          title: "Ticket Pausado",
+          description: `Ticket pausado: ${pauseData.reason}`,
+        });
+      } else {
+        console.error('Erro ao pausar ticket no servidor');
+        toast({
+          title: "Erro",
+          description: "Não foi possível pausar o ticket.",
+          variant: "destructive",
+        });
+      }
+
+      setPauseModal({ isOpen: false, ticket: null });
+    } catch (error) {
+      console.error('Erro ao pausar ticket:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao pausar o ticket.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1121,6 +1179,16 @@ export default function KanbanBoard() {
           ticket={finalizationModal.ticket}
           onClose={() => setFinalizationModal({ isOpen: false, ticket: null })}
           onConfirm={handleFinalizationConfirm}
+        />
+      )}
+
+      {/* Modal de Pausa */}
+      {pauseModal.isOpen && pauseModal.ticket && (
+        <PauseTicketModal
+          isOpen={pauseModal.isOpen}
+          ticket={pauseModal.ticket}
+          onClose={() => setPauseModal({ isOpen: false, ticket: null })}
+          onPause={handlePauseConfirm}
         />
       )}
     </div>
