@@ -1006,12 +1006,12 @@ export class DatabaseStorage implements IStorage {
         slaStatus = progressPercentage <= 100 ? 'met' : 'violated';
       } else {
         // Para tickets em andamento
-        if (progressPercentage <= 60) {
-          slaStatus = 'met';
-        } else if (progressPercentage <= 100) {
+        if (progressPercentage >= 100) {
+          slaStatus = 'violated';
+        } else if (progressPercentage >= 90) {
           slaStatus = 'at_risk';
         } else {
-          slaStatus = 'violated';
+          slaStatus = 'met';
         }
       }
 

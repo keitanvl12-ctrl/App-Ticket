@@ -536,15 +536,7 @@ export default function KanbanBoard() {
 
   // Funções SLA - Usando dados calculados pelo backend
   const getSLAProgressPercentage = (ticket: any) => {
-    // Debug: log dos dados SLA do ticket
-    if (ticket.ticketNumber === 'TICK-005400') {
-      console.log('Dados SLA do ticket', ticket.ticketNumber, {
-        slaProgressPercent: ticket.slaProgressPercent,
-        slaStatus: ticket.slaStatus,
-        slaHoursTotal: ticket.slaHoursTotal,
-        slaHoursRemaining: ticket.slaHoursRemaining
-      });
-    }
+
     
     // Usar dados SLA calculados pelo backend se disponíveis
     if (ticket.slaProgressPercent !== undefined && ticket.slaProgressPercent !== null) {
@@ -570,9 +562,9 @@ export default function KanbanBoard() {
 
   const getSLAProgressColor = (ticket: any) => {
     // Usar status SLA calculado pelo backend se disponível
-    if (ticket.slaStatus === 'violated' || ticket.slaStatus === 'Fora do SLA') return 'bg-red-500';
+    if (ticket.slaStatus === 'violated') return 'bg-red-500';
     if (ticket.slaStatus === 'at_risk') return 'bg-orange-500';
-    if (ticket.slaStatus === 'Dentro do SLA') return 'bg-green-500';
+    if (ticket.slaStatus === 'met') return 'bg-green-500';
     
     // Fallback para cálculo baseado em progresso
     const progress = getSLAProgressPercentage(ticket);
@@ -584,14 +576,9 @@ export default function KanbanBoard() {
 
   const getSLAStatusText = (ticket: any) => {
     // Usar status SLA calculado pelo backend se disponível
-    if (ticket.slaStatus === 'violated' || ticket.slaStatus === 'Fora do SLA') return 'Vencido';
+    if (ticket.slaStatus === 'violated') return 'Vencido';
     if (ticket.slaStatus === 'at_risk') return 'Em risco';
-    if (ticket.slaStatus === 'Dentro do SLA') return 'No prazo';
-    
-    // Usar texto do SLA se disponível
-    if (ticket.slaData && ticket.slaData.status) {
-      return ticket.slaData.status;
-    }
+    if (ticket.slaStatus === 'met') return 'No prazo';
     
     // Fallback para cálculo baseado em progresso
     const progress = getSLAProgressPercentage(ticket);

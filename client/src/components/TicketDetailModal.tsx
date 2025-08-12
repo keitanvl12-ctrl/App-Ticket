@@ -317,7 +317,8 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                       className={`h-2 rounded-full transition-all ${
                         ticket.slaStatus === 'violated' ? 'bg-red-500' :
                         ticket.slaStatus === 'at_risk' ? 'bg-orange-500' :
-                        'bg-green-500'
+                        ticket.slaStatus === 'met' ? 'bg-green-500' :
+                        'bg-blue-500'
                       }`}
                       style={{ 
                         width: `${ticket.slaProgressPercent !== undefined ? 
