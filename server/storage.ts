@@ -963,7 +963,15 @@ export class DatabaseStorage implements IStorage {
       let slaSource = 'padrão (4h)';
 
       // 1. Primeiro, buscar regras SLA específicas (maior prioridade)
-      const slaRulesData = await db.select().from(slaRules).where(eq(slaRules.isActive, true));
+      const slaRulesData = await db.select({
+        id: slaRules.id,
+        name: slaRules.name,
+        departmentId: slaRules.departmentId,
+        category: slaRules.category,
+        priority: slaRules.priority,
+        timeHours: slaRules.timeHours,
+        isActive: slaRules.isActive
+      }).from(slaRules).where(eq(slaRules.isActive, true));
       
       if (slaRulesData && slaRulesData.length > 0) {
         const matchingRule = slaRulesData.find(rule => {
@@ -974,7 +982,8 @@ export class DatabaseStorage implements IStorage {
         });
 
         if (matchingRule) {
-          slaHours = matchingRule.timeHours;
+          // Usar timeHours como fallback se response_time não existir
+          slaHours = matchingRule.timeHours || 24;
           slaSource = `regra SLA: ${matchingRule.name}`;
         }
       }
@@ -1206,7 +1215,22 @@ export class DatabaseStorage implements IStorage {
 
   // SLA Rules methods
   async getSLARules(): Promise<SLARule[]> {
-    return await db.select().from(slaRules).where(eq(slaRules.isActive, true));
+    try {
+      return await db.select({
+        id: slaRules.id,
+        name: slaRules.name,
+        departmentId: slaRules.departmentId,
+        category: slaRules.category,
+        priority: slaRules.priority,
+        timeHours: slaRules.timeHours,
+        isActive: slaRules.isActive,
+        createdAt: slaRules.createdAt,
+        updatedAt: slaRules.updatedAt
+      }).from(slaRules).where(eq(slaRules.isActive, true));
+    } catch (error) {
+      console.error('Error fetching SLA rules:', error);
+      throw new Error('Failed to fetch SLA rules');
+    }
   }
 
   async createSLARule(data: InsertSLARule): Promise<SLARule> {

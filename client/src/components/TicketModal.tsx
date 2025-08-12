@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Eye, Edit, Save, X, Paperclip, MessageCircle, Clock, User, 
   FileText, Image, Download, Upload, Calendar, AlertCircle,
-  CheckCircle, Pause, Play, MoreHorizontal, Send, Receipt
+  CheckCircle, Pause, Play, MoreHorizontal, Send, Receipt, XCircle, AlertTriangle
 } from 'lucide-react';
 import ServiceOrderModal from './ServiceOrderModal';
 import { format } from 'date-fns';
@@ -35,6 +35,13 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
   const [newComment, setNewComment] = useState('');
   const [newTag, setNewTag] = useState('');
   const [showServiceOrder, setShowServiceOrder] = useState(false);
+  const [showFinalization, setShowFinalization] = useState(false);
+  const [finalizationData, setFinalizationData] = useState({
+    resolutionComment: '',
+    hoursWorked: '',
+    equipmentRetired: '',
+    materialsUsed: ''
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -334,6 +341,19 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
               <Receipt className="w-4 h-4 mr-2" />
               Ordem de Serviço
             </Button>
+
+            {/* Botão Finalizar Ticket */}
+            {ticket.status !== 'resolved' && (
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => setShowFinalization(true)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Finalizar
+              </Button>
+            )}
             
             {isEditing ? (
               <>
@@ -761,6 +781,163 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
         onClose={() => setShowServiceOrder(false)}
         finalizationData={null}
       />
+
+      {/* Modal de Finalização Melhorado */}
+      <Dialog open={showFinalization} onOpenChange={setShowFinalization}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <span>Finalizar Ticket {ticket.ticketNumber}</span>
+            </DialogTitle>
+            <div className="text-sm text-gray-600">
+              {ticket.subject}
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Comentário de Resolução */}
+            <div>
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                Comentário de Finalização *
+              </Label>
+              <Textarea
+                value={finalizationData.resolutionComment}
+                onChange={(e) => setFinalizationData({
+                  ...finalizationData,
+                  resolutionComment: e.target.value
+                })}
+                placeholder="Descreva como o problema foi resolvido..."
+                className="min-h-[100px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            {/* Apontamento de Horas */}
+            <div>
+              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                Apontamento de Horas (Calculado automaticamente)
+              </Label>
+              <div className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <Clock className="w-5 h-5 text-gray-400 mr-3" />
+                <span className="text-gray-600 font-medium">04:30</span>
+              </div>
+            </div>
+
+            {/* Grid para Equipamentos e Materiais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Equipamentos Retirados */}
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Equipamentos Retirados
+                </Label>
+                <Textarea
+                  value={finalizationData.equipmentRetired}
+                  onChange={(e) => setFinalizationData({
+                    ...finalizationData,
+                    equipmentRetired: e.target.value
+                  })}
+                  placeholder="Liste os equipamentos retirados, se houver..."
+                  className="min-h-[80px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Materiais Utilizados */}
+              <div>
+                <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Materiais Utilizados
+                </Label>
+                <Textarea
+                  value={finalizationData.materialsUsed}
+                  onChange={(e) => setFinalizationData({
+                    ...finalizationData,
+                    materialsUsed: e.target.value
+                  })}
+                  placeholder="Liste os materiais utilizados..."
+                  className="min-h-[80px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowFinalization(false);
+                  setFinalizationData({
+                    resolutionComment: '',
+                    hoursWorked: '',
+                    equipmentRetired: '',
+                    materialsUsed: ''
+                  });
+                }}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!finalizationData.resolutionComment.trim()) {
+                    toast({
+                      title: "Campo obrigatório",
+                      description: "O comentário de finalização é obrigatório.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  try {
+                    // Adicionar comentário de finalização
+                    await apiRequest(`/api/tickets/${ticket.id}/comments`, {
+                      method: 'POST',
+                      body: {
+                        content: `FINALIZAÇÃO: ${finalizationData.resolutionComment}${finalizationData.equipmentRetired ? `\n\nEquipamentos retirados: ${finalizationData.equipmentRetired}` : ''}${finalizationData.materialsUsed ? `\n\nMateriais utilizados: ${finalizationData.materialsUsed}` : ''}`
+                      }
+                    });
+
+                    // Atualizar status para resolvido
+                    await apiRequest(`/api/tickets/${ticket.id}`, {
+                      method: 'PATCH',
+                      body: {
+                        status: 'resolved',
+                        resolvedAt: new Date().toISOString()
+                      }
+                    });
+
+                    toast({
+                      title: "Ticket finalizado!",
+                      description: "O ticket foi finalizado com sucesso.",
+                    });
+
+                    // Atualizar caches
+                    queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+                    queryClient.invalidateQueries({ queryKey: ['/api/tickets', ticket.id, 'comments'] });
+
+                    setShowFinalization(false);
+                    setIsOpen(false);
+                    
+                    if (onUpdate) {
+                      onUpdate({ ...ticket, status: 'resolved' });
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Erro ao finalizar",
+                      description: "Ocorreu um erro ao finalizar o ticket. Tente novamente.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Finalizar Ticket
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
