@@ -140,19 +140,17 @@ export default function Dashboard() {
     }
   ];
 
-  const teamMetrics = [
-    { name: "João Silva", tickets: 28, resolved: 24, efficiency: 85.7 },
-    { name: "Maria Santos", tickets: 31, resolved: 29, efficiency: 93.5 },
-    { name: "Pedro Costa", tickets: 22, resolved: 19, efficiency: 86.4 },
-    { name: "Ana Oliveira", tickets: 26, resolved: 25, efficiency: 96.2 }
-  ];
+  // Fetch real team performance data
+  const { data: teamMetrics } = useQuery<any[]>({
+    queryKey: ["/api/dashboard/team-performance"],
+    initialData: []
+  });
 
-  const departmentStats = [
-    { name: "TI", tickets: 45, resolved: 38, pending: 7, sla: 92 },
-    { name: "RH", tickets: 23, resolved: 21, pending: 2, sla: 95 },
-    { name: "Financeiro", tickets: 18, resolved: 16, pending: 2, sla: 89 },
-    { name: "Operações", tickets: 31, resolved: 27, pending: 4, sla: 87 }
-  ];
+  // Fetch real department stats data
+  const { data: departmentStats } = useQuery<any[]>({
+    queryKey: ["/api/dashboard/department-stats"], 
+    initialData: []
+  });
 
   return (
     <div className="p-6 bg-background min-h-screen">

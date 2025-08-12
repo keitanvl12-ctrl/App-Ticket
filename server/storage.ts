@@ -100,6 +100,10 @@ export interface IStorage {
   createCustomField(field: InsertCustomField): Promise<CustomField>;
   updateCustomField(id: string, updates: Partial<CustomField>): Promise<CustomField | undefined>;
   deleteCustomField(id: string): Promise<boolean>;
+  
+  // Dashboard Real Data
+  getTeamPerformance(): Promise<any[]>;
+  getDepartmentStats(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1866,6 +1870,108 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error deleting user:', error);
       return false;
+    }
+  }
+
+  // Dashboard Real Data methods
+  async getTeamPerformance(): Promise<any[]> {
+    try {
+      // Get all active users with tickets
+      const usersWithTickets = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          role: users.role,
+          departmentId: users.departmentId
+        })
+        .from(users)
+        .where(eq(users.isActive, true));
+
+      const teamPerformance = [];
+
+      for (const user of usersWithTickets) {
+        // Count assigned tickets
+        const assignedResult = await db
+          .select({ count: count() })
+          .from(tickets)
+          .where(eq(tickets.assignedTo, user.id));
+        
+        const assigned = Number(assignedResult[0]?.count) || 0;
+
+        // Count resolved tickets
+        const resolvedResult = await db
+          .select({ count: count() })
+          .from(tickets)
+          .where(and(
+            eq(tickets.assignedTo, user.id),
+            eq(tickets.status, 'resolved')
+          ));
+        
+        const resolved = Number(resolvedResult[0]?.count) || 0;
+        
+        if (assigned > 0) {
+          teamPerformance.push({
+            name: user.name,
+            tickets: assigned,
+            resolved: resolved,
+            efficiency: assigned > 0 ? Math.round((resolved / assigned) * 100 * 10) / 10 : 0
+          });
+        }
+      }
+
+      return teamPerformance.sort((a, b) => b.efficiency - a.efficiency);
+    } catch (error) {
+      console.error('Error in getTeamPerformance:', error);
+      return [];
+    }
+  }
+
+  async getDepartmentStats(): Promise<any[]> {
+    try {
+      // Get all departments
+      const departmentList = await db.select().from(departments);
+      const departmentStats = [];
+
+      for (const dept of departmentList) {
+        // Count total tickets by department
+        const totalResult = await db
+          .select({ count: count() })
+          .from(tickets)
+          .leftJoin(users, eq(tickets.assignedTo, users.id))
+          .where(eq(users.departmentId, dept.id));
+        
+        const total = Number(totalResult[0]?.count) || 0;
+
+        // Count resolved tickets by department
+        const resolvedResult = await db
+          .select({ count: count() })
+          .from(tickets)
+          .leftJoin(users, eq(tickets.assignedTo, users.id))
+          .where(and(
+            eq(users.departmentId, dept.id),
+            eq(tickets.status, 'resolved')
+          ));
+        
+        const resolved = Number(resolvedResult[0]?.count) || 0;
+        const pending = total - resolved;
+        
+        if (total > 0) {
+          const sla = Math.round((resolved / total) * 100);
+          
+          departmentStats.push({
+            name: dept.name,
+            tickets: total,
+            resolved: resolved,
+            pending: pending,
+            sla: sla
+          });
+        }
+      }
+
+      return departmentStats;
+    } catch (error) {
+      console.error('Error in getDepartmentStats:', error);
+      return [];
     }
   }
 }

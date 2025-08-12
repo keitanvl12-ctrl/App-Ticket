@@ -650,7 +650,7 @@ export default function KanbanBoard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'Resolvido',
+          status: 'resolved',
           finalizationData: finalizationData,
           progress: 100
         }),

@@ -29,6 +29,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Registrar rotas de permissões
   app.use(permissionsRoutes);
+  
+  // Team Performance endpoint (real data)
+  app.get("/api/dashboard/team-performance", async (req, res) => {
+    try {
+      const teamPerformance = await storage.getTeamPerformance();
+      res.json(teamPerformance);
+    } catch (error) {
+      console.error("Error fetching team performance:", error);
+      res.status(500).json({ error: "Failed to fetch team performance" });
+    }
+  });
+
+  // Department Stats endpoint (real data)  
+  app.get("/api/dashboard/department-stats", async (req, res) => {
+    try {
+      const departmentStats = await storage.getDepartmentStats();
+      res.json(departmentStats);
+    } catch (error) {
+      console.error("Error fetching department stats:", error);
+      res.status(500).json({ error: "Failed to fetch department stats" });
+    }
+  });
+  
   // Dashboard stats with filters
   app.get("/api/dashboard/stats", async (req, res) => {
     try {

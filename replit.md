@@ -98,6 +98,16 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 
 # Recent Changes (August 2025)
 
+## Dados Reais Implementados e Problemas de Status Resolvidos (12/08/2025)
+- ✓ **Dashboard com dados reais**: Substituído dados mock por consultas reais do PostgreSQL
+- ✓ **Team Performance real**: API /dashboard/team-performance retorna dados reais dos usuários
+- ✓ **Department Stats real**: API /dashboard/department-stats com estatísticas reais por departamento
+- ✓ **Status uniformizado**: Corrigido problema de status misto (português/inglês) - agora todos usam 'resolved'
+- ✓ **Finalização de tickets corrigida**: Tickets finalizados aparecem corretamente na coluna "Resolvido"
+- ✓ **Contadores reais**: Dashboard mostra contagens precisas (13 tickets resolvidos, 6 abertos, 2 em progresso)
+- ✓ **Performance real de usuários**: Carlos 100%, Administrador 60%, Maria 55.6% baseado em dados reais
+- ✓ **WebSocket funcionando**: Notificações em tempo real para todas as operações
+
 ## Sistema de Atualização em Tempo Real Implementado (12/08/2025)
 - ✓ WebSocket conectado no Dashboard (/ws endpoint) 
 - ✓ Notificações automáticas quando tickets são criados/atualizados/finalizados
