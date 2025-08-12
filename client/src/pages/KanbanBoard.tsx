@@ -1077,18 +1077,10 @@ export default function KanbanBoard() {
                             <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
                           </div>
 
-                          {/* SLA Progress - Clean and Functional */}
-                          <div className="space-y-1 pt-2 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-gray-600">Progresso SLA</span>
-                              <span className="text-xs text-gray-500">{getSLAStatusText(ticket)}</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div 
-                                className={`h-1.5 rounded-full transition-all duration-300 ${getSLAProgressColor(ticket)}`}
-                                style={{ width: `${getSLAProgressPercentage(ticket)}%` }}
-                              />
-                            </div>
+                          {/* SLA Progress - Simple and Clean */}
+                          <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                            <span>Progresso SLA</span>
+                            <span>{getSLAStatusText(ticket)}</span>
                           </div>
                         </div>
                       </CardContent>
