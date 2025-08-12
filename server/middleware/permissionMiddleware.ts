@@ -197,9 +197,15 @@ export async function mockAuth(req: Request, res: Response, next: NextFunction) 
     const { storage } = await import('../storage');
     const authReq = req as AuthenticatedRequest;
     
-    // Buscar usuário administrador real do banco
+    // Buscar usuário administrador real do banco (role 'admin' ou 'administrador')
     const allUsers = await storage.getAllUsers();
-    const adminUser = allUsers.find(user => user.role === 'administrador');
+    const adminUser = allUsers.find(user => user.role === 'admin' || user.role === 'administrador');
+    
+    console.log('MockAuth Debug:', {
+      totalUsers: allUsers.length,
+      adminUserFound: !!adminUser,
+      adminUserRole: adminUser?.role
+    });
     
     if (adminUser) {
       authReq.user = {
@@ -208,33 +214,25 @@ export async function mockAuth(req: Request, res: Response, next: NextFunction) 
         departmentId: adminUser.departmentId || undefined
       };
     } else {
-      // Fallback para primeiro usuário disponível
-      const firstUser = allUsers[0];
-      if (firstUser) {
-        authReq.user = {
-          id: firstUser.id,
-          role: firstUser.role as UserRole,
-          departmentId: firstUser.departmentId || undefined
-        };
-      } else {
-        // Último fallback para usuário mock
-        authReq.user = {
-          id: 'user-1',
-          role: 'administrador',
-          departmentId: 'dept-1'
-        };
-      }
+      // Fallback para usuário mock admin
+      console.log('No admin user found, using mock admin');
+      authReq.user = {
+        id: 'mock-admin-id',
+        role: 'admin',
+        departmentId: undefined
+      };
     }
     
+    console.log('MockAuth final user:', authReq.user);
     next();
   } catch (error) {
     console.error('Error in mockAuth:', error);
     // Fallback em caso de erro
     const authReq = req as AuthenticatedRequest;
     authReq.user = {
-      id: 'user-1',
-      role: 'administrador',
-      departmentId: 'dept-1'
+      id: 'mock-admin-id',
+      role: 'admin',
+      departmentId: undefined
     };
     next();
   }
