@@ -968,7 +968,7 @@ export class DatabaseStorage implements IStorage {
       let slaSource = 'padrão (4h)';
       
       // Log para debug - verificar tickets incorretos
-      if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400')) {
+      if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400' || ticket.ticketNumber === 'TICK-5403')) {
         console.log(`=== SLA CALCULATION START ${ticket.ticketNumber} ===`, {
           ticketNumber: ticket.ticketNumber,
           initialSlaHours: slaHours,
@@ -1029,7 +1029,7 @@ export class DatabaseStorage implements IStorage {
           slaHours = matchedRule.resolutionTime;
           slaSource = `regra SLA: ${matchedRule.name}`;
           
-          if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400')) {
+          if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400' || ticket.ticketNumber === 'TICK-5403')) {
             console.log(`=== MATCHED SLA RULE ${ticket.ticketNumber} ===`, {
               ruleName: matchedRule.name,
               resolutionTime: matchedRule.resolutionTime,
@@ -1038,7 +1038,7 @@ export class DatabaseStorage implements IStorage {
             });
           }
         } else {
-          if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400')) {
+          if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400' || ticket.ticketNumber === 'TICK-5403')) {
             console.log(`=== NO SLA RULE MATCHED - KEEPING DEFAULT ${ticket.ticketNumber} ===`, {
               slaHours: slaHours,
               slaSource: slaSource,
@@ -1103,7 +1103,7 @@ export class DatabaseStorage implements IStorage {
       };
       
       // Log final para debug
-      if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400')) {
+      if (ticket.ticketNumber && (ticket.ticketNumber === 'TICK-027' || ticket.ticketNumber === 'TICK-008' || ticket.ticketNumber === 'TICK-005400' || ticket.ticketNumber === 'TICK-5403')) {
         console.log(`=== FINAL SLA RESULT ${ticket.ticketNumber} ===`, {
           ticketNumber: ticket.ticketNumber,
           finalSlaHours: slaHours,
