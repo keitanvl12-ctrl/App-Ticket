@@ -46,6 +46,7 @@ interface User {
 function CreateUserDialog() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -58,7 +59,7 @@ function CreateUserDialog() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: async (userData: { name: string; email: string; role: string; departmentId?: string }) => {
+    mutationFn: async (userData: { name: string; email: string; password: string; role: string; departmentId: string }) => {
       return apiRequest('/api/users', 'POST', userData);
     },
     onSuccess: () => {
@@ -82,6 +83,7 @@ function CreateUserDialog() {
     setIsOpen(false);
     setName('');
     setEmail('');
+    setPassword('');
     setRole('');
     setDepartmentId('');
   };
@@ -89,10 +91,19 @@ function CreateUserDialog() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !email.trim() || !role) {
+    if (!name.trim() || !email.trim() || !password.trim() || !role || !departmentId) {
       toast({
         title: "Erro",
-        description: "Nome, email e função são obrigatórios",
+        description: "Todos os campos são obrigatórios: nome, email, senha, função e departamento",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
         variant: "destructive",
       });
       return;
@@ -101,13 +112,21 @@ function CreateUserDialog() {
     createUserMutation.mutate({
       name: name.trim(),
       email: email.trim(),
+      password: password.trim(),
       role,
-      departmentId: departmentId || undefined
+      departmentId
     });
   };
 
   return (
-    <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-green-600 hover:bg-green-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Usuário
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Plus className="w-5 h-5 text-green-600" />
@@ -140,6 +159,18 @@ function CreateUserDialog() {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="password">Senha *</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mínimo 6 caracteres"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="role">Função *</Label>
           <Select value={role} onValueChange={setRole} required>
             <SelectTrigger>
@@ -154,10 +185,10 @@ function CreateUserDialog() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="department">Departamento</Label>
-          <Select value={departmentId} onValueChange={setDepartmentId}>
+          <Label htmlFor="department">Departamento *</Label>
+          <Select value={departmentId} onValueChange={setDepartmentId} required>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione um departamento (opcional)" />
+              <SelectValue placeholder="Selecione um departamento" />
             </SelectTrigger>
             <SelectContent>
               {departments.map((dept: any) => (
@@ -183,6 +214,7 @@ function CreateUserDialog() {
         </DialogFooter>
       </form>
     </DialogContent>
+    </Dialog>
   );
 }
 

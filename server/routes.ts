@@ -370,19 +370,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user endpoint (Admin only)
-  app.delete("/api/users/:id", requireRole('admin'), async (req, res) => {
+  app.delete("/api/users/:id", requireRole(['administrador']), async (req, res) => {
     try {
       const { id } = req.params;
+      console.log('Attempting to delete user with ID:', id);
+      
+      // Verificar se o usuário existe primeiro
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) {
+        console.log('User not found for deletion:', id);
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
       
       const success = await storage.deleteUser(id);
       if (!success) {
-        return res.status(404).json({ message: "User not found" });
+        console.log('Delete operation failed for user:', id);
+        return res.status(500).json({ message: "Falha ao deletar usuário" });
       }
       
-      res.json({ message: "User deleted successfully" });
+      console.log('User deleted successfully:', id);
+      res.json({ message: "Usuário deletado com sucesso" });
     } catch (error) {
       console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Failed to delete user" });
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
@@ -407,8 +417,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", async (req, res) => {
+  app.post("/api/users", requireRole(['administrador']), async (req, res) => {
     try {
+      // Validar campos obrigatórios
+      if (!req.body.name || !req.body.email || !req.body.password || !req.body.role || !req.body.departmentId) {
+        return res.status(400).json({ 
+          message: "Todos os campos são obrigatórios: nome, email, senha, função e departamento" 
+        });
+      }
+
       const userData = {
         ...req.body,
         username: req.body.email.split('@')[0]
