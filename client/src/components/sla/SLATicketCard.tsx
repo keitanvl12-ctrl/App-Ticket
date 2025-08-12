@@ -71,8 +71,15 @@ export default function SLATicketCard({ ticket }: SLATicketCardProps) {
   
   const calculateProgress = () => {
     if (hoursTotal <= 0) return 0;
+    
+    // Se está vencido (hoursRemaining negativo), progresso é 100%
+    if (hoursRemaining <= 0) return 100;
+    
+    // Calcular quantas horas já se passaram
     const hoursElapsed = hoursTotal - hoursRemaining;
     const progress = (hoursElapsed / hoursTotal) * 100;
+    
+    // Garantir que está entre 0 e 100
     return Math.min(Math.max(progress, 0), 100);
   };
 

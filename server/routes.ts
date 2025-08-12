@@ -176,10 +176,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: currentUser.id,
         requesterDepartmentId: req.body.requesterDepartment || currentUser.departmentId || null,
         responsibleDepartmentId: req.body.responsibleDepartment || null,
-        priority: req.body.priority === 'Baixa' ? 'low' : 
-                  req.body.priority === 'Média' ? 'medium' :
-                  req.body.priority === 'Alta' ? 'high' :
-                  req.body.priority === 'Crítica' ? 'critical' : 'medium'
+        priority: req.body.priority === 'Baixa' || req.body.priority === 'baixa' || req.body.priority === 'low' ? 'low' : 
+                  req.body.priority === 'Média' || req.body.priority === 'média' || req.body.priority === 'medium' ? 'medium' :
+                  req.body.priority === 'Alta' || req.body.priority === 'alta' || req.body.priority === 'high' ? 'high' :
+                  req.body.priority === 'Crítica' || req.body.priority === 'crítica' || req.body.priority === 'critical' ? 'critical' : 'medium'
       };
       
       const validatedData = insertTicketSchema.parse(ticketData);
