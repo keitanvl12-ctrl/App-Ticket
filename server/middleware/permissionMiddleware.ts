@@ -64,8 +64,11 @@ export function requirePermission(permission: PermissionKey) {
 
       const userRole = authReq.user.role;
       
+      // Tratar caso especial do role "admin" = "administrador"
+      const normalizedRole = userRole === 'admin' ? 'administrador' : userRole;
+      
       // Buscar permissões do banco de dados
-      const userPermissions = await storage.getPermissionByRole(userRole);
+      const userPermissions = await storage.getPermissionByRole(normalizedRole);
       const hasPermission = userPermissions?.[permission] || false;
 
       if (!hasPermission) {
@@ -94,7 +97,11 @@ export function requireRole(minRole: UserRole) {
       }
 
       const userRole = authReq.user.role;
-      const userLevel = ROLE_HIERARCHY[userRole] || 0;
+      
+      // Tratar caso especial do role "admin" = "administrador"
+      const normalizedUserRole = userRole === 'admin' ? 'administrador' : userRole;
+      
+      const userLevel = ROLE_HIERARCHY[normalizedUserRole as UserRole] || 0;
       const requiredLevel = ROLE_HIERARCHY[minRole] || 0;
 
       if (userLevel < requiredLevel) {
@@ -126,8 +133,11 @@ export async function filterTicketsByHierarchy(req: Request, res: Response, next
     const userId = authReq.user.id;
     const userDepartmentId = authReq.user.departmentId;
 
+    // Tratar caso especial do role "admin" = "administrador"
+    const normalizedRole = userRole === 'admin' ? 'administrador' : userRole;
+    
     // Adicionar parâmetros de filtro baseado na hierarquia
-    switch (userRole) {
+    switch (normalizedRole) {
       case 'colaborador':
         // Colaboradores só veem seus próprios tickets
         req.query.createdBy = userId;
