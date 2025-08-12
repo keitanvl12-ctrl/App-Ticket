@@ -401,8 +401,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: req.body.email.split('@')[0]
       };
       
-      const validatedData = insertUserSchema.parse(userData);
-      const user = await storage.createUser(validatedData);
+      // Validação simples dos dados
+      if (!userData.name.trim() || !userData.email.trim() || !userData.password.trim()) {
+        return res.status(400).json({ message: "Dados inválidos" });
+      }
+      const user = await storage.createUser(userData);
       res.status(201).json(user);
     } catch (error) {
       console.error("Error creating user:", error);

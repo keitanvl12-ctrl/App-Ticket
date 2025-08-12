@@ -126,94 +126,188 @@ function CreateUserDialog() {
           Novo Usuário
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Plus className="w-5 h-5 text-green-600" />
-          Criar Novo Usuário
-        </DialogTitle>
-      </DialogHeader>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome Completo *</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Digite o nome completo"
-            required
-          />
-        </div>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4 border-b border-gray-100 dark:border-gray-800">
+          <DialogTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <Plus className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Criar Novo Usuário
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-normal">
+                Configure os dados de acesso e permissões do usuário
+              </p>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="usuario@empresa.com"
-            required
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-6 pt-6">
+          {/* Informações Pessoais */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              Informações Pessoais
+            </h3>
+            
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                  <span>Nome Completo</span>
+                  <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Digite o nome completo do usuário"
+                  className="pl-4 py-2.5 border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-400"
+                  required
+                />
+              </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Senha *</Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
-            required
-          />
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                  <span>Email</span>
+                  <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="usuario@grupoopus.com"
+                  className="pl-4 py-2.5 border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-400"
+                  required
+                />
+              </div>
+            </div>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="role">Função *</Label>
-          <Select value={role} onValueChange={setRole} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a função do usuário" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Administrador</SelectItem>
-              <SelectItem value="supervisor">Supervisor</SelectItem>
-              <SelectItem value="colaborador">Colaborador</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+          {/* Credenciais de Acesso */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              Credenciais de Acesso
+            </h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
+                <span>Senha</span>
+                <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="pl-4 py-2.5 border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-400"
+                required
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                A senha deve ter pelo menos 6 caracteres para garantir segurança
+              </p>
+            </div>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="department">Departamento *</Label>
-          <Select value={departmentId} onValueChange={setDepartmentId} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um departamento" />
-            </SelectTrigger>
-            <SelectContent>
-              {departments.map((dept: any) => (
-                <SelectItem key={dept.id} value={dept.id}>
-                  {dept.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          {/* Permissões e Departamento */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              Permissões e Departamento
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="role" className="text-sm font-medium flex items-center gap-2">
+                  <span>Função</span>
+                  <span className="text-red-500">*</span>
+                </Label>
+                <Select value={role} onValueChange={setRole} required>
+                  <SelectTrigger className="py-2.5 border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-400">
+                    <SelectValue placeholder="Selecione a função do usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin" className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span>Administrador</span>
+                        <span className="text-xs text-gray-500 ml-auto">Acesso total</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="supervisor" className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Supervisor</span>
+                        <span className="text-xs text-gray-500 ml-auto">Gerencia departamento</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="colaborador" className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>Colaborador</span>
+                        <span className="text-xs text-gray-500 ml-auto">Acesso básico</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={handleClose}>
-            Cancelar
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={createUserMutation.isPending}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {createUserMutation.isPending ? "Criando..." : "Criar Usuário"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
+              <div className="space-y-2">
+                <Label htmlFor="department" className="text-sm font-medium flex items-center gap-2">
+                  <span>Departamento</span>
+                  <span className="text-red-500">*</span>
+                </Label>
+                <Select value={departmentId} onValueChange={setDepartmentId} required>
+                  <SelectTrigger className="py-2.5 border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-400">
+                    <SelectValue placeholder="Selecione um departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept: any) => (
+                      <SelectItem key={dept.id} value={dept.id} className="py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <span>{dept.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className="px-6 py-2.5 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={createUserMutation.isPending}
+              className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              {createUserMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Criando...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Criar Usuário</span>
+                </div>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 }
