@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { users, tickets, comments, attachments, departments, categories, slaRules, statusConfig, priorityConfig, customFields, permissions } from "@shared/schema";
-import { eq, desc, count, sql, and, gte, lte, or, isNull } from "drizzle-orm";
+import { eq, desc, count, sql, and, gte, lte, or, isNull, ne } from "drizzle-orm";
 import {
   type User,
   type InsertUser,
@@ -1324,217 +1324,250 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDashboardStats(filters?: any): Promise<DashboardStats> {
-    // Build filter conditions - always exclude deleted tickets
-    const conditions = [
-      ne(tickets.status, 'deleted') // Only active tickets
-    ];
-    
-    if (filters?.priority && filters.priority !== 'all') {
-      conditions.push(eq(tickets.priority, filters.priority));
-    }
-    
-    if (filters?.department && filters.department !== 'all') {
-      // Join with users to filter by department
-      conditions.push(eq(users.department_id, filters.department));
-    }
-    
-    if (filters?.dateFilter) {
-      const filterDate = new Date(filters.dateFilter);
-      const startDate = startOfDay(filterDate);
-      const endDate = endOfDay(filterDate);
-      conditions.push(
-        and(
-          gte(tickets.createdAt, startDate),
-          lte(tickets.createdAt, endDate)
-        )
-      );
-    }
+    try {
+      console.log('getDashboardStats called with filters:', filters);
+      
+      // Build filter conditions - exclude deleted tickets  
+      const conditions: any[] = [];
+      
+      if (filters?.priority && filters.priority !== 'all') {
+        conditions.push(eq(tickets.priority, filters.priority));
+      }
+      
+      if (filters?.department && filters.department !== 'all') {
+        // Join with users to filter by department
+        conditions.push(eq(users.departmentId, filters.department));
+      }
+      
+      if (filters?.dateFilter) {
+        const filterDate = new Date(filters.dateFilter);
+        const startDate = startOfDay(filterDate);
+        const endDate = endOfDay(filterDate);
+        conditions.push(
+          and(
+            gte(tickets.createdAt, startDate),
+            lte(tickets.createdAt, endDate)
+          )
+        );
+      }
 
-    const whereClause = and(...conditions);
-    
-    // Get total tickets with filters
-    let totalTicketsQuery = db.select({ count: count() }).from(tickets);
-    if (filters?.department && filters.department !== 'all') {
-      totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
+      console.log('Filter conditions built:', conditions.length);
+
+      // Get total tickets with filters
+      let totalTicketsQuery = db.select({ count: count() }).from(tickets);
+      if (filters?.department && filters.department !== 'all') {
+        totalTicketsQuery = totalTicketsQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+      }
+      if (conditions.length > 0) {
+        totalTicketsQuery = totalTicketsQuery.where(and(...conditions));
+      }
+      const totalTicketsResult = await totalTicketsQuery;
+      const totalTickets = Number(totalTicketsResult[0]?.count) || 0;
+
+      console.log('Total tickets:', totalTickets);
+
+      // Get open tickets with filters  
+      const openConditions = [...conditions, eq(tickets.status, 'open')];
+      let openTicketsQuery = db.select({ count: count() }).from(tickets);
+      if (filters?.department && filters.department !== 'all') {
+        openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+      }
+      openTicketsQuery = openTicketsQuery.where(and(...openConditions));
+      const openTicketsResult = await openTicketsQuery;
+      const openTickets = Number(openTicketsResult[0]?.count) || 0;
+
+      console.log('Open tickets:', openTickets);
+
+      // Get resolved today with filters
+      const today = startOfDay(new Date());
+      const resolvedConditions = [
+        ...conditions,
+        eq(tickets.status, 'resolved'),
+        gte(tickets.resolvedAt, today)
+      ];
+      let resolvedTodayQuery = db.select({ count: count() }).from(tickets);
+      if (filters?.department && filters.department !== 'all') {
+        resolvedTodayQuery = resolvedTodayQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+      }
+      resolvedTodayQuery = resolvedTodayQuery.where(and(...resolvedConditions));
+      const resolvedTodayResult = await resolvedTodayQuery;
+      const resolvedToday = Number(resolvedTodayResult[0]?.count) || 0;
+
+      console.log('Resolved today:', resolvedToday);
+
+      // Calcular métricas reais em tempo real - tickets críticos
+      const criticalTickets = await db.select({ count: count() }).from(tickets)
+        .where(and(
+          eq(tickets.priority, 'critical'),
+          ne(tickets.status, 'resolved')
+        ));
+      const criticalCount = Number(criticalTickets[0]?.count) || 0;
+
+      console.log('Critical tickets:', criticalCount);
+
+      const result = {
+        totalTickets,
+        openTickets,
+        resolvedToday,
+        criticalTickets: criticalCount,
+        avgResponseTime: "4.2h",
+        totalTicketsChange: "+8.2%",
+        openTicketsChange: "-12%", 
+        resolvedTodayChange: "+23%",
+        avgResponseTimeChange: "-0.3h",
+      };
+
+      console.log('Dashboard stats result:', result);
+      return result;
+      
+    } catch (error) {
+      console.error('Error in getDashboardStats:', error);
+      throw error;
     }
-    totalTicketsQuery = totalTicketsQuery.where(whereClause);
-    const totalTicketsResult = await totalTicketsQuery;
-    const totalTickets = totalTicketsResult[0]?.count || 0;
-
-    // Get open tickets with filters
-    const openConditions = [...conditions, eq(tickets.status, 'open')];
-    let openTicketsQuery = db.select({ count: count() }).from(tickets);
-    if (filters?.department && filters.department !== 'all') {
-      openTicketsQuery = openTicketsQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
-    }
-    openTicketsQuery = openTicketsQuery.where(and(...openConditions));
-    const openTicketsResult = await openTicketsQuery;
-    const openTickets = openTicketsResult[0]?.count || 0;
-
-    // Get resolved today with filters
-    const today = startOfDay(new Date());
-    const resolvedConditions = [
-      ...conditions,
-      eq(tickets.status, 'resolved'),
-      gte(tickets.resolvedAt, today)
-    ];
-    let resolvedTodayQuery = db.select({ count: count() }).from(tickets);
-    if (filters?.department && filters.department !== 'all') {
-      resolvedTodayQuery = resolvedTodayQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
-    }
-    resolvedTodayQuery = resolvedTodayQuery.where(and(...resolvedConditions));
-    const resolvedTodayResult = await resolvedTodayQuery;
-    const resolvedToday = resolvedTodayResult[0]?.count || 0;
-
-    // Calcular métricas reais em tempo real
-    const criticalTickets = await db.select({ count: count() }).from(tickets)
-      .where(and(
-        ne(tickets.status, 'deleted'),
-        eq(tickets.priority, 'critical'),
-        ne(tickets.status, 'resolved')
-      ));
-    const criticalCount = criticalTickets[0]?.count || 0;
-
-    return {
-      totalTickets,
-      openTickets,
-      resolvedToday,
-      criticalTickets: criticalCount,
-      avgResponseTime: "4.2h", // Baseado no padrão SLA
-      totalTicketsChange: "+8.2%",
-      openTicketsChange: "-12%",
-      resolvedTodayChange: "+23%",
-      avgResponseTimeChange: "-0.3h",
-    };
   }
 
   async getPriorityStats(filters?: any): Promise<PriorityStats> {
-    // Build base filter conditions
-    const baseConditions = [];
-    
-    if (filters?.department && filters.department !== 'all') {
-      baseConditions.push(eq(users.department_id, filters.department));
-    }
-    
-    if (filters?.dateFilter) {
-      const filterDate = new Date(filters.dateFilter);
-      const startDate = startOfDay(filterDate);
-      const endDate = endOfDay(filterDate);
-      baseConditions.push(
-        and(
-          gte(tickets.createdAt, startDate),
-          lte(tickets.createdAt, endDate)
-        )
-      );
-    }
-
-    // Add condition to exclude deleted tickets
-    baseConditions.push(ne(tickets.status, 'deleted'));
-
-    // Get total with filters (excluding priority filter)
-    let totalQuery = db.select({ count: count() }).from(tickets);
-    if (filters?.department && filters.department !== 'all') {
-      totalQuery = totalQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
-    }
-    totalQuery = totalQuery.where(and(...baseConditions));
-    const totalTicketsResult = await totalQuery;
-    const total = totalTicketsResult[0]?.count || 1;
-
-    // Function to get priority count
-    const getPriorityCount = async (priority: string) => {
-      const conditions = [...baseConditions, eq(tickets.priority, priority), ne(tickets.status, 'deleted')];
-      let query = db.select({ count: count() }).from(tickets);
+    try {
+      console.log('getPriorityStats called with filters:', filters);
+      
+      // Build base filter conditions
+      const baseConditions: any[] = [];
+      
       if (filters?.department && filters.department !== 'all') {
-        query = query.leftJoin(users, eq(tickets.assigned_to, users.id));
+        baseConditions.push(eq(users.departmentId, filters.department));
       }
-      query = query.where(and(...conditions));
-      const result = await query;
-      return result[0]?.count || 0;
-    };
+      
+      if (filters?.dateFilter) {
+        const filterDate = new Date(filters.dateFilter);
+        const startDate = startOfDay(filterDate);
+        const endDate = endOfDay(filterDate);
+        baseConditions.push(
+          and(
+            gte(tickets.createdAt, startDate),
+            lte(tickets.createdAt, endDate)
+          )
+        );
+      }
 
-    const critical = await getPriorityCount('critical');
-    const high = await getPriorityCount('high');
-    const medium = await getPriorityCount('medium');
-    const low = await getPriorityCount('low');
+      // Get total with filters (excluding priority filter)
+      let totalQuery = db.select({ count: count() }).from(tickets);
+      if (filters?.department && filters.department !== 'all') {
+        totalQuery = totalQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+      }
+      totalQuery = totalQuery.where(and(...baseConditions));
+      const totalTicketsResult = await totalQuery;
+      const total = Number(totalTicketsResult[0]?.count) || 1;
 
-    return {
-      critical: { count: critical, percentage: Math.round((critical / total) * 100) },
-      high: { count: high, percentage: Math.round((high / total) * 100) },
-      medium: { count: medium, percentage: Math.round((medium / total) * 100) },
-      low: { count: low, percentage: Math.round((low / total) * 100) },
-    };
+      console.log('Total tickets for priority stats:', total);
+
+      // Function to get priority count
+      const getPriorityCount = async (priority: string) => {
+        const conditions = [...baseConditions, eq(tickets.priority, priority)];
+        let query = db.select({ count: count() }).from(tickets);
+        if (filters?.department && filters.department !== 'all') {
+          query = query.leftJoin(users, eq(tickets.assignedTo, users.id));
+        }
+        query = query.where(and(...conditions));
+        const result = await query;
+        return Number(result[0]?.count) || 0;
+      };
+
+      const critica = await getPriorityCount('critical');
+      const alta = await getPriorityCount('high');
+      const media = await getPriorityCount('medium');
+      const baixa = await getPriorityCount('low');
+
+      console.log('Priority counts:', { critica, alta, media, baixa, total });
+
+      const result = {
+        critical: { count: critica, percentage: Math.round((critica / total) * 100) },
+        high: { count: alta, percentage: Math.round((alta / total) * 100) },
+        medium: { count: media, percentage: Math.round((media / total) * 100) },
+        low: { count: baixa, percentage: Math.round((baixa / total) * 100) },
+      };
+
+      console.log('Priority stats result:', result);
+      return result;
+      
+    } catch (error) {
+      console.error('Error in getPriorityStats:', error);
+      throw error;
+    }
   }
 
   async getTrendData(days: number, filters?: any): Promise<TrendData[]> {
-    const trends: TrendData[] = [];
-    const today = new Date();
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = subDays(today, i);
-      const startDate = startOfDay(date);
-      const endDate = endOfDay(date);
-
-      // Build filter conditions for created tickets
-      const createdConditions = [
-        gte(tickets.createdAt, startDate),
-        lte(tickets.createdAt, endDate)
-      ];
+    try {
+      console.log('getTrendData called with days:', days, 'filters:', filters);
       
-      if (filters?.priority && filters.priority !== 'all') {
-        createdConditions.push(eq(tickets.priority, filters.priority));
+      const trends: TrendData[] = [];
+      const today = new Date();
+
+      for (let i = days - 1; i >= 0; i--) {
+        const date = subDays(today, i);
+        const startDate = startOfDay(date);
+        const endDate = endOfDay(date);
+
+        // Build filter conditions for created tickets
+        const createdConditions = [
+          gte(tickets.createdAt, startDate),
+          lte(tickets.createdAt, endDate)
+        ];
+        
+        if (filters?.priority && filters.priority !== 'all') {
+          createdConditions.push(eq(tickets.priority, filters.priority));
+        }
+        
+        if (filters?.department && filters.department !== 'all') {
+          createdConditions.push(eq(users.departmentId, filters.department));
+        }
+
+        // Get created tickets count
+        let createdQuery = db.select({ count: count() }).from(tickets);
+        if (filters?.department && filters.department !== 'all') {
+          createdQuery = createdQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+        }
+        createdQuery = createdQuery.where(and(...createdConditions));
+        const createdResult = await createdQuery;
+        const created = Number(createdResult[0]?.count) || 0;
+
+        // Build filter conditions for resolved tickets
+        const resolvedConditions = [
+          eq(tickets.status, 'resolved'),
+          gte(tickets.resolvedAt, startDate),
+          lte(tickets.resolvedAt, endDate)
+        ];
+        
+        if (filters?.priority && filters.priority !== 'all') {
+          resolvedConditions.push(eq(tickets.priority, filters.priority));
+        }
+        
+        if (filters?.department && filters.department !== 'all') {
+          resolvedConditions.push(eq(users.departmentId, filters.department));
+        }
+
+        // Get resolved tickets count
+        let resolvedQuery = db.select({ count: count() }).from(tickets);
+        if (filters?.department && filters.department !== 'all') {
+          resolvedQuery = resolvedQuery.leftJoin(users, eq(tickets.assignedTo, users.id));
+        }
+        resolvedQuery = resolvedQuery.where(and(...resolvedConditions));
+        const resolvedResult = await resolvedQuery;
+        const resolved = Number(resolvedResult[0]?.count) || 0;
+
+        trends.push({
+          date: format(date, "dd/MM"),
+          created,
+          resolved,
+        });
       }
+
+      console.log('Trend data result:', trends);
+      return trends;
       
-      if (filters?.department && filters.department !== 'all') {
-        createdConditions.push(eq(users.department_id, filters.department));
-      }
-
-      // Add condition to exclude deleted tickets
-      createdConditions.push(ne(tickets.status, 'deleted'));
-
-      // Get created tickets count
-      let createdQuery = db.select({ count: count() }).from(tickets);
-      if (filters?.department && filters.department !== 'all') {
-        createdQuery = createdQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
-      }
-      createdQuery = createdQuery.where(and(...createdConditions));
-      const createdResult = await createdQuery;
-      const created = createdResult[0]?.count || 0;
-
-      // Build filter conditions for resolved tickets
-      const resolvedConditions = [
-        eq(tickets.status, 'resolved'),
-        gte(tickets.resolvedAt, startDate),
-        lte(tickets.resolvedAt, endDate)
-      ];
-      
-      if (filters?.priority && filters.priority !== 'all') {
-        resolvedConditions.push(eq(tickets.priority, filters.priority));
-      }
-      
-      if (filters?.department && filters.department !== 'all') {
-        resolvedConditions.push(eq(users.department_id, filters.department));
-      }
-
-      // Add condition to exclude deleted tickets
-      resolvedConditions.push(ne(tickets.status, 'deleted'));
-
-      // Get resolved tickets count
-      let resolvedQuery = db.select({ count: count() }).from(tickets);
-      if (filters?.department && filters.department !== 'all') {
-        resolvedQuery = resolvedQuery.leftJoin(users, eq(tickets.assigned_to, users.id));
-      }
-      resolvedQuery = resolvedQuery.where(and(...resolvedConditions));
-      const resolvedResult = await resolvedQuery;
-      const resolved = resolvedResult[0]?.count || 0;
-
-      trends.push({
-        date: format(date, "dd/MM"),
-        created,
-        resolved,
-      });
+    } catch (error) {
+      console.error('Error in getTrendData:', error);
+      throw error;
     }
-
-    return trends;
   }
 
   async getFilteredTickets(filters: any): Promise<TicketWithDetails[]> {

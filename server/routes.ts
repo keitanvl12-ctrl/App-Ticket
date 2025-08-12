@@ -36,9 +36,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         priority: req.query.priority as string,
         department: req.query.department as string
       };
+      console.log('Dashboard stats endpoint called with filters:', filters);
       const stats = await storage.getDashboardStats(filters);
+      console.log('Dashboard stats result:', stats);
       res.json(stats);
     } catch (error) {
+      console.error("Dashboard stats error:", error);
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
     }
   });
