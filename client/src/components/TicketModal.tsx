@@ -114,6 +114,7 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     enabled: isOpen,
   });
 
+  // Mantido priorityConfigs apenas para exibir cores/nomes - NÃO para SLA
   const { data: priorityConfigs } = useQuery<any[]>({
     queryKey: ['/api/config/priority'],
     enabled: isOpen,
@@ -140,52 +141,21 @@ export function TicketModal({ ticket, children, onUpdate }: TicketModalProps) {
     enabled: isOpen,
   });
 
-  // Calcular SLA baseado na hierarquia: Regras SLA → Categorias → Configurações de Prioridade → Fallback
+  // Calcular SLA SEMPRE usando dados do backend - NÃO calcular localmente
   const calculateSLA = () => {
-    let slaHours = 24; // Fallback padrão
-    let source = "(padrão)";
-
-    // 1. Primeiro, tentar encontrar uma regra SLA específica
-    if (slaRules && slaRules.length > 0) {
-      const matchingRule = slaRules.find(rule => {
-        const matchesDepartment = !rule.departmentId || rule.departmentId === editedTicket.responsibleDepartmentId;
-        const matchesCategory = !rule.category || rule.category === editedTicket.category;
-        const matchesPriority = !rule.priority || rule.priority === editedTicket.priority;
-        return matchesDepartment && matchesCategory && matchesPriority && rule.isActive;
-      });
-
-      if (matchingRule) {
-        slaHours = matchingRule.timeHours;
-        source = "(regra SLA)";
-      }
-    }
-
-    // 2. Se não encontrou regra SLA, usar SLA da categoria
-    if (source === "(padrão)" && editedTicket.category) {
-      const categoryConfig = categories?.find(c => c.name === editedTicket.category);
-      if (categoryConfig && categoryConfig.slaHours) {
-        slaHours = categoryConfig.slaHours;
-        source = "(categoria)";
-      }
-    }
-
-    // 3. Se não encontrou categoria, usar configuração de prioridade
-    if (source === "(padrão)") {
-      const priorityConfig = priorityConfigs?.find(p => p.value === editedTicket.priority);
-      if (priorityConfig && priorityConfig.slaHours) {
-        slaHours = priorityConfig.slaHours;
-        source = "(prioridade)";
-      }
-    }
-
-    const createdAt = new Date(editedTicket.createdAt);
-    const now = new Date();
-    const elapsed = now.getTime() - createdAt.getTime();
-    const slaTarget = slaHours * 60 * 60 * 1000; // Convert hours to milliseconds
+    // USAR EXCLUSIVAMENTE os dados já calculados pelo backend
+    const slaHours = editedTicket.slaHoursTotal || 4; // Padrão de 4h conforme solicitado
+    const source = editedTicket.slaSource || "(padrão)";
     
-    const percentage = Math.min((elapsed / slaTarget) * 100, 100);
-    const timeRemaining = slaTarget - elapsed;
-    const isViolation = timeRemaining < 0;
+    // Se não tem dados do backend, usar 4h padrão
+    if (!editedTicket.slaHoursTotal) {
+      console.warn('Ticket sem dados SLA do backend, usando 4h padrão:', editedTicket.ticketNumber);
+    }
+
+    // Usar dados já calculados pelo backend
+    const percentage = editedTicket.slaProgressPercent || 0;
+    const isViolation = editedTicket.slaStatus === 'violated';
+    const timeRemaining = (editedTicket.slaHoursRemaining || 0) * 60 * 60 * 1000; // Convert hours to ms
 
     return { 
       percentage: Math.max(percentage, 0), 

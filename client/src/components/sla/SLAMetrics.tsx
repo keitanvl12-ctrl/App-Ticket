@@ -57,9 +57,7 @@ export default function SLAMetrics() {
     queryKey: ['/api/tickets']
   });
 
-  const { data: priorityConfigs = [] } = useQuery<any[]>({
-    queryKey: ['/api/config/priority']
-  });
+  // Removido priorityConfigs - SLA agora é calculado exclusivamente no backend
 
   // Calcular métricas reais baseadas nos tickets
   const totalTickets = tickets.length;
@@ -93,7 +91,7 @@ export default function SLAMetrics() {
       title: 'Cumprimento SLA',
       value: `${slaCompliance}%`,
       change: 2.1,
-      changeType: parseFloat(slaCompliance) >= 95 ? 'positive' : 'negative' as const,
+      changeType: (parseFloat(slaCompliance) >= 95 ? 'positive' : 'negative') as 'positive' | 'negative',
       icon: 'Target',
       color: parseFloat(slaCompliance) >= 95 ? 'green' : 'red' as const
     },

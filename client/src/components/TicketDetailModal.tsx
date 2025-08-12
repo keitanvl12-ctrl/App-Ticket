@@ -41,6 +41,7 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
     enabled: isOpen,
   });
 
+  // Mantido priorityConfigs apenas para exibir cores/nomes - NÃO para SLA
   const { data: priorityConfigs } = useQuery<any[]>({
     queryKey: ['/api/config/priority'],
     enabled: isOpen,
