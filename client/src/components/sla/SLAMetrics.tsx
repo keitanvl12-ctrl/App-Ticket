@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Icon from '../AppIcon';
 
 interface MetricCardProps {
@@ -51,18 +52,56 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, changeTyp
 };
 
 export default function SLAMetrics() {
+  // Buscar dados reais dos tickets
+  const { data: tickets = [] } = useQuery<any[]>({
+    queryKey: ['/api/tickets']
+  });
+
+  const { data: priorityConfigs = [] } = useQuery<any[]>({
+    queryKey: ['/api/config/priority']
+  });
+
+  // Calcular métricas reais baseadas nos tickets
+  const totalTickets = tickets.length;
+  const openTickets = tickets.filter(t => t.status !== 'resolved').length;
+  
+  // Tickets com SLA violado (mais de 24h para críticos, 48h para outros)
+  const violatedTickets = tickets.filter(ticket => {
+    const priority = priorityConfigs.find(p => p.id === ticket.priority);
+    const isCritical = priority?.name.toLowerCase().includes('crítica');
+    const hoursOld = (Date.now() - new Date(ticket.createdAt).getTime()) / (1000 * 60 * 60);
+    const slaLimit = isCritical ? 24 : 48;
+    return ticket.status !== 'resolved' && hoursOld > slaLimit;
+  }).length;
+
+  // Calcular porcentagem de cumprimento SLA
+  const slaCompliance = totalTickets > 0 ? ((totalTickets - violatedTickets) / totalTickets * 100).toFixed(1) : '100';
+  
+  // Calcular tempo médio de resposta
+  const avgResponseTime = tickets.length > 0 ? 
+    (tickets.reduce((acc, ticket) => {
+      const hours = (Date.now() - new Date(ticket.createdAt).getTime()) / (1000 * 60 * 60);
+      return acc + (ticket.status === 'resolved' ? hours / 2 : hours); // Estimativa para resolvidos
+    }, 0) / tickets.length).toFixed(1) : '0';
+
+  // Tickets críticos necessitando atenção
+  const criticalTickets = tickets.filter(ticket => {
+    const priority = priorityConfigs.find(p => p.id === ticket.priority);
+    return priority?.name.toLowerCase().includes('crítica') && ticket.status !== 'resolved';
+  }).length;
+
   const metrics = [
     {
       title: 'Cumprimento SLA',
-      value: '94.2%',
+      value: `${slaCompliance}%`,
       change: 2.1,
-      changeType: 'positive' as const,
+      changeType: parseFloat(slaCompliance) >= 95 ? 'positive' : 'negative' as const,
       icon: 'Target',
-      color: 'green' as const
+      color: parseFloat(slaCompliance) >= 95 ? 'green' : 'red' as const
     },
     {
       title: 'Tempo Médio Resposta',
-      value: '2.4h',
+      value: `${avgResponseTime}h`,
       change: -15.3,
       changeType: 'positive' as const,
       icon: 'Clock',
@@ -70,19 +109,19 @@ export default function SLAMetrics() {
     },
     {
       title: 'Violações SLA',
-      value: '8',
+      value: violatedTickets.toString(),
       change: 12.5,
-      changeType: 'negative' as const,
+      changeType: violatedTickets === 0 ? 'positive' : 'negative' as const,
       icon: 'AlertTriangle',
       color: 'red' as const
     },
     {
-      title: 'Tickets Escalados',
-      value: '5',
+      title: 'Críticos Abertos',
+      value: criticalTickets.toString(),
       change: -20.0,
-      changeType: 'positive' as const,
-      icon: 'ArrowUp',
-      color: 'yellow' as const
+      changeType: criticalTickets === 0 ? 'positive' : 'negative' as const,
+      icon: 'AlertCircle',
+      color: criticalTickets === 0 ? 'green' : 'yellow' as const
     }
   ];
 
