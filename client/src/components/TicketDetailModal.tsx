@@ -33,10 +33,12 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
   });
   
   // Buscar usuários que podem ser atribuídos (com permissão para gerenciar tickets)
-  const { data: users = [] } = useQuery<any[]>({
+  const { data: users = [], isLoading: usersLoading } = useQuery<any[]>({
     queryKey: ['/api/users/assignable'],
     enabled: isOpen && !!ticketId,
   });
+
+  console.log("🔍 Users query result:", { users, usersLoading, count: users.length });
   
   const ticket = (tickets as any[])?.find((t: any) => t.id === ticketId);
 
@@ -303,14 +305,15 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                       <div className="mt-3 space-y-2">
                         <Select 
                           onValueChange={(value) => {
-                            console.log("Select onChange triggered:", { value, ticketId: ticket.id });
+                            console.log("🔄 Select onChange triggered:", { value, ticketId: ticket.id });
                             if (value === 'unassign') {
-                              console.log("Unassigning ticket");
+                              console.log("🔄 Unassigning ticket");
                               assignTicketMutation.mutate({ ticketId: ticket.id, assignedTo: null });
                             } else {
-                              console.log("Assigning ticket to user:", value);
+                              console.log("🔄 Assigning ticket to user:", value);
                               assignTicketMutation.mutate({ ticketId: ticket.id, assignedTo: value });
                             }
+                            setIsAssigning(false);
                           }}
                           disabled={assignTicketMutation.isPending}
                         >
@@ -319,13 +322,11 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="unassign">Não atribuído</SelectItem>
-                            {users
-                              .filter(user => user.role !== 'colaborador')
-                              .map((user) => (
-                                <SelectItem key={user.id} value={user.id}>
-                                  {user.name} ({user.role})
-                                </SelectItem>
-                              ))}
+                            {users.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.name} ({user.role})
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <div className="flex gap-2">
@@ -600,6 +601,8 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
               </div>
             </CardContent>
           </Card>
+
+
 
           {/* Action Buttons */}
           <div className="flex justify-between pt-4 border-t">
