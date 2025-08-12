@@ -1055,7 +1055,53 @@ export default function KanbanBoard() {
                             </p>
                           </div>
 
-                          {/* Assignee and Date */}
+                          {/* Category and Tags */}
+                          {(ticket.categoryName || (ticket.tags && ticket.tags.length > 0)) && (
+                            <div className="space-y-2">
+                              {ticket.categoryName && (
+                                <div>
+                                  <span className="text-xs text-gray-500">Categoria:</span>
+                                  <Badge variant="outline" className="ml-2 text-xs">
+                                    {ticket.categoryName}
+                                  </Badge>
+                                </div>
+                              )}
+                              {ticket.tags && ticket.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {ticket.tags.slice(0, 3).map((tag: string, index: number) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                  {ticket.tags.length > 3 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      +{ticket.tags.length - 3}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Requester Info */}
+                          <div className="bg-gray-50 rounded-lg p-2 space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-gray-500">Solicitante:</span>
+                              <span className="font-medium text-gray-700">{ticket.createdByUser?.name || 'Desconhecido'}</span>
+                            </div>
+                            {ticket.requesterDepartment?.name && (
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">Depto:</span>
+                                <span className="text-gray-600">{ticket.requesterDepartment.name}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-gray-500">Criado:</span>
+                              <span className="text-gray-600">{new Date(ticket.createdAt).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                          </div>
+
+                          {/* Assignee and Priority */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
                               <Avatar className="w-6 h-6">
@@ -1065,30 +1111,45 @@ export default function KanbanBoard() {
                               </Avatar>
                               <span className="text-xs text-gray-600">{ticket.assignedToUser?.name || 'Não atribuído'}</span>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {new Date(ticket.createdAt).toLocaleDateString('pt-BR')}
-                            </div>
-                          </div>
-
-                          {/* Priority Badge */}
-                          <div className="flex items-center justify-between">
                             <Badge className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-1`}>
                               {getPriorityLabel(ticket.priority)}
                             </Badge>
-                            <span className="text-xs text-gray-500">{ticket.department?.name || 'Sem departamento'}</span>
                           </div>
 
-                          {/* SLA Progress Bar - Original Style */}
-                          <div className="mt-3">
+                          {/* SLA Progress Bar - Enhanced */}
+                          <div className="mt-3 border-t pt-3">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs text-gray-600">Progresso SLA</span>
-                              <span className="text-xs text-gray-500">{getSLAStatusText(ticket)}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-600">Meta SLA</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {ticket.slaHoursTotal || 4}h ({(ticket.slaSource || 'padrão').includes('regra SLA') ? 'configurado' : 'padrão'})
+                                </Badge>
+                              </div>
+                              <span className={`text-xs font-medium ${
+                                ticket.slaStatus === 'violated' ? 'text-red-600' : 
+                                (ticket.slaProgressPercent || 0) > 80 ? 'text-yellow-600' : 
+                                'text-green-600'
+                              }`}>
+                                {Math.round(ticket.slaProgressPercent || 0)}%
+                              </span>
                             </div>
                             <div className="w-full bg-gray-200 rounded h-2">
                               <div 
-                                className={`h-2 rounded transition-all duration-300 ${getSLAProgressColor(ticket)}`}
-                                style={{ width: `${getSLAProgressPercentage(ticket)}%` }}
+                                className={`h-2 rounded transition-all duration-300 ${
+                                  ticket.slaStatus === 'violated' ? 'bg-red-500' : 
+                                  (ticket.slaProgressPercent || 0) > 80 ? 'bg-yellow-500' : 
+                                  'bg-green-500'
+                                }`}
+                                style={{ width: `${Math.min(ticket.slaProgressPercent || 0, 100)}%` }}
                               />
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-500 mt-1">
+                              <span>{getSLAStatusText(ticket)}</span>
+                              {ticket.slaStatus === 'violated' ? (
+                                <span className="text-red-600 font-medium">Vencido</span>
+                              ) : (
+                                <span>Dentro do prazo</span>
+                              )}
                             </div>
                           </div>
                         </div>
