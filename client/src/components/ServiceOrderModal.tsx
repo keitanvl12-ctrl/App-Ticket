@@ -78,23 +78,57 @@ export default function ServiceOrderModal({ ticket, isOpen, onClose, finalizatio
     return users?.find(u => u.id === ticket.createdBy)?.name || 'Sistema';
   };
 
-  // Get SLA information
+  // Get SLA information with proper pause handling
   const getSLAInfo = () => {
     const rule = slaRules?.find(r => r.priority === ticket.priority);
     if (!rule) return null;
 
     const createdAt = new Date(ticket.createdAt);
-    const resolvedAt = ticket.resolvedAt ? new Date(ticket.resolvedAt) : new Date();
-    const hoursElapsed = Math.floor((resolvedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60));
-    const slaHours = rule.responseTime;
-    const slaStatus = hoursElapsed <= slaHours ? 'Dentro do SLA' : 'Fora do SLA';
+    let endTime = new Date();
+    
+    // If ticket is resolved, use resolution time
+    if (ticket.resolvedAt) {
+      endTime = new Date(ticket.resolvedAt);
+    }
+    
+    // Calculate total elapsed time in minutes
+    const totalElapsedMinutes = Math.floor((endTime.getTime() - createdAt.getTime()) / (1000 * 60));
+    
+    // TODO: Fetch pause records and calculate paused time
+    // For now, assume no paused time - this will be enhanced when pause system is implemented
+    const pausedMinutes = 0;
+    const effectiveMinutes = totalElapsedMinutes - pausedMinutes;
+    
+    // Convert to hours for display
+    const effectiveHours = Math.floor(effectiveMinutes / 60);
+    const remainingMinutes = effectiveMinutes % 60;
+    
+    // Determine which SLA to use (response vs resolution)
+    const isResolved = ticket.status === 'resolved';
+    const slaLimitHours = isResolved ? rule.resolutionTime : rule.responseTime;
+    const slaLimitMinutes = slaLimitHours * 60;
+    
+    const isCompliant = effectiveMinutes <= slaLimitMinutes;
+    
+    // Format time display
+    const formatTime = (minutes: number) => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      if (hours === 0) return `${mins}min`;
+      if (mins === 0) return `${hours}h`;
+      return `${hours}h ${mins}min`;
+    };
     
     return {
       responseTime: `${rule.responseTime}h`,
       resolutionTime: `${rule.resolutionTime}h`,
-      hoursElapsed: `${hoursElapsed}h`,
-      status: slaStatus,
-      isCompliant: hoursElapsed <= slaHours
+      hoursElapsed: formatTime(effectiveMinutes),
+      totalElapsed: formatTime(totalElapsedMinutes),
+      pausedTime: formatTime(pausedMinutes),
+      status: isCompliant ? 'Dentro do SLA' : 'Fora do SLA',
+      isCompliant,
+      slaType: isResolved ? 'Resolução' : 'Resposta',
+      slaLimit: `${slaLimitHours}h`
     };
   };
 
@@ -208,9 +242,12 @@ export default function ServiceOrderModal({ ticket, isOpen, onClose, finalizatio
         pdf.text('INFORMAÇÕES DE SLA', margin, yPosition);
         yPosition += 10;
 
-        addInfoField('Tempo Resposta SLA', slaInfo.responseTime);
-        addInfoField('Tempo Resolução SLA', slaInfo.resolutionTime);
-        addInfoField('Tempo Decorrido', slaInfo.hoursElapsed);
+        addInfoField('SLA Resposta', slaInfo.responseTime);
+        addInfoField('SLA Resolução', slaInfo.resolutionTime);
+        addInfoField('Tipo SLA Aplicado', `${slaInfo.slaType} (${slaInfo.slaLimit})`);
+        addInfoField('Tempo Total', slaInfo.totalElapsed);
+        addInfoField('Tempo Pausado', slaInfo.pausedTime);
+        addInfoField('Tempo Efetivo', slaInfo.hoursElapsed);
         addInfoField('Status SLA', slaInfo.status);
         
         yPosition += 10;
@@ -493,22 +530,34 @@ export default function ServiceOrderModal({ ticket, isOpen, onClose, finalizatio
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {(() => {
                     const slaInfo = getSLAInfo();
                     return (
                       <>
                         <div>
-                          <label className="text-sm font-semibold text-gray-700">Tempo Resposta SLA:</label>
+                          <label className="text-sm font-semibold text-gray-700">SLA Resposta:</label>
                           <p className="text-sm">{slaInfo?.responseTime}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-semibold text-gray-700">Tempo Resolução SLA:</label>
+                          <label className="text-sm font-semibold text-gray-700">SLA Resolução:</label>
                           <p className="text-sm">{slaInfo?.resolutionTime}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-semibold text-gray-700">Tempo Decorrido:</label>
-                          <p className="text-sm">{slaInfo?.hoursElapsed}</p>
+                          <label className="text-sm font-semibold text-gray-700">Tipo SLA Aplicado:</label>
+                          <p className="text-sm font-medium">{slaInfo?.slaType} ({slaInfo?.slaLimit})</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">Tempo Total:</label>
+                          <p className="text-sm">{slaInfo?.totalElapsed}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">Tempo Pausado:</label>
+                          <p className="text-sm">{slaInfo?.pausedTime}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">Tempo Efetivo:</label>
+                          <p className="text-sm font-medium">{slaInfo?.hoursElapsed}</p>
                         </div>
                         <div>
                           <label className="text-sm font-semibold text-gray-700">Status SLA:</label>

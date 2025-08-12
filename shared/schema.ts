@@ -133,7 +133,8 @@ export const slaRules = pgTable("sla_rules", {
   departmentId: varchar("department_id").references(() => departments.id), // Nullable - applies to all departments if null
   category: text("category"), // Nullable - applies to all categories if null
   priority: text("priority"), // low, medium, high, critical - nullable for non-priority based SLAs
-  timeHours: integer("time_hours").notNull().default(24),
+  responseTime: integer("response_time").notNull().default(24), // Response time in hours
+  resolutionTime: integer("resolution_time").notNull().default(48), // Resolution time in hours
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -273,6 +274,39 @@ export type InsertPriorityConfig = z.infer<typeof insertPriorityConfigSchema>;
 export type InsertSlaRule = z.infer<typeof insertSlaRuleSchema>;
 export type InsertCustomField = z.infer<typeof insertCustomFieldSchema>;
 export type InsertCustomFieldValue = z.infer<typeof insertCustomFieldValueSchema>;
+
+// Pause reasons table
+export const pauseReasons = pgTable("pause_reasons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").references(() => tickets.id),
+  reason: text("reason").notNull(),
+  pausedAt: timestamp("paused_at").defaultNow(),
+  pausedBy: varchar("paused_by").references(() => users.id),
+  expectedReturnAt: timestamp("expected_return_at"),
+  resumedAt: timestamp("resumed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// SLA tracking table for detailed SLA calculations
+export const slaTracking = pgTable("sla_tracking", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").references(() => tickets.id),
+  slaRuleId: varchar("sla_rule_id").references(() => slaRules.id),
+  startedAt: timestamp("started_at").defaultNow(),
+  pausedAt: timestamp("paused_at"),
+  resumedAt: timestamp("resumed_at"),
+  completedAt: timestamp("completed_at"),
+  totalPausedMinutes: integer("total_paused_minutes").default(0),
+  effectiveMinutes: integer("effective_minutes").default(0),
+  status: varchar("status").notNull().default("active"), // active, paused, completed, breached
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type PauseReason = typeof pauseReasons.$inferSelect;
+export type InsertPauseReason = typeof pauseReasons.$inferInsert;
+export type SlaTracking = typeof slaTracking.$inferSelect;
+export type InsertSlaTracking = typeof slaTracking.$inferInsert;
 
 // Update Ticket Schema with pause fields
 export const updateTicketSchema = insertTicketSchema.partial().extend({
