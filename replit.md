@@ -98,6 +98,18 @@ Language: Sistema completo traduzido para português brasileiro (interface, form
 
 # Recent Changes (August 2025)
 
+## Sistema de Ordem de Serviço Profissional Implementado (12/08/2025)
+- ✓ **Ordem de Serviço completamente reformulada**: Layout profissional com identidade Grupo OPUS
+- ✓ **Botão "Ordem de Serviço" adicionado**: Disponível em todos os modais de ticket para prévia
+- ✓ **PDF profissional com branding**: Logo OPUS, cores corporativas e layout estruturado
+- ✓ **Informações completas**: Dados do ticket, SLA calculado, histórico de comentários, dados de finalização
+- ✓ **Seção de assinaturas**: Campos para técnico responsável e cliente/solicitante
+- ✓ **Funcionalidades**: Baixar PDF, Imprimir, Enviar por Email (preparado para implementação)
+- ✓ **Integração automática**: Tickets finalizados geram automaticamente a OS
+- ✓ **Cálculo de SLA real**: Tempo decorrido vs tempo limite com status "Dentro/Fora do SLA"
+- ✓ **Histórico completo**: Todos os comentários organizados cronologicamente
+- ✓ **Layout responsivo**: Interface adaptada para visualização em diferentes tamanhos
+
 ## Dados Reais Implementados e Problemas de Status Resolvidos (12/08/2025)
 - ✓ **Dashboard com dados reais**: Substituído dados mock por consultas reais do PostgreSQL
 - ✓ **Team Performance real**: API /dashboard/team-performance retorna dados reais dos usuários

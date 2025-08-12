@@ -1,10 +1,33 @@
 import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Download, Mail, Printer } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  Download, 
+  Printer, 
+  Mail, 
+  FileText, 
+  Clock, 
+  User, 
+  AlertTriangle,
+  CheckCircle,
+  Calendar,
+  Building,
+  Tag,
+  MessageSquare,
+  Paperclip,
+  X
+} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
-import logoOpus from '@assets/Logo Grupo OPUS - azul escuro.azul claro1_1754938736660.png';
+import html2canvas from 'html2canvas';
 
 interface ServiceOrderModalProps {
   ticket: any;
@@ -13,254 +36,626 @@ interface ServiceOrderModalProps {
   finalizationData?: any;
 }
 
-const ServiceOrderModal: React.FC<ServiceOrderModalProps> = ({
-  ticket,
-  isOpen,
-  onClose,
-  finalizationData
-}) => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const { toast } = useToast();
+export default function ServiceOrderModal({ ticket, isOpen, onClose, finalizationData }: ServiceOrderModalProps) {
+  const [emailAddress, setEmailAddress] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  const generateServiceOrderPDF = async () => {
-    setIsGenerating(true);
+  // Fetch ticket comments
+  const { data: comments } = useQuery<any[]>({
+    queryKey: ['/api/tickets', ticket.id, 'comments'],
+    enabled: isOpen && !!ticket.id,
+  });
+
+  // Fetch users for assignments
+  const { data: users } = useQuery<any[]>({
+    queryKey: ['/api/users'],
+    enabled: isOpen,
+  });
+
+  // Fetch SLA rules
+  const { data: slaRules } = useQuery<any[]>({
+    queryKey: ['/api/sla/rules'],
+    enabled: isOpen,
+  });
+
+  // Fetch status and priority configs
+  const { data: statusConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/status'],
+    enabled: isOpen,
+  });
+
+  const { data: priorityConfigs } = useQuery<any[]>({
+    queryKey: ['/api/config/priority'],
+    enabled: isOpen,
+  });
+
+  // Get user names
+  const getAssignedUser = () => {
+    return users?.find(u => u.id === ticket.assignedTo)?.name || 'Não atribuído';
+  };
+
+  const getCreatedByUser = () => {
+    return users?.find(u => u.id === ticket.createdBy)?.name || 'Sistema';
+  };
+
+  // Get SLA information
+  const getSLAInfo = () => {
+    const rule = slaRules?.find(r => r.priority === ticket.priority);
+    if (!rule) return null;
+
+    const createdAt = new Date(ticket.createdAt);
+    const resolvedAt = ticket.resolvedAt ? new Date(ticket.resolvedAt) : new Date();
+    const hoursElapsed = Math.floor((resolvedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60));
+    const slaHours = rule.responseTime;
+    const slaStatus = hoursElapsed <= slaHours ? 'Dentro do SLA' : 'Fora do SLA';
     
-    try {
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.width;
-      const margin = 20;
-      let yPosition = 30;
+    return {
+      responseTime: `${rule.responseTime}h`,
+      resolutionTime: `${rule.resolutionTime}h`,
+      hoursElapsed: `${hoursElapsed}h`,
+      status: slaStatus,
+      isCompliant: hoursElapsed <= slaHours
+    };
+  };
 
-      // Header with logo and company info
-      pdf.setFontSize(20);
+  // Get status and priority display names
+  const getStatusDisplay = () => {
+    const config = statusConfigs?.find(s => s.value === ticket.status);
+    return config?.name || ticket.status;
+  };
+
+  const getPriorityDisplay = () => {
+    const config = priorityConfigs?.find(p => p.value === ticket.priority);
+    return config?.name || ticket.priority;
+  };
+
+  const generatePDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPosition = 20;
+
+      // Header with OPUS Logo
       pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(20);
+      pdf.setTextColor(44, 66, 87); // OPUS Blue
+      pdf.text('GRUPO OPUS', pageWidth / 2, yPosition, { align: 'center' });
+      
+      yPosition += 8;
+      pdf.setFontSize(14);
+      pdf.setTextColor(107, 143, 176);
       pdf.text('ORDEM DE SERVIÇO', pageWidth / 2, yPosition, { align: 'center' });
       
       yPosition += 15;
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Grupo OPUS', pageWidth / 2, yPosition, { align: 'center' });
       
-      yPosition += 20;
-
-      // OS Number and Date
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`OS Nº: ${ticket.ticketNumber}`, margin, yPosition);
-      pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 50, yPosition);
-
-      yPosition += 20;
-
-      // Ticket Information
+      // Service Order Header
+      pdf.setFillColor(44, 66, 87);
+      pdf.rect(margin, yPosition, pageWidth - margin * 2, 8, 'F');
+      
       pdf.setFontSize(12);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text(`OS Nº: ${ticket.ticketNumber || 'N/A'}`, margin + 5, yPosition + 5);
+      pdf.text(`Data: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, pageWidth - margin - 5, yPosition + 5, { align: 'right' });
+      
+      yPosition += 15;
+
+      // Ticket Information Section
+      pdf.setFontSize(14);
+      pdf.setTextColor(44, 66, 87);
       pdf.setFont('helvetica', 'bold');
       pdf.text('INFORMAÇÕES DO CHAMADO', margin, yPosition);
-      
       yPosition += 10;
-      pdf.setFont('helvetica', 'normal');
-      
-      // Split long text into multiple lines
-      const splitText = (text: string, maxWidth: number) => {
-        return pdf.splitTextToSize(text, maxWidth);
-      };
 
-      const addField = (label: string, value: string) => {
+      const addInfoField = (label: string, value: string, isFullWidth: boolean = false) => {
         pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
         pdf.text(`${label}:`, margin, yPosition);
-        pdf.setFont('helvetica', 'normal');
         
-        const lines = splitText(value, pageWidth - margin * 2 - 40);
-        pdf.text(lines, margin + 40, yPosition);
-        yPosition += lines.length * 5 + 5;
+        pdf.setFont('helvetica', 'normal');
+        const valueText = value || 'N/A';
+        const maxWidth = isFullWidth ? pageWidth - margin * 2 - 5 : (pageWidth - margin * 2) / 2 - 10;
+        const lines = pdf.splitTextToSize(valueText, maxWidth);
+        pdf.text(lines, margin + 35, yPosition);
+        
+        yPosition += Math.max(lines.length * 4, 6);
       };
 
-      addField('Número', ticket.ticketNumber || 'N/A');
-      addField('Assunto', ticket.subject || 'N/A');
-      addField('Descrição', ticket.description || 'N/A');
-      addField('Prioridade', ticket.priority || 'N/A');
-      addField('Categoria', ticket.category || 'N/A');
-      addField('Solicitante', ticket.createdByUser?.name || ticket.createdBy || 'N/A');
-      addField('Responsável', ticket.assignedToUser?.name || ticket.assignedTo || 'N/A');
-      addField('Data de Abertura', ticket.createdAt ? new Date(ticket.createdAt).toLocaleString('pt-BR') : 'N/A');
-      addField('Data de Resolução', ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleString('pt-BR') : 'N/A');
+      // Basic Information
+      addInfoField('Número', ticket.ticketNumber || 'N/A');
+      addInfoField('Assunto', ticket.subject || 'N/A', true);
+      addInfoField('Descrição', ticket.description || 'N/A', true);
+      
+      yPosition += 5;
+      
+      // Status and Priority in same line
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.text('Status:', margin, yPosition);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(getStatusDisplay(), margin + 35, yPosition);
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Prioridade:', pageWidth / 2, yPosition);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(getPriorityDisplay(), pageWidth / 2 + 35, yPosition);
+      
+      yPosition += 8;
+
+      // People Information
+      addInfoField('Solicitante', getCreatedByUser());
+      addInfoField('Responsável', getAssignedUser());
+      
+      yPosition += 5;
+
+      // Dates
+      addInfoField('Abertura', ticket.createdAt ? format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A');
+      if (ticket.resolvedAt) {
+        addInfoField('Resolução', format(new Date(ticket.resolvedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }));
+      }
 
       yPosition += 10;
 
-      // Comments/History Section
-      if (ticket.comments && ticket.comments.length > 0) {
+      // SLA Information
+      const slaInfo = getSLAInfo();
+      if (slaInfo) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(44, 66, 87);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('HISTÓRICO DE COMENTÁRIOS', margin, yPosition);
+        pdf.text('INFORMAÇÕES DE SLA', margin, yPosition);
         yPosition += 10;
 
-        ticket.comments.forEach((comment: any) => {
-          pdf.setFont('helvetica', 'normal');
-          const commentDate = new Date(comment.createdAt).toLocaleString('pt-BR');
+        addInfoField('Tempo Resposta SLA', slaInfo.responseTime);
+        addInfoField('Tempo Resolução SLA', slaInfo.resolutionTime);
+        addInfoField('Tempo Decorrido', slaInfo.hoursElapsed);
+        addInfoField('Status SLA', slaInfo.status);
+        
+        yPosition += 10;
+      }
+
+      // Comments/History Section
+      if (comments && comments.length > 0) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(44, 66, 87);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('HISTÓRICO DE ATENDIMENTO', margin, yPosition);
+        yPosition += 10;
+
+        comments.forEach((comment: any, index: number) => {
+          if (yPosition > pageHeight - 40) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+
+          const commentDate = format(new Date(comment.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR });
           const commentUser = comment.user?.name || 'Sistema';
-          const commentHeader = `${commentDate} - ${commentUser}:`;
           
-          pdf.text(commentHeader, margin, yPosition);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(10);
+          pdf.text(`${index + 1}. ${commentDate} - ${commentUser}`, margin, yPosition);
           yPosition += 5;
           
-          const commentLines = splitText(comment.content, pageWidth - margin * 2);
-          pdf.text(commentLines, margin + 10, yPosition);
-          yPosition += commentLines.length * 5 + 10;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+          const commentLines = pdf.splitTextToSize(comment.content, pageWidth - margin * 2 - 10);
+          pdf.text(commentLines, margin + 5, yPosition);
+          yPosition += commentLines.length * 4 + 8;
         });
       }
 
-      yPosition += 10;
-
-      // Service Details
+      // Finalization Data
       if (finalizationData) {
+        if (yPosition > pageHeight - 60) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        pdf.setFontSize(14);
+        pdf.setTextColor(44, 66, 87);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('DETALHES DO ATENDIMENTO', margin, yPosition);
+        pdf.text('DADOS DE FINALIZAÇÃO', margin, yPosition);
         yPosition += 10;
 
-        if (finalizationData.comment) {
-          addField('Solução Aplicada', finalizationData.comment);
+        if (finalizationData.solution) {
+          addInfoField('Solução Aplicada', finalizationData.solution, true);
         }
-        if (finalizationData.hoursSpent) {
-          addField('Horas Trabalhadas', finalizationData.hoursSpent);
+        if (finalizationData.timeSpent) {
+          addInfoField('Tempo Gasto', `${finalizationData.timeSpent} horas`);
         }
-        if (finalizationData.materialsUsed) {
-          addField('Materiais Utilizados', finalizationData.materialsUsed);
-        }
-        if (finalizationData.equipmentRemoved) {
-          addField('Equipamento Removido', finalizationData.equipmentRemoved ? 'Sim' : 'Não');
-        }
-        if (finalizationData.extraCharge && finalizationData.chargeType) {
-          addField('Cobrança Extra', `${finalizationData.chargeType}: R$ ${finalizationData.extraCharge}`);
+        if (finalizationData.materials) {
+          addInfoField('Materiais Utilizados', finalizationData.materials, true);
         }
       }
 
-      yPosition += 20;
+      // Signature Section
+      if (yPosition > pageHeight - 80) {
+        pdf.addPage();
+        yPosition = 20;
+      }
 
-      // Signatures
+      yPosition += 20;
+      
+      pdf.setFontSize(14);
+      pdf.setTextColor(44, 66, 87);
       pdf.setFont('helvetica', 'bold');
       pdf.text('ASSINATURAS', margin, yPosition);
-      yPosition += 20;
+      yPosition += 15;
 
-      const signatureWidth = (pageWidth - margin * 2 - 40) / 2;
+      // Signature boxes
+      const boxWidth = (pageWidth - margin * 2 - 10) / 2;
       
       // Technical signature
-      pdf.line(margin, yPosition, margin + signatureWidth, yPosition);
+      pdf.setFontSize(10);
+      pdf.setTextColor(0, 0, 0);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Técnico Responsável', margin, yPosition + 10);
-      pdf.text(`Data: ___/___/______`, margin, yPosition + 20);
+      pdf.rect(margin, yPosition, boxWidth, 20);
+      pdf.text('Técnico Responsável:', margin + 2, yPosition + 5);
+      pdf.text('Nome: ____________________________', margin + 2, yPosition + 10);
+      pdf.text('Data: ____/____/____', margin + 2, yPosition + 15);
 
       // Client signature
-      const clientSignatureX = margin + signatureWidth + 40;
-      pdf.line(clientSignatureX, yPosition, clientSignatureX + signatureWidth, yPosition);
-      pdf.text('Cliente/Solicitante', clientSignatureX, yPosition + 10);
-      pdf.text(`Data: ___/___/______`, clientSignatureX, yPosition + 20);
-
-      yPosition += 40;
+      pdf.rect(margin + boxWidth + 10, yPosition, boxWidth, 20);
+      pdf.text('Cliente/Solicitante:', margin + boxWidth + 12, yPosition + 5);
+      pdf.text('Nome: ____________________________', margin + boxWidth + 12, yPosition + 10);
+      pdf.text('Data: ____/____/____', margin + boxWidth + 12, yPosition + 15);
 
       // Footer
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'italic');
-      pdf.text('Este documento comprova a execução dos serviços descritos acima.', pageWidth / 2, yPosition, { align: 'center' });
+      yPosition = pageHeight - 15;
+      pdf.setFontSize(8);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text('Documento gerado automaticamente pelo Sistema TicketFlow Pro - Grupo OPUS', pageWidth / 2, yPosition, { align: 'center' });
 
-      // Generate and download PDF
-      const fileName = `OS_${ticket.ticketNumber}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
-
-      toast({
-        title: "Ordem de Serviço Gerada",
-        description: `PDF salvo como: ${fileName}`,
-      });
-
+      // Save PDF
+      pdf.save(`Ordem_Servico_${ticket.ticketNumber || ticket.id}.pdf`);
+      
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível gerar a Ordem de Serviço.",
-        variant: "destructive",
-      });
     } finally {
-      setIsGenerating(false);
+      setIsGeneratingPDF(false);
     }
   };
 
-  const sendByEmail = async () => {
-    // TODO: Implementar envio por email usando SendGrid
-    toast({
-      title: "Funcionalidade em Desenvolvimento",
-      description: "Envio por email será implementado em breve.",
-    });
+  const handlePrint = () => {
+    window.print();
   };
 
-  const printServiceOrder = async () => {
-    // Generate PDF and trigger print
-    await generateServiceOrderPDF();
-    toast({
-      title: "Ordem de Serviço Gerada",
-      description: "Use Ctrl+P para imprimir o arquivo baixado.",
-    });
+  const handleEmail = async () => {
+    if (!emailAddress.trim()) {
+      alert('Por favor, insira um endereço de email válido');
+      return;
+    }
+    
+    // Here you would implement email functionality
+    console.log('Enviando por email para:', emailAddress);
+    alert('Funcionalidade de email será implementada em breve');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Ordem de Serviço
-          </DialogTitle>
-          <DialogDescription>
-            Gerar documento de finalização do chamado {ticket?.ticketNumber}
-          </DialogDescription>
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <FileText className="w-6 h-6 text-blue-600" />
+            <DialogTitle className="text-xl font-bold text-blue-900">
+              Ordem de Serviço - {ticket.ticketNumber}
+            </DialogTitle>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={generatePDF}
+              disabled={isGeneratingPDF}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isGeneratingPDF ? 'Gerando...' : 'Baixar PDF'}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handlePrint}
+              className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimir
+            </Button>
+            
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold mb-2">Resumo do Atendimento</h4>
-            <div className="space-y-1 text-sm">
-              <p><strong>Chamado:</strong> {ticket?.ticketNumber}</p>
-              <p><strong>Assunto:</strong> {ticket?.subject}</p>
-              <p><strong>Status:</strong> Finalizado</p>
-              <p><strong>Data:</strong> {new Date().toLocaleDateString('pt-BR')}</p>
+        {/* Service Order Content */}
+        <div className="space-y-6 p-6 bg-white" id="service-order-content">
+          {/* Header */}
+          <div className="text-center border-b-2 border-blue-900 pb-4">
+            <div className="flex items-center justify-center space-x-4 mb-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-800 to-blue-600 rounded-lg flex items-center justify-center">
+                <Building className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-blue-900">GRUPO OPUS</h1>
+                <p className="text-blue-600 font-medium">ORDEM DE SERVIÇO</p>
+              </div>
+            </div>
+            <div className="flex justify-between items-center text-sm text-gray-600">
+              <span>OS Nº: <strong>{ticket.ticketNumber || 'N/A'}</strong></span>
+              <span>Data de Emissão: <strong>{format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}</strong></span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <Button 
-              onClick={generateServiceOrderPDF}
-              disabled={isGenerating}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {isGenerating ? 'Gerando...' : 'Baixar PDF'}
-            </Button>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Ticket Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <span>Informações do Chamado</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Número:</label>
+                  <p className="text-sm">{ticket.ticketNumber || 'N/A'}</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Assunto:</label>
+                  <p className="text-sm">{ticket.subject || 'N/A'}</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Descrição:</label>
+                  <p className="text-sm text-gray-600">{ticket.description || 'N/A'}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Status:</label>
+                    <Badge variant="outline" className="ml-2">{getStatusDisplay()}</Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Prioridade:</label>
+                    <Badge variant="outline" className="ml-2">{getPriorityDisplay()}</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            <Button 
-              variant="outline"
-              onClick={printServiceOrder}
-              disabled={isGenerating}
-              className="flex items-center gap-2"
-            >
-              <Printer className="h-4 w-4" />
-              Imprimir
-            </Button>
-
-            <Button 
-              variant="outline"
-              onClick={sendByEmail}
-              className="flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              Enviar por Email
-            </Button>
+            {/* People and Dates */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  <span>Responsáveis e Datas</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Solicitante:</label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                        {getCreatedByUser().charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm">{getCreatedByUser()}</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Responsável:</label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback className="bg-green-100 text-green-600 text-xs">
+                        {getAssignedUser().charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm">{getAssignedUser()}</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">Data de Abertura:</label>
+                  <p className="text-sm flex items-center space-x-1">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span>{ticket.createdAt ? format(new Date(ticket.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A'}</span>
+                  </p>
+                </div>
+                
+                {ticket.resolvedAt && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Data de Resolução:</label>
+                    <p className="text-sm flex items-center space-x-1">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span>{format(new Date(ticket.resolvedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Fechar
-          </Button>
-        </DialogFooter>
+          {/* SLA Information */}
+          {getSLAInfo() && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  <span>Informações de SLA</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {(() => {
+                    const slaInfo = getSLAInfo();
+                    return (
+                      <>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">Tempo Resposta SLA:</label>
+                          <p className="text-sm">{slaInfo?.responseTime}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">Tempo Resolução SLA:</label>
+                          <p className="text-sm">{slaInfo?.resolutionTime}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">Tempo Decorrido:</label>
+                          <p className="text-sm">{slaInfo?.hoursElapsed}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold text-gray-700">Status SLA:</label>
+                          <Badge 
+                            variant="outline" 
+                            className={slaInfo?.isCompliant ? 'text-green-700 border-green-200 bg-green-50' : 'text-red-700 border-red-200 bg-red-50'}
+                          >
+                            {slaInfo?.isCompliant ? (
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                            ) : (
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                            )}
+                            {slaInfo?.status}
+                          </Badge>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Comments/History */}
+          {comments && comments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <span>Histórico de Atendimento ({comments.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 max-h-64 overflow-y-auto">
+                  {comments.map((comment: any, index: number) => (
+                    <div key={comment.id} className="border-l-2 border-blue-200 pl-4 py-2">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                            {comment.user?.name?.charAt(0) || 'S'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{comment.user?.name || 'Sistema'}</span>
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(comment.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700">{comment.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Finalization Data */}
+          {finalizationData && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span>Dados de Finalização</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {finalizationData.solution && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Solução Aplicada:</label>
+                    <p className="text-sm text-gray-600">{finalizationData.solution}</p>
+                  </div>
+                )}
+                
+                {finalizationData.timeSpent && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Tempo Gasto:</label>
+                    <p className="text-sm">{finalizationData.timeSpent} horas</p>
+                  </div>
+                )}
+                
+                {finalizationData.materials && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Materiais Utilizados:</label>
+                    <p className="text-sm text-gray-600">{finalizationData.materials}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Signature Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Assinaturas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border border-gray-300 rounded-lg p-4 h-24">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Técnico Responsável:</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Nome: _______________________________</p>
+                    <p className="text-xs text-gray-500">Data: ____/____/____</p>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-300 rounded-lg p-4 h-24">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Cliente/Solicitante:</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Nome: _______________________________</p>
+                    <p className="text-xs text-gray-500">Data: ____/____/____</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Email Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <span>Enviar por Email</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex space-x-2">
+                <Input
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={emailAddress}
+                  onChange={(e) => setEmailAddress(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleEmail} className="bg-blue-600 hover:bg-blue-700">
+                  <Mail className="w-4 h-4 mr-2" />
+                  Enviar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Footer */}
+        <div className="text-center text-xs text-gray-500 mt-6 p-4 border-t">
+          <p>Documento gerado automaticamente pelo Sistema TicketFlow Pro - Grupo OPUS</p>
+          <p>Data de geração: {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default ServiceOrderModal;
+}

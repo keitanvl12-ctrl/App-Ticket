@@ -24,7 +24,6 @@ interface EmailParams {
 }
 
 export async function sendEmail(
-  apiKey: string,
   params: EmailParams
 ): Promise<boolean> {
   try {
