@@ -36,9 +36,13 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
+  changeUserPassword(id: string, password: string): Promise<boolean>;
+  blockUser(id: string, block: boolean): Promise<boolean>;
+  deleteUser(id: string): Promise<boolean>;
 
   // Tickets
   getTicket(id: string): Promise<TicketWithDetails | undefined>;

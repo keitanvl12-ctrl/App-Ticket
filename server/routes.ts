@@ -396,13 +396,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Hash the password before storing
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+      
       const userData = {
         ...req.body,
-        username: req.body.email.split('@')[0]
+        username: req.body.email.split('@')[0],
+        password: hashedPassword
       };
       
       // Validação simples dos dados
-      if (!userData.name.trim() || !userData.email.trim() || !userData.password.trim()) {
+      if (!userData.name.trim() || !userData.email.trim() || !req.body.password.trim()) {
         return res.status(400).json({ message: "Dados inválidos" });
       }
       const user = await storage.createUser(userData);

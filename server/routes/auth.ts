@@ -91,12 +91,39 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // For demo purposes, we'll accept the hardcoded passwords and the new user created
-    const isValidPassword = 
-      (email === 'admin@empresa.com' && password === 'admin123') ||
-      (email === 'maria.santos@empresa.com' && password === 'maria123') ||
-      (email === 'ana.costa@empresa.com' && password === 'ana123') ||
-      (email === 'felipe.lacerda@grupoopus.com' && password === 'felipe123');
+    // Validate password from database using bcrypt
+    const bcrypt = require('bcryptjs');
+    let isValidPassword = false;
+    
+    try {
+      // If user has a hashed password, use bcrypt to compare
+      if (user.password) {
+        isValidPassword = await bcrypt.compare(password, user.password);
+      }
+      
+      // Fallback for demo users with plain text passwords
+      if (!isValidPassword) {
+        const demoPasswordMap = {
+          'admin@empresa.com': 'admin123',
+          'maria.santos@empresa.com': 'maria123',
+          'ana.costa@empresa.com': 'ana123',
+          'felipe.lacerda@grupoopus.com': 'felipe123'
+        };
+        
+        const expectedPassword = demoPasswordMap[email];
+        if (expectedPassword && password === expectedPassword) {
+          isValidPassword = true;
+          
+          // Update user with hashed password for future logins
+          const hashedPassword = await bcrypt.hash(password, 10);
+          await storage.updateUser(user.id, { password: hashedPassword });
+        }
+      }
+      
+    } catch (error) {
+      console.error('Password validation error:', error);
+      isValidPassword = false;
+    }
 
     if (!isValidPassword) {
       return res.status(401).json({
@@ -106,6 +133,9 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = generateToken(user);
+
+    // Update last login time
+    await storage.updateUser(user.id, { lastLoginAt: new Date() });
 
     // Return user data without password
     const { password: _, ...userWithoutPassword } = user;
