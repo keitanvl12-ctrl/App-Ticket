@@ -534,9 +534,20 @@ export default function KanbanBoard() {
     return config?.name || priority;
   };
 
-  // Funções SLA - Usando dados reais do servidor
+  // Funções SLA - Usando dados calculados pelo backend
   const getSLAProgressPercentage = (ticket: any) => {
-    // Usa a função original que calcula baseado no tempo real
+    // Usar dados SLA calculados pelo backend se disponíveis
+    if (ticket.slaProgressPercent !== undefined && ticket.slaProgressPercent !== null) {
+      return Math.max(Math.min(ticket.slaProgressPercent, 100), 0);
+    }
+    
+    // Se o ticket tem dados SLA do backend, usar eles
+    if (ticket.slaData && ticket.slaData.minutesElapsed !== undefined && ticket.slaData.slaLimitMinutes) {
+      const progress = (ticket.slaData.minutesElapsed / ticket.slaData.slaLimitMinutes) * 100;
+      return Math.max(Math.min(progress, 100), 0);
+    }
+    
+    // Fallback: usar dados básicos se não houver dados detalhados do SLA
     if (!ticket.slaHoursTotal || ticket.slaHoursTotal <= 0) return 0;
     if (ticket.status === 'resolved') return 100;
     
@@ -548,13 +559,31 @@ export default function KanbanBoard() {
   };
 
   const getSLAProgressColor = (ticket: any) => {
+    // Usar status SLA calculado pelo backend se disponível
+    if (ticket.slaStatus === 'violated' || ticket.slaStatus === 'Fora do SLA') return 'bg-red-500';
+    if (ticket.slaStatus === 'at_risk') return 'bg-orange-500';
+    if (ticket.slaStatus === 'Dentro do SLA') return 'bg-green-500';
+    
+    // Fallback para cálculo baseado em progresso
     const progress = getSLAProgressPercentage(ticket);
-    if (progress >= 90) return 'bg-red-500';
-    if (progress >= 70) return 'bg-orange-500';
-    return 'bg-green-500';
+    if (progress >= 100) return 'bg-red-500'; // Vencido
+    if (progress >= 90) return 'bg-orange-500';  // Em risco
+    if (progress >= 70) return 'bg-yellow-500';  // Atenção
+    return 'bg-green-500'; // No prazo
   };
 
   const getSLAStatusText = (ticket: any) => {
+    // Usar status SLA calculado pelo backend se disponível
+    if (ticket.slaStatus === 'violated' || ticket.slaStatus === 'Fora do SLA') return 'Vencido';
+    if (ticket.slaStatus === 'at_risk') return 'Em risco';
+    if (ticket.slaStatus === 'Dentro do SLA') return 'No prazo';
+    
+    // Usar texto do SLA se disponível
+    if (ticket.slaData && ticket.slaData.status) {
+      return ticket.slaData.status;
+    }
+    
+    // Fallback para cálculo baseado em progresso
     const progress = getSLAProgressPercentage(ticket);
     if (progress >= 100) return 'Vencido';
     if (progress >= 90) return 'Em risco';
