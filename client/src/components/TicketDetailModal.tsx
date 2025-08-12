@@ -257,6 +257,10 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
             </div>
           </div>
 
+          {/* Debug: Mostrar dados do ticket */}
+          {console.log('Ticket data:', ticket)}
+          {console.log('FormData raw:', ticket.formData)}
+
           {/* Dados Completos do Formulário Original */}
           {ticket.formData && (
             <Card>
